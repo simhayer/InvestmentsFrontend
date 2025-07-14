@@ -1,41 +1,41 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { register } from "@/lib/api"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { register } from "@/utils/authService";
 
 interface RegisterFormProps {
-  onSuccess: (userData: any, token?: string) => void
+  onSuccess: (userData: any, token?: string) => void;
 }
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (password !== confirmPassword) {
       toast({
         title: "Password Mismatch",
         description: "Passwords don't match. Please try again.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const response = await register(email, password)
+      const response = await register(email, password);
 
       onSuccess(
         {
@@ -43,19 +43,19 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           name,
           user_id: response.user_id,
         },
-        response.access_token, // Some APIs return token on registration
-      )
+        response.access_token // Some APIs return token on registration
+      );
     } catch (error) {
-      console.error("Registration error:", error)
+      console.error("Registration error:", error);
       toast({
         title: "Registration Failed",
         description: "Failed to create account. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,5 +107,5 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         {isLoading ? "Creating account..." : "Create Account"}
       </Button>
     </form>
-  )
+  );
 }

@@ -9,21 +9,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AddInvestmentForm } from "@/components/add-investment-form";
 import { InvestmentList } from "@/components/investment-list";
 import { PortfolioOverview } from "@/components/portfolio-overview";
 import { LogOut, Plus, RefreshCw } from "lucide-react";
-import { groupInvestmentsBySymbol } from "@/lib/groupInvestments";
+import {
+  addHolding,
+  deleteHolding,
+  getHoldings,
+  groupInvestmentsBySymbol,
+} from "@/utils/investmentsService";
 import { fetchLivePricesForList } from "@/lib/finnhub";
 import type { Investment } from "@/types/investment";
-import { getHoldings, addHolding, getToken, deleteHolding } from "@/lib/api";
+import { getToken } from "@/utils/authService";
 import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+import { PlaidLinkButton } from "./plaid-link-button";
+import { User } from "@/types/user";
 
 interface DashboardProps {
   user: User;
@@ -34,12 +36,13 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingHoldings, setLoadingHoldings] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setRefreshing(true);
+        setLoadingHoldings(true);
         const token = await getToken();
         if (!token) {
           onLogout();
@@ -47,22 +50,23 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         }
 
         const holdings = await getHoldings(token);
-        setInvestments(holdings);
-
-        // Optional: Update prices
         const updated = await fetchLivePricesForList(holdings, token);
         setInvestments(updated);
       } catch (err) {
         console.error("Error loading holdings:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load holdings.",
+          variant: "destructive",
+        });
       } finally {
-        setRefreshing(false);
+        setLoadingHoldings(false);
       }
     };
 
     fetchData();
   }, []);
 
-  // Fetch live prices
   const fetchLivePrices = async (invList: Investment[] = investments) => {
     if (invList.length === 0) return;
 
@@ -78,7 +82,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
     setRefreshing(false);
   };
 
-  // Add new investment
   const handleAddInvestment = async (investment: Omit<Investment, "id">) => {
     try {
       const token = await getToken();
@@ -87,37 +90,37 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         return;
       }
 
-      // Send to backend
-      const created = await addHolding(token, {
+      await addHolding(token, {
         symbol: investment.symbol,
         quantity: investment.quantity,
         avg_price: investment.purchasePrice,
         type: investment.type,
       });
 
-      // Refresh holdings
       const updatedHoldings = await getHoldings(token);
       const priced = await fetchLivePricesForList(updatedHoldings, token);
-
       setInvestments(priced);
       setShowAddForm(false);
     } catch (err) {
       console.error("Failed to add investment:", err);
-      // optionally show toast or UI error
+      toast({
+        title: "Error",
+        description: "Could not add investment.",
+        variant: "destructive",
+      });
     }
   };
 
-  // Delete
   const handleDeleteInvestment = async (id: string) => {
     const token = await getToken();
     if (!token) {
-      onLogout(); // Auto logout if token missing
+      onLogout();
       return;
     }
 
     try {
       await deleteHolding(token, id);
-      setInvestments((prev) => prev.filter((inv) => inv.id !== id)); // Update state
+      setInvestments((prev) => prev.filter((inv) => inv.id !== id));
 
       toast({
         title: "Deleted",
@@ -125,7 +128,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
       });
     } catch (error) {
       console.error("Failed to delete investment:", error);
-
       toast({
         title: "Error",
         description: "Failed to delete investment. Please try again.",
@@ -149,6 +151,10 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               <p className="text-sm text-gray-500">Welcome back, {user.name}</p>
             </div>
             <div className="flex items-center gap-4">
+              <PlaidLinkButton
+                userId={user.id}
+                onSuccess={() => console.log("Plaid connected!")}
+              />
               <Button
                 onClick={() => fetchLivePrices()}
                 disabled={refreshing}
@@ -183,32 +189,45 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
-          <PortfolioOverview investments={groupedInvestments} />
+        {loadingHoldings ? (
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-24 rounded-md" />
+            <Skeleton className="h-10 w-1/4" />
+            <Skeleton className="h-40 rounded-md" />
+          </div>
+        ) : (
+          <div
+            className={`space-y-8 ${
+              refreshing ? "opacity-50 pointer-events-none" : ""
+            }`}
+          >
+            <PortfolioOverview investments={groupedInvestments} />
 
-          {showAddForm && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Investment</CardTitle>
-                <CardDescription>
-                  Add a new stock, cryptocurrency, or other investment to your
-                  portfolio
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AddInvestmentForm
-                  onAdd={handleAddInvestment}
-                  onCancel={() => setShowAddForm(false)}
-                />
-              </CardContent>
-            </Card>
-          )}
+            {showAddForm && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Investment</CardTitle>
+                  <CardDescription>
+                    Add a new stock, cryptocurrency, or other investment to your
+                    portfolio
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AddInvestmentForm
+                    onAdd={handleAddInvestment}
+                    onCancel={() => setShowAddForm(false)}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
-          <InvestmentList
-            investments={groupedInvestments}
-            onDelete={handleDeleteInvestment}
-          />
-        </div>
+            <InvestmentList
+              investments={groupedInvestments}
+              onDelete={handleDeleteInvestment}
+            />
+          </div>
+        )}
       </main>
     </div>
   );

@@ -29,7 +29,7 @@ export function InvestmentList({ investments, onDelete }: InvestmentListProps) {
 
   const calculateGainLoss = (investment: Investment) => {
     const totalValue = investment.quantity * investment.currentPrice;
-    const totalCost = investment.quantity * investment.purchasePrice;
+    const totalCost = investment.quantity * investment.avg_price;
     const gainLoss = totalValue - totalCost;
     const percentage = (gainLoss / totalCost) * 100;
     return { gainLoss, percentage };

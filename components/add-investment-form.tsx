@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   searchSymbols,
   fetchQuote,
   fetchProfile,
@@ -19,7 +12,7 @@ import {
 } from "@/lib/finnhub";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Investment } from "@/types/investment";
-import { getToken } from "@/lib/api";
+import { getToken } from "@/utils/authService";
 
 interface AddInvestmentFormProps {
   onAdd: (investment: Investment) => void;

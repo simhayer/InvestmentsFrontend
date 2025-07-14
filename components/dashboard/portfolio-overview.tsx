@@ -8,8 +8,17 @@ interface PortfolioOverviewProps {
   investments: Investment[];
 }
 
+interface PortfolioStats {
+  totalValue: number;
+  totalCost: number;
+  totalGainLoss: number;
+  totalPercentage: number;
+  topPerformer: Investment | null;
+  worstPerformer: Investment | null;
+}
+
 export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
-  const calculatePortfolioStats = () => {
+  const calculatePortfolioStats = (): PortfolioStats => {
     if (investments.length === 0) {
       return {
         totalValue: 0,

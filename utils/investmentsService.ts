@@ -55,18 +55,18 @@ export function groupInvestmentsBySymbol(investments: Investment[]): Investment[
     const key = inv.symbol;
 
     if (!grouped.has(key)) {
-      grouped.set(key, { ...inv });
+      grouped.set(key, { ...inv, avgPrice: inv.purchasePrice });
     } else {
       const existing = grouped.get(key)!;
       const totalQty = existing.quantity + inv.quantity;
       const avgPrice =
-        (existing.avg_price * existing.quantity + inv.avg_price * inv.quantity) / totalQty;
+        (existing.purchasePrice * existing.quantity + inv.purchasePrice * inv.quantity) / totalQty;
 
       grouped.set(key, {
         ...existing,
         quantity: totalQty,
         purchasePrice: avgPrice,
-        avg_price: avgPrice
+        avgPrice: avgPrice
       });
     }
   }

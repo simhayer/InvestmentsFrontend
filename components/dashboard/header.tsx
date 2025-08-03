@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { LogOut, Plus, RefreshCw } from "lucide-react";
-import { PlaidLinkButton } from "../plaid-link-button";
+import { PlaidLinkButton } from "@/components/plaid/plaid-link-button";
 import { User } from "@/types/user";
+import { GetPlaidInvestmentsButton } from "../plaid/get-plaid-investments-button";
 
 interface Props {
   user: User;
@@ -31,6 +32,7 @@ export function DashboardHeader({
             <p className="text-sm text-gray-500">Welcome back, {user.name}</p>
           </div>
           <div className="flex items-center gap-4">
+            <GetPlaidInvestmentsButton userId={user.id} />
             <PlaidLinkButton
               userId={user.id}
               onSuccess={() => console.log("Plaid connected!")}

@@ -29,7 +29,7 @@ export function InvestmentItem({ investment, onDelete }: InvestmentItemProps) {
 
   const calculateGainLoss = (investment: Investment) => {
     const totalValue = investment.quantity * investment.currentPrice;
-    const totalCost = investment.quantity * investment.avg_price;
+    const totalCost = investment.quantity * investment.avgPrice;
     const gainLoss = totalValue - totalCost;
     const percentage = (gainLoss / totalCost) * 100;
     return { gainLoss, percentage };
@@ -76,7 +76,7 @@ export function InvestmentItem({ investment, onDelete }: InvestmentItemProps) {
             </div>
             <div>
               <p className="text-gray-500">Purchase Price</p>
-              <p className="font-medium">${investment.avg_price.toFixed(2)}</p>
+              <p className="font-medium">${investment.avgPrice?.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-gray-500">Current Price</p>

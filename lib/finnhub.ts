@@ -4,10 +4,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
 const BACKEND_URL = `${API_URL}/api/finnhub`;
 
 // Send list of symbols to backend and get latest prices
-export async function fetchLivePricesForList(invList: Investment[], token: string): Promise<Investment[]> {
+export async function fetchLivePricesForList(
+  invList: Investment[],
+  token: string
+): Promise<Investment[]> {
   if (!invList.length) return invList;
 
   const symbols = invList.map((inv) => inv.symbol);
+  const types = invList.map((inv) => inv.type); // Extract type for each investment
+
+  const filteredSymbols = symbols.filter((s) => s); // Remove any empty symbols
+  const filteredTypes = types.filter((_, idx) => symbols[idx]); // Keep types in sync
+
+  console.log("Fetching live prices for symbols:", filteredSymbols);
 
   const res = await fetch(`${BACKEND_URL}/prices`, {
     method: "POST",
@@ -15,8 +24,17 @@ export async function fetchLivePricesForList(invList: Investment[], token: strin
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(symbols),
+    body: JSON.stringify({
+      symbols: filteredSymbols,
+      types: filteredTypes,
+      currency: "USD",
+    }),
   });
+
+  if (!res.ok) {
+    console.error("Failed to fetch live prices", await res.text());
+    return invList;
+  }
 
   const data = await res.json();
 

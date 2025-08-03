@@ -9,5 +9,5 @@ export interface Investment {
   purchasePrice: number;
   currentPrice: number;
   purchaseDate: string; // ISO format
-  avg_price: number
+  avgPrice: number
 }

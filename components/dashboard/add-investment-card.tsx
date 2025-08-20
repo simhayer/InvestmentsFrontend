@@ -19,7 +19,6 @@ import {
   mapFinnhubType,
 } from "@/lib/finnhub";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getToken } from "@/utils/authService";
 
 type InvestmentFormData = {
   symbol: string;
@@ -66,11 +65,7 @@ export function AddInvestmentCard({ onAdd, onCancel }: Props) {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const token = await getToken();
-        if (!token) {
-          return;
-        }
-        const matches = await searchSymbols(debouncedSearch, token);
+        const matches = await searchSymbols(debouncedSearch);
         setResults(matches.slice(0, 5));
         setShowDropdown(true);
       } catch (err) {
@@ -90,14 +85,9 @@ export function AddInvestmentCard({ onAdd, onCancel }: Props) {
     setShowDropdown(false);
 
     try {
-      const token = await getToken();
-      if (!token) {
-        return;
-      }
-
       const [quoteData, profileData] = await Promise.all([
-        fetchQuote(symbol, token),
-        fetchProfile(symbol, token),
+        fetchQuote(symbol),
+        fetchProfile(symbol),
       ]);
 
       const price = quoteData?.c || 0;
@@ -130,6 +120,10 @@ export function AddInvestmentCard({ onAdd, onCancel }: Props) {
       symbol: formData.symbol.toUpperCase(),
       quantity: parseFloat(formData.quantity),
       purchasePrice: parsedPurchasePrice,
+      currentPrice: formData.currentPrice,
+      avgPrice: parsedPurchasePrice,
+      institution: "Manual Entry",
+      currency: "USD",
       // avg_price: parsedPurchasePrice,
     };
 

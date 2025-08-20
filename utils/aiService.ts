@@ -1,17 +1,12 @@
 // utils/aiService.ts
 import { Investment } from "@/types/investment";
-import { getToken } from "./authService";
 
 export async function getAiInsight(investment: Investment): Promise<string> {
   try {
-    const token = await getToken();
-    if (!token) throw new Error("No auth token");
-
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai/analyze-holding`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         symbol: investment.symbol,
@@ -23,6 +18,7 @@ export async function getAiInsight(investment: Investment): Promise<string> {
         institution: investment.institution || "Unknown",
         currency: investment.currency || "USD",
         }),
+      credentials: "include"
     });
 
     const data = await res.json();

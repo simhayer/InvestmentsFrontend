@@ -1,45 +1,59 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL
+// utils/authService.ts
+export const API_URL = process.env.NEXT_PUBLIC_API_URL!; // e.g. http://localhost:8000
 
-export const login = async (email: string, password: string) => {
-  const formData = new URLSearchParams()
-  formData.append("username", email)
-  formData.append("password", password)
+type Me = { id: number; email: string } | null;
 
-  const res = await fetch(`${API_URL}/token`, {
-    method: "POST",
-    body: formData,
-  })
-
-  if (!res.ok) {
-    throw new Error("Login failed")
-  }
-
-  return res.json()
+function withCreds(init?: RequestInit): RequestInit {
+  return { credentials: 'include', ...init };
 }
 
-export const register = async (email: string, password: string) => {
-  const res = await fetch(`${API_URL}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+export async function login(email: string, password: string) {
+  const body = new URLSearchParams();
+  body.set('username', email);          // FastAPI OAuth2PasswordRequestForm fields
+  body.set('password', password);
+
+  const res = await fetch(`${API_URL}/token`, withCreds({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  }));
+  if (!res.ok) throw new Error('Login failed');
+
+  // backend returns { ok: true } and sets httpOnly cookie
+  return res.json() as Promise<{ ok: true }>;
+}
+
+export async function register(email: string, password: string) {
+  const res = await fetch(`${API_URL}/register`, withCreds({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
-  })
-
-  if (!res.ok) {
-    throw new Error("Registration failed")
-  }
-
-  return res.json()
+  }));
+  if (!res.ok) throw new Error('Registration failed');
+  return res.json();
 }
 
-export async function getToken(): Promise<string | null> {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
+export async function getMe(): Promise<Me> {
+  const res = await fetch(`${API_URL}/me`, withCreds({ method: 'GET', cache: 'no-store' }));
+  if (!res.ok) return null;
+  return res.json();
+}
 
-  try {
-    const payload = await JSON.parse(atob(token.split(".")[1]));
-    const isExpired = payload.exp * 1000 < Date.now();
-    return isExpired ? null : token;
-  } catch {
-    return null; // malformed token
-  }
+export async function logout() {
+  const res = await fetch(`${API_URL}/logout`, withCreds({ method: 'POST' }));
+  if (!res.ok) throw new Error('Logout failed');
+  return res.json();
+}
+
+/**
+ * Convenience wrapper for other authenticated API calls.
+ * Example: await authedFetch('/analyze-holding', { method: 'POST', body: JSON.stringify(...) })
+ */
+export async function authedFetch(path: string, init?: RequestInit) {
+  const res = await fetch(`${API_URL}${path}`, withCreds({
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    ...init,
+  }));
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res;
 }

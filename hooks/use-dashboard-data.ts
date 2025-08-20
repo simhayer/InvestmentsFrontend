@@ -7,7 +7,6 @@ import {
   groupInvestmentsBySymbol,
 } from "@/utils/investmentsService";
 import { fetchLivePricesForList } from "@/lib/finnhub";
-import { getToken } from "@/utils/authService";
 import { Investment } from "@/types/investment";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,15 +40,12 @@ export function useDashboardData(onLogout: () => void) {
   const loadHoldings = async () => {
     setLoading(true);
     try {
-      const token = await getToken();
-      if (!token) return onLogout();
-
-      const holdings = await getHoldings(token);
+      const holdings = await getHoldings();
       const mappedHoldings = holdings.map(mapToCamelCase);
-      const priced = await fetchLivePricesForList(mappedHoldings, token);
+      const priced = await fetchLivePricesForList(mappedHoldings);
       setInvestments(priced);
 
-      const connectedInstitutions = await getInstitutions(token);
+      const connectedInstitutions = await getInstitutions();
       setInstitutions(connectedInstitutions);
     } catch (err) {
       toast({
@@ -69,17 +65,13 @@ export function useDashboardData(onLogout: () => void) {
   const refreshPrices = async () => {
     if (investments.length === 0) return;
     setRefreshing(true);
-    const token = await getToken();
-    if (!token) return onLogout();
-    const updated = await fetchLivePricesForList(investments, token);
+    const updated = await fetchLivePricesForList(investments);
     setInvestments(updated);
     setRefreshing(false);
   };
 
   const addInvestment = async (inv: Omit<Investment, "id">) => {
-    const token = await getToken();
-    if (!token) return onLogout();
-    await addHolding(token, {
+    await addHolding({
       symbol: inv.symbol,
       quantity: inv.quantity,
       avg_price: inv.purchasePrice,
@@ -89,9 +81,7 @@ export function useDashboardData(onLogout: () => void) {
   };
 
   const deleteInvestment = async (id: string) => {
-    const token = await getToken();
-    if (!token) return onLogout();
-    await deleteHolding(token, id);
+    await deleteHolding(id);
     setInvestments((prev) => prev.filter((inv) => inv.id !== id));
   };
 

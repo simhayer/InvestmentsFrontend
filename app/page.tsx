@@ -1,19 +1,9 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export default async function Home() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
 
-export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    } else {
-      router.push("/login");
-    }
-  }, [router]);
-
-  return null;
+  redirect(token ? "/dashboard" : "/landing");
 }

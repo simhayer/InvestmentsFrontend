@@ -1,16 +1,12 @@
-import { getToken } from "@/utils/authService";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function createLinkToken(userId: string) {
-  const token = await getToken();
-  if (!token) throw new Error("No auth token");
-
   const res = await fetch(`${API_URL}/api/plaid/create-link-token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify({ user_id: userId }),
   });
 
@@ -31,15 +27,13 @@ interface ExchangePayload {
 }
 
 export async function exchangePublicToken(payload: ExchangePayload): Promise<void> {
-  const token = await getToken();
-
   // Step 1: Exchange token
   const res = await fetch(`${API_URL}/api/plaid/exchange-token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify(payload),
   });
 
@@ -52,9 +46,7 @@ export async function exchangePublicToken(payload: ExchangePayload): Promise<voi
   // ✅ Step 2: Trigger sync
   const syncRes = await fetch(`${API_URL}/api/plaid/investments`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include",
   });
 
   if (!syncRes.ok) {
@@ -67,17 +59,14 @@ export async function exchangePublicToken(payload: ExchangePayload): Promise<voi
 }
 
 export async function getPlaidInvestments(userId: string) {
-  const token = await getToken();
-  if (!token) throw new Error("No auth token");
-
   const res = await fetch(
     `${API_URL}/api/plaid/investments?user_id=${encodeURIComponent(userId)}`,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
     }
   );
 

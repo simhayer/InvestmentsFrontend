@@ -1,13 +1,13 @@
 import { Investment } from "@/types/investment";
 export const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-export const addHolding = async (token: string, data: any) => {
+export const addHolding = async (data: any) => {
   const res = await fetch(`${API_URL}/holdings`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(data),
   })
 
@@ -18,12 +18,10 @@ export const addHolding = async (token: string, data: any) => {
   return res.json()
 }
 
-export const getHoldings = async (token: string) => {
+export const getHoldings = async () => {
   console.log('getting holdings')
   const res = await fetch(`${API_URL}/holdings`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include"
   })
 
   if (!res.ok) {
@@ -33,12 +31,10 @@ export const getHoldings = async (token: string) => {
   return res.json()
 }
 
-export const deleteHolding = async (token: string, holdingId: string) => {
+export const deleteHolding = async (holdingId: string) => {
   const res = await fetch(`${API_URL}/holdings/${holdingId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include"
   })
 
   if (!res.ok) {
@@ -48,9 +44,9 @@ export const deleteHolding = async (token: string, holdingId: string) => {
   return res.json()
 }
 
-export async function getInstitutions(token: string) {
+export async function getInstitutions() {
   const res = await fetch(`${API_URL}/api/plaid/institutions`, {
-    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
 
   if (!res.ok) throw new Error("Failed to fetch institutions");

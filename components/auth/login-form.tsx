@@ -1,15 +1,15 @@
 "use client";
 
-import type React from "react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { login } from "@/utils/authService";
+import { login, getMe } from "@/utils/authService";
 
 interface LoginFormProps {
-  onSuccess: (userData: any, token: string) => void;
+  onSuccess?: (userData: any) => void; // token no longer needed
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -17,26 +17,23 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await login(email, password);
+      const result = await login(email, password); // sets cookie
+      if (!result?.ok) throw new Error("Invalid response");
 
-      if (response.access_token) {
-        onSuccess(
-          {
-            email,
-            username: email,
-            user_id: response.user_id,
-          },
-          response.access_token
-        );
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      const user = await getMe().catch(() => null);
+      onSuccess?.(user ?? { email });
+
+      // Redirect (support return-to)
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next") || "/dashboard";
+      router.replace(next);
     } catch (error) {
       console.error("Login error:", error);
       toast({

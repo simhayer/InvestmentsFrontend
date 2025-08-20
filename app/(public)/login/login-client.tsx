@@ -16,13 +16,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLoginSuccess = (userData: any, token: string) => {
+  const handleLoginSuccess = (userData: any) => {
     const user = {
       id: userData.user_id || "1",
       email: userData.email || userData.username,
       name: userData.name || userData.email?.split("@")[0] || userData.username,
     };
-    localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     toast({
       title: "Welcome back!",

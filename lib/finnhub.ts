@@ -6,7 +6,6 @@ const BACKEND_URL = `${API_URL}/api/finnhub`;
 // Send list of symbols to backend and get latest prices
 export async function fetchLivePricesForList(
   invList: Investment[],
-  token: string
 ): Promise<Investment[]> {
   if (!invList.length) return invList;
 
@@ -22,8 +21,8 @@ export async function fetchLivePricesForList(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify({
       symbols: filteredSymbols,
       types: filteredTypes,
@@ -44,39 +43,32 @@ export async function fetchLivePricesForList(
   }));
 }
 
-export async function searchSymbols(query: string, token: string) {
+export async function searchSymbols(query: string) {
   if (!query) return [];
   const res = await fetch(`${BACKEND_URL}/search?query=${encodeURIComponent(query)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include"
   });
   const data = await res.json();
   return data;
 }
 
-export async function fetchQuote(symbol: string, token: string) {
+export async function fetchQuote(symbol: string) {
   const res = await fetch(`${BACKEND_URL}/quote?symbol=${symbol}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+    credentials: "include",});
   return res.json();
 }
 
-export async function fetchProfile(symbol: string, token: string) {
+export async function fetchProfile(symbol: string) {
   const res = await fetch(`${BACKEND_URL}/profile?symbol=${symbol}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: "include",
   });
   return res.json();
 }
 
-export function mapFinnhubType(apiType: string): "stock" | "crypto" | "etf" | "bond" {
+export function mapFinnhubType(apiType: string): "stock" | "cryptocurrency" | "etf" | "bond" {
   const lower = apiType.toLowerCase();
 
-  if (lower.includes("crypto")) return "crypto";
+  if (lower.includes("crypto")) return "cryptocurrency";
   if (lower.includes("etf")) return "etf";
   if (lower.includes("bond")) return "bond";
 

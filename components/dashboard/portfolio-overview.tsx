@@ -159,7 +159,8 @@ export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
           <div className="text-2xl font-bold">{investments.length}</div>
           <p className="text-xs text-muted-foreground">
             {investments.filter((inv) => inv.type === "stock").length} stocks,{" "}
-            {investments.filter((inv) => inv.type === "crypto").length} crypto
+            {investments.filter((inv) => inv.type === "cryptocurrency").length}{" "}
+            crypto
           </p>
         </CardContent>
       </Card>

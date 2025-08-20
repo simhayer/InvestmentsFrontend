@@ -1,7 +1,7 @@
 "use client";
 
-import { getToken } from "@/utils/authService";
 import { useCallback } from "react";
+import { getPlaidInvestments } from "@/utils/plaidService";
 
 interface PlaidLinkButtonProps {
   userId: string;
@@ -9,32 +9,10 @@ interface PlaidLinkButtonProps {
 
 export function GetPlaidInvestmentsButton({ userId }: PlaidLinkButtonProps) {
   const handleGetInvestments = useCallback(async () => {
-    const token = await getToken();
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
-
     try {
-      const res = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL
-        }/api/plaid/investments?user_id=${encodeURIComponent(userId)}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
-      }
-
-      const data = await res.json();
+      const data = await getPlaidInvestments(userId);
       console.log("Plaid Investments:", data);
+      // Optionally trigger UI update, toast, etc.
     } catch (error) {
       console.error("Failed to get investments:", error);
     }

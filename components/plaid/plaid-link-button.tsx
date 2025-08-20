@@ -1,8 +1,8 @@
 "use client";
 
-import { getToken } from "@/utils/authService";
 import { useEffect, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
+import { createLinkToken, exchangePublicToken } from "@/utils/plaidService";
 
 interface PlaidLinkButtonProps {
   userId: string;
@@ -11,77 +11,34 @@ interface PlaidLinkButtonProps {
 
 export function PlaidLinkButton({ userId, onSuccess }: PlaidLinkButtonProps) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
 
-  // Fetch auth token on mount
   useEffect(() => {
     const fetchToken = async () => {
-      const token = await getToken();
-      if (token) setAuthToken(token);
-    };
-    fetchToken();
-  }, []);
-
-  // Fetch Plaid link token once auth token and userId are available
-  useEffect(() => {
-    const fetchLinkToken = async () => {
-      if (!authToken || !userId) return;
-
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/plaid/create-link-token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({ user_id: userId }),
-          }
-        );
-
-        const data = await res.json();
-        setLinkToken(data.link_token);
-      } catch (error) {
-        console.error("Failed to fetch link token:", error);
+        const token = await createLinkToken(userId);
+        setLinkToken(token);
+      } catch (err) {
+        console.error("Failed to fetch link token:", err);
       }
     };
 
-    fetchLinkToken();
-  }, [authToken, userId]);
+    fetchToken();
+  }, [userId]);
 
   const { open, ready } = usePlaidLink({
     token: linkToken || "",
     onSuccess: async (public_token, metadata) => {
       try {
-        const institution_id = metadata.institution?.institution_id || null;
-        const institution_name = metadata.institution?.name || null;
+        await exchangePublicToken({
+          public_token,
+          user_id: userId,
+          institution_id: metadata.institution?.institution_id || null,
+          institution_name: metadata.institution?.name || null,
+        });
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/plaid/exchange-token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
-            },
-            body: JSON.stringify({
-              public_token,
-              user_id: userId,
-              institution_id,
-              institution_name,
-            }),
-          }
-        );
-
-        if (!res.ok) {
-          const error = await res.json();
-          console.error("Failed to exchange token:", error);
-        } else {
-          onSuccess?.();
-        }
+        onSuccess?.();
       } catch (err) {
-        console.error("Error during Plaid exchange:", err);
+        console.error("Error during token exchange:", err);
       }
     },
   });

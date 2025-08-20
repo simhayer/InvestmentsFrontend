@@ -18,12 +18,20 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const {
     grouped,
+    institutions,
+    selectedInstitution,
+    setSelectedInstitution,
     loading,
     refreshing,
     refreshPrices,
     addInvestment,
     deleteInvestment,
+    reloadDashboardData,
   } = useDashboardData(onLogout);
+
+  const filteredGrouped = selectedInstitution
+    ? grouped.filter((inv) => inv.institution === selectedInstitution)
+    : grouped;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,6 +41,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         onLogout={onLogout}
         onAddClick={() => setShowAddForm(true)}
         refreshing={refreshing}
+        onPlaidLinkSuccess={reloadDashboardData}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -56,7 +65,34 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
                 onCancel={() => setShowAddForm(false)}
               />
             )}
-            <InvestmentList investments={grouped} onDelete={deleteInvestment} />
+            {institutions.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Filter by Institution
+                </label>
+                <select
+                  className="block w-full max-w-sm border border-gray-300 rounded-md p-2"
+                  value={selectedInstitution || ""}
+                  onChange={(e) =>
+                    setSelectedInstitution(e.target.value || null)
+                  }
+                >
+                  <option value="">All Institutions</option>
+                  {institutions.map((inst) => (
+                    <option
+                      key={inst.institution_id}
+                      value={inst.institution_name}
+                    >
+                      {inst.institution_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <InvestmentList
+              investments={filteredGrouped}
+              onDelete={deleteInvestment}
+            />
           </div>
         )}
       </main>

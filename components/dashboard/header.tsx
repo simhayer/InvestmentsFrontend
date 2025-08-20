@@ -12,6 +12,7 @@ interface Props {
   onRefresh: () => void;
   onLogout: () => void;
   onAddClick: () => void;
+  onPlaidLinkSuccess: () => void;
 }
 
 export function DashboardHeader({
@@ -20,6 +21,7 @@ export function DashboardHeader({
   onRefresh,
   onLogout,
   onAddClick,
+  onPlaidLinkSuccess,
 }: Props) {
   return (
     <header className="bg-white shadow-sm border-b">
@@ -33,10 +35,7 @@ export function DashboardHeader({
           </div>
           <div className="flex items-center gap-4">
             <GetPlaidInvestmentsButton userId={user.id} />
-            <PlaidLinkButton
-              userId={user.id}
-              onSuccess={() => console.log("Plaid connected!")}
-            />
+            <PlaidLinkButton userId={user.id} onSuccess={onPlaidLinkSuccess} />
             <Button onClick={onRefresh} disabled={refreshing} variant="outline">
               <RefreshCw
                 className={`h-4 w-4 mr-1 ${

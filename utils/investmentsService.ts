@@ -48,6 +48,16 @@ export const deleteHolding = async (token: string, holdingId: string) => {
   return res.json()
 }
 
+export async function getInstitutions(token: string) {
+  const res = await fetch(`${API_URL}/api/plaid/institutions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch institutions");
+  return await res.json();
+}
+
+
 export function groupInvestmentsBySymbol(investments: Investment[]): Investment[] {
   const grouped = new Map<string, Investment>();
 

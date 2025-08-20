@@ -1,4 +1,4 @@
-export type InvestmentType = "stock" | "crypto" | "etf" | "bond";
+export type InvestmentType = "stock" | "cryptocurrency" | "etf" | "bond";
 
 export interface Investment {
   id: string;
@@ -9,5 +9,7 @@ export interface Investment {
   purchasePrice: number;
   currentPrice: number;
   purchaseDate: string; // ISO format
-  avgPrice: number
+  avgPrice: number;
+  institution: string; // Name of the institution
+  currency: string; // Currency code (e.g., USD, EUR)
 }

@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { getHoldings, addHolding, deleteHolding, groupInvestmentsBySymbol } from "@/utils/investmentsService";
+import {
+  getHoldings,
+  getInstitutions,
+  addHolding,
+  deleteHolding,
+  groupInvestmentsBySymbol,
+} from "@/utils/investmentsService";
 import { fetchLivePricesForList } from "@/lib/finnhub";
 import { getToken } from "@/utils/authService";
 import { Investment } from "@/types/investment";
 import { useToast } from "@/hooks/use-toast";
 
-const mapToCamelCase = (holding: any) => ({
+const mapToCamelCase = (holding: any): Investment => ({
   id: holding.id,
   symbol: holding.symbol,
   name: holding.name,
@@ -13,17 +19,21 @@ const mapToCamelCase = (holding: any) => ({
   quantity: holding.quantity,
   purchasePrice: holding.purchase_price,
   currentPrice: holding.current_price,
-  value: holding.value,
+  //value: holding.value,
   currency: holding.currency,
   institution: holding.institution,
-  accountName: holding.account_name,
-  source: holding.source,
-  externalId: holding.external_id,
-  userId: holding.user_id,
+  //accountName: holding.account_name,
+  //source: holding.source,
+  //externalId: holding.external_id,
+ // userId: holding.user_id,
+  avgPrice: holding.avg_price,
+  purchaseDate: holding.purchase_date,
 });
 
 export function useDashboardData(onLogout: () => void) {
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [institutions, setInstitutions] = useState<{ institution_name: string; institution_id: string }[]>([]);
+  const [selectedInstitution, setSelectedInstitution] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -38,10 +48,13 @@ export function useDashboardData(onLogout: () => void) {
       const mappedHoldings = holdings.map(mapToCamelCase);
       const priced = await fetchLivePricesForList(mappedHoldings, token);
       setInvestments(priced);
+
+      const connectedInstitutions = await getInstitutions(token);
+      setInstitutions(connectedInstitutions);
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to load holdings.",
+        description: "Failed to load holdings or institutions.",
         variant: "destructive",
       });
     } finally {
@@ -82,13 +95,21 @@ export function useDashboardData(onLogout: () => void) {
     setInvestments((prev) => prev.filter((inv) => inv.id !== id));
   };
 
+  const filteredInvestments = selectedInstitution
+    ? investments.filter((inv) => inv.institution === selectedInstitution)
+    : investments;
+
   return {
     investments,
-    grouped: groupInvestmentsBySymbol(investments),
+    grouped: groupInvestmentsBySymbol(filteredInvestments),
+    institutions,
+    selectedInstitution,
+    setSelectedInstitution,
     loading,
     refreshing,
     refreshPrices,
     addInvestment,
     deleteInvestment,
+    reloadDashboardData: loadHoldings
   };
 }

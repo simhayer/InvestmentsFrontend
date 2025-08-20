@@ -9,15 +9,36 @@ interface InvestmentListProps {
   onDelete: (id: string) => void;
 }
 
+type GroupedInvestments = {
+  [category: string]: Investment[];
+};
+
+export function groupInvestmentsByCategory(
+  investments: Investment[]
+): GroupedInvestments {
+  const groups: GroupedInvestments = {
+    stocks: [],
+    crypto: [],
+    other: [],
+  };
+
+  for (const inv of investments) {
+    const type = inv.type?.toLowerCase();
+
+    if (type === "equity" || type === "etf") {
+      groups.stocks.push(inv);
+    } else if (type === "cryptocurrency") {
+      groups.crypto.push(inv);
+    } else {
+      groups.other.push(inv);
+    }
+  }
+
+  return groups;
+}
+
 export function InvestmentList({ investments, onDelete }: InvestmentListProps) {
-  const grouped = investments.reduce<Record<string, Investment[]>>(
-    (acc, inv) => {
-      if (!acc[inv.type]) acc[inv.type] = [];
-      acc[inv.type].push(inv);
-      return acc;
-    },
-    {}
-  );
+  const grouped = groupInvestmentsByCategory(investments);
 
   if (investments.length === 0) {
     return (
@@ -48,6 +69,8 @@ export function InvestmentList({ investments, onDelete }: InvestmentListProps) {
             (sum, inv) => sum + inv.quantity * inv.currentPrice,
             0
           );
+
+          if (list.length === 0) return null;
 
           return (
             <div key={type}>

@@ -1,10 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, RefreshCw } from "lucide-react";
+import { LogOut, Plus, RefreshCw, Menu } from "lucide-react";
 import { PlaidLinkButton } from "@/components/plaid/plaid-link-button";
 import { User } from "@/types/user";
-import { GetPlaidInvestmentsButton } from "../plaid/get-plaid-investments-button";
 
 interface Props {
   user: User;
@@ -13,6 +12,7 @@ interface Props {
   onLogout: () => void;
   onAddClick: () => void;
   onPlaidLinkSuccess: () => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export function DashboardHeader({
@@ -22,19 +22,24 @@ export function DashboardHeader({
   onLogout,
   onAddClick,
   onPlaidLinkSuccess,
+  setSidebarOpen,
 }: Props) {
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-white shadow-sm border-b sticky top-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Investment Tracker
-            </h1>
             <p className="text-sm text-gray-500">Welcome back, {user.name}</p>
           </div>
           <div className="flex items-center gap-4">
-            <GetPlaidInvestmentsButton userId={user.id} />
             <PlaidLinkButton userId={user.id} onSuccess={onPlaidLinkSuccess} />
             <Button onClick={onRefresh} disabled={refreshing} variant="outline">
               <RefreshCw

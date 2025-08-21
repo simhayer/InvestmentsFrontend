@@ -1,24 +1,36 @@
 "use client";
-
-import { useState } from "react";
-import { AddInvestmentCard } from "./add-investment-card";
-import { InvestmentList } from "@/components/investments-view/investment-list";
-import { PortfolioOverview } from "@/components/dashboard/portfolio-overview";
+import { useMemo, useState } from "react";
 import { DashboardHeader } from "./header";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PortfolioOverview } from "@/components/dashboard/portfolio-overview";
+import { InvestmentList } from "@/components/investments-view/investment-list";
+import { AddInvestmentCard } from "./add-investment-card";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { User } from "@/types/user";
+import type { User } from "@/types/user";
+import { Sidebar } from "./sidebar";
 
-interface DashboardProps {
+const ALL_INSTITUTIONS = "__all__" as const;
+
+export function Dashboard({
+  user,
+  onLogout,
+}: {
   user: User;
   onLogout: () => void;
-}
-
-export function Dashboard({ user, onLogout }: DashboardProps) {
+}) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const {
     grouped,
-    institutions,
+    institutions, // [{institution_id, institution_name}, ...]
     selectedInstitution,
     setSelectedInstitution,
     loading,
@@ -29,73 +41,107 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
     reloadDashboardData,
   } = useDashboardData(onLogout);
 
-  const filteredGrouped = selectedInstitution
-    ? grouped.filter((inv) => inv.institution === selectedInstitution)
-    : grouped;
+  // Build a map of counts per institution for better filter labels
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const inv of grouped)
+      m.set(
+        inv.institution || inv.institution || "Unknown",
+        (m.get(inv.institution || inv.institution || "Unknown") || 0) + 1
+      );
+    return m;
+  }, [grouped]);
+
+  const filtered = useMemo(() => {
+    if (!selectedInstitution) return grouped;
+    // Be consistent: compare by institution_name
+    return grouped.filter(
+      (inv) => (inv.institution || inv.institution) === selectedInstitution
+    );
+  }, [grouped, selectedInstitution]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader
-        user={user}
-        onRefresh={refreshPrices}
-        onLogout={onLogout}
-        onAddClick={() => setShowAddForm(true)}
-        refreshing={refreshing}
-        onPlaidLinkSuccess={reloadDashboardData}
-      />
+    <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[16rem_1fr]">
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader
+          user={user}
+          onRefresh={refreshPrices}
+          onLogout={onLogout}
+          onAddClick={() => setShowAddForm(true)}
+          refreshing={refreshing}
+          onPlaidLinkSuccess={reloadDashboardData}
+          setSidebarOpen={setSidebarOpen}
+        />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-24 rounded-md" />
-            <Skeleton className="h-10 w-1/4" />
-            <Skeleton className="h-40 rounded-md" />
-          </div>
-        ) : (
-          <div
-            className={`space-y-8 ${
-              refreshing ? "opacity-50 pointer-events-none" : ""
-            }`}
-          >
-            <PortfolioOverview investments={grouped} />
-            {showAddForm && (
-              <AddInvestmentCard
-                onAdd={addInvestment}
-                onCancel={() => setShowAddForm(false)}
+        <main
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+          aria-busy={refreshing}
+          aria-live="polite"
+        >
+          {loading ? (
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-24 rounded-md" />
+              <Skeleton className="h-10 w-1/4" />
+              <Skeleton className="h-40 rounded-md" />
+            </div>
+          ) : (
+            <div
+              className={`space-y-8 ${
+                refreshing ? "opacity-60 pointer-events-none" : ""
+              }`}
+            >
+              <PortfolioOverview investments={grouped} />
+              {showAddForm && (
+                <AddInvestmentCard
+                  onAdd={addInvestment}
+                  onCancel={() => setShowAddForm(false)}
+                />
+              )}
+
+              {institutions.length > 0 && (
+                <div className="mb-4 max-w-sm">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Filter by Institution
+                  </label>
+                  <Select
+                    // map null -> sentinel for the Select's controlled value
+                    value={selectedInstitution ?? ALL_INSTITUTIONS}
+                    onValueChange={(v) =>
+                      setSelectedInstitution(v === ALL_INSTITUTIONS ? null : v)
+                    }
+                    disabled={refreshing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All institutions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_INSTITUTIONS}>
+                        All institutions ({grouped.length})
+                      </SelectItem>
+                      {institutions.map((inst) => {
+                        const name =
+                          inst.institution_name || inst.institution_id;
+                        return (
+                          <SelectItem key={inst.institution_id} value={name}>
+                            {name} ({counts.get(name) || 0})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <InvestmentList
+                investments={filtered}
+                onDelete={deleteInvestment}
               />
-            )}
-            {institutions.length > 0 && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Filter by Institution
-                </label>
-                <select
-                  className="block w-full max-w-sm border border-gray-300 rounded-md p-2"
-                  value={selectedInstitution || ""}
-                  onChange={(e) =>
-                    setSelectedInstitution(e.target.value || null)
-                  }
-                >
-                  <option value="">All Institutions</option>
-                  {institutions.map((inst) => (
-                    <option
-                      key={inst.institution_id}
-                      value={inst.institution_name}
-                    >
-                      {inst.institution_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <InvestmentList
-              investments={filteredGrouped}
-              onDelete={deleteInvestment}
-            />
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { login, getMe } from "@/utils/authService";
 
 interface LoginFormProps {
-  onSuccess?: (userData: any) => void; // token no longer needed
+  onSuccess?: (userData: any) => void;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {

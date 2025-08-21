@@ -1,82 +1,65 @@
 "use client";
-
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, PieChart } from "lucide-react";
 import type { Investment } from "@/types/investment";
+import { formatCurrency, formatPct } from "@/utils/format";
 
-interface PortfolioOverviewProps {
-  investments: Investment[];
-}
+type PortfolioOverviewProps = { investments: Investment[]; currency?: string };
 
-interface PortfolioStats {
-  totalValue: number;
-  totalCost: number;
-  totalGainLoss: number;
-  totalPercentage: number;
-  topPerformer: Investment | null;
-  worstPerformer: Investment | null;
-}
-
-export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
-  const calculatePortfolioStats = (): PortfolioStats => {
-    if (investments.length === 0) {
+export function PortfolioOverview({
+  investments,
+  currency = "USD",
+}: PortfolioOverviewProps) {
+  const stats = useMemo(() => {
+    if (!investments?.length) {
       return {
         totalValue: 0,
         totalCost: 0,
-        totalGainLoss: 0,
-        totalPercentage: 0,
-        topPerformer: null,
-        worstPerformer: null,
+        gain: 0,
+        pct: 0,
+        top: null as Investment | null,
+        worst: null as Investment | null,
       };
     }
 
-    let totalValue = 0;
-    let totalCost = 0;
-    let bestPerformance = Number.NEGATIVE_INFINITY;
-    let worstPerformance = Number.POSITIVE_INFINITY;
-    let topPerformer = null;
-    let worstPerformer = null;
+    let totalValue = 0,
+      totalCost = 0;
+    let top: Investment | null = null,
+      worst: Investment | null = null;
+    let best = -Infinity,
+      worstv = Infinity;
 
-    investments.forEach((investment: Investment) => {
-      const value = investment.quantity * investment.currentPrice;
-      const cost = investment.quantity * investment.purchasePrice;
-      const performance = ((value - cost) / cost) * 100;
+    for (const inv of investments) {
+      const value = inv.quantity * inv.currentPrice;
+      const cost = inv.quantity * inv.purchasePrice;
+      const perf = cost > 0 ? ((value - cost) / cost) * 100 : 0;
 
       totalValue += value;
       totalCost += cost;
 
-      if (performance > bestPerformance) {
-        bestPerformance = performance;
-        topPerformer = investment;
+      if (perf > best) {
+        best = perf;
+        top = inv;
       }
-
-      if (performance < worstPerformance) {
-        worstPerformance = performance;
-        worstPerformer = investment;
+      if (perf < worstv) {
+        worstv = perf;
+        worst = inv;
       }
-    });
+    }
 
-    const totalGainLoss = totalValue - totalCost;
-    const totalPercentage =
-      totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+    const gain = totalValue - totalCost;
+    const pct = totalCost > 0 ? (gain / totalCost) * 100 : 0;
 
-    return {
-      totalValue,
-      totalCost,
-      totalGainLoss,
-      totalPercentage,
-      topPerformer,
-      worstPerformer,
-    };
-  };
+    return { totalValue, totalCost, gain, pct, top, worst };
+  }, [investments]);
 
-  const stats = calculatePortfolioStats();
-  const isPositive = stats.totalGainLoss >= 0;
+  const pos = stats.gain >= 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
             Total Portfolio Value
           </CardTitle>
@@ -84,18 +67,18 @@ export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            ${stats.totalValue.toFixed(2)}
+            {formatCurrency(stats.totalValue, currency)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Cost basis: ${stats.totalCost.toFixed(2)}
+            Cost basis: {formatCurrency(stats.totalCost, currency)}
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Gain/Loss</CardTitle>
-          {isPositive ? (
+          {pos ? (
             <TrendingUp className="h-4 w-4 text-green-600" />
           ) : (
             <TrendingDown className="h-4 w-4 text-red-600" />
@@ -104,42 +87,35 @@ export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
         <CardContent>
           <div
             className={`text-2xl font-bold ${
-              isPositive ? "text-green-600" : "text-red-600"
+              pos ? "text-green-600" : "text-red-600"
             }`}
           >
-            {isPositive ? "+" : ""}${stats.totalGainLoss.toFixed(2)}
+            {pos ? "+" : ""}
+            {formatCurrency(stats.gain, currency)}
           </div>
-          <p
-            className={`text-xs ${
-              isPositive ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {isPositive ? "+" : ""}
-            {stats.totalPercentage.toFixed(2)}%
+          <p className={`text-xs ${pos ? "text-green-600" : "text-red-600"}`}>
+            {pos ? "+" : ""}
+            {formatPct(stats.pct)}
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Top Performer</CardTitle>
           <TrendingUp className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          {stats.topPerformer ? (
+          {stats.top ? (
             <>
-              <div className="text-2xl font-bold">
-                {stats.topPerformer.symbol}
-              </div>
+              <div className="text-2xl font-bold">{stats.top.symbol}</div>
               <p className="text-xs text-green-600">
                 +
-                {(
-                  ((stats.topPerformer.currentPrice -
-                    stats.topPerformer.purchasePrice) /
-                    stats.topPerformer.purchasePrice) *
-                  100
-                ).toFixed(2)}
-                %
+                {formatPct(
+                  ((stats.top.currentPrice - stats.top.purchasePrice) /
+                    stats.top.purchasePrice) *
+                    100
+                )}
               </p>
             </>
           ) : (
@@ -149,7 +125,7 @@ export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
             Total Investments
           </CardTitle>
@@ -158,9 +134,9 @@ export function PortfolioOverview({ investments }: PortfolioOverviewProps) {
         <CardContent>
           <div className="text-2xl font-bold">{investments.length}</div>
           <p className="text-xs text-muted-foreground">
-            {investments.filter((inv) => inv.type === "stock").length} stocks,{" "}
-            {investments.filter((inv) => inv.type === "cryptocurrency").length}{" "}
-            crypto
+            {
+              // normalize types first (see grouping below)
+            }
           </p>
         </CardContent>
       </Card>

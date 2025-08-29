@@ -1,29 +1,15 @@
+// components/investments-view/InvestmentItem.tsx
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import type { Investment } from "@/types/investment";
-import { getAiInsight } from "@/utils/aiService";
+import { useAiInsight } from "@/hooks/use-ai-insight";
+import { AIPanel } from "@/components/ai/AIPanel";
 
-// ---- Structured type for AI analysis (matches your backend JSON) ----
-type Analysis = {
-  symbol: string;
-  as_of_utc: string;
-  pnl_abs: number | null;
-  pnl_pct: number | null;
-  market_context: Record<string, unknown>;
-  rating: "hold" | "sell" | "watch" | "diversify";
-  rationale: string;
-  key_risks: string[];
-  suggestions: string[];
-  data_notes: string[];
-  disclaimer: string;
-};
-
-// ---- Helpers ----
 const getTypeColor = (type: Investment["type"]) => {
   switch (type) {
     case "stock":
@@ -42,10 +28,10 @@ const getTypeColor = (type: Investment["type"]) => {
 const safeNumber = (n: unknown, fallback = 0) =>
   typeof n === "number" && Number.isFinite(n) ? n : fallback;
 
-const calculateGainLoss = (investment: Investment) => {
-  const qty = safeNumber(investment.quantity);
-  const current = safeNumber(investment.currentPrice);
-  const avg = safeNumber(investment.avgPrice);
+const usePnl = (inv: Investment) => {
+  const qty = safeNumber(inv.quantity);
+  const current = safeNumber(inv.currentPrice);
+  const avg = safeNumber(inv.avgPrice);
   const totalValue = qty * current;
   const totalCost = qty * avg;
   const gainLoss = totalValue - totalCost;
@@ -53,76 +39,29 @@ const calculateGainLoss = (investment: Investment) => {
   return { gainLoss, percentage, totalValue };
 };
 
-// ---- Component ----
-interface InvestmentItemProps {
+export function InvestmentItem({
+  investment,
+  onDelete,
+}: {
   investment: Investment;
   onDelete: (id: string) => void;
-}
-
-export function InvestmentItem({ investment, onDelete }: InvestmentItemProps) {
-  const { gainLoss, percentage, totalValue } = calculateGainLoss(investment);
+}) {
+  const { gainLoss, percentage, totalValue } = usePnl(investment);
   const isPositive = gainLoss >= 0;
 
-  const [aiInsight, setAiInsight] = useState<Analysis | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-  const [insightError, setInsightError] = useState<string | null>(null);
+  const { loading, error, news, holdingAnalysis, fetch } =
+    useAiInsight(investment);
 
-  if (!investment) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <div className="text-gray-400 text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Investment Not Found
-            </h3>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const fetchInsight = async () => {
-    setLoadingInsight(true);
-    setInsightError(null);
-    setAiInsight(null);
-
-    try {
-      // May return a string (JSON) or an object depending on your aiService
-      const raw = await getAiInsight(investment);
-      let parsed: Analysis | null = null;
-
-      if (raw && typeof raw === "object") {
-        parsed = raw as Analysis;
-      } else if (typeof raw === "string") {
-        try {
-          parsed = JSON.parse(raw) as Analysis;
-        } catch {
-          setInsightError("AI returned unexpected text.");
-        }
-      }
-
-      if (parsed) {
-        // Optional: basic sanity checks for required fields
-        parsed.rating = ["hold", "sell", "watch", "diversify"].includes(
-          String(parsed.rating).toLowerCase()
-        )
-          ? (parsed.rating as Analysis["rating"])
-          : "watch";
-        setAiInsight(parsed);
-      } else if (!insightError) {
-        setInsightError("No insight available.");
-      }
-    } catch (e) {
-      setInsightError("Failed to fetch AI insight.");
-    } finally {
-      setLoadingInsight(false);
-    }
-  };
+  const institutionName = useMemo(
+    () => investment.institution || "N/A",
+    [investment.institution]
+  );
 
   return (
     <Card>
-      <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+      <div className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50">
         <div className="flex-1">
+          {/* Header */}
           <div className="flex items-center gap-3 mb-2">
             <div>
               <h3 className="font-medium text-gray-900">{investment.symbol}</h3>
@@ -133,105 +72,51 @@ export function InvestmentItem({ investment, onDelete }: InvestmentItemProps) {
             </Badge>
           </div>
 
+          {/* Facts */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Quantity</p>
               <p className="font-medium">{safeNumber(investment.quantity)}</p>
             </div>
-
             <div>
               <p className="text-gray-500">Purchase Price</p>
               <p className="font-medium">
                 ${safeNumber(investment.avgPrice).toFixed(2)}
               </p>
             </div>
-
             <div>
               <p className="text-gray-500">Current Price</p>
               <p className="font-medium">
                 ${safeNumber(investment.currentPrice).toFixed(2)}
               </p>
             </div>
-
             <div>
               <p className="text-gray-500">Total Value</p>
               <p className="font-medium">${totalValue.toFixed(2)}</p>
             </div>
-
             <div>
               <p className="text-gray-500">Institution</p>
-              <p className="font-medium">{investment.institution || "N/A"}</p>
+              <p className="font-medium">{institutionName}</p>
             </div>
           </div>
 
-          {/* AI Insight */}
-          {aiInsight && (
-            <div className="mt-4 bg-gray-100 p-3 rounded text-sm text-gray-800 border">
-              <div className="flex items-center justify-between">
-                <strong>AI Feedback</strong>
-                <span className="uppercase text-xs opacity-70">
-                  {aiInsight.rating}
-                </span>
-              </div>
-
-              <p className="mt-2">{aiInsight.rationale}</p>
-
-              {!!aiInsight.key_risks?.length && (
-                <div className="mt-3">
-                  <strong>Key risks:</strong>
-                  <ul className="list-disc ml-5">
-                    {aiInsight.key_risks.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {!!aiInsight.suggestions?.length && (
-                <div className="mt-3">
-                  <strong>Suggestions:</strong>
-                  <ul className="list-disc ml-5">
-                    {aiInsight.suggestions.map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                <div>
-                  <strong>P&amp;L:</strong>{" "}
-                  {aiInsight.pnl_abs !== null
-                    ? aiInsight.pnl_abs.toFixed(2)
-                    : "N/A"}{" "}
-                  (
-                  {aiInsight.pnl_pct !== null
-                    ? aiInsight.pnl_pct.toFixed(2)
-                    : "N/A"}
-                  %)
-                </div>
-                <div>
-                  <strong>As of:</strong> {aiInsight.as_of_utc}
-                </div>
-              </div>
-
-              {!!aiInsight.data_notes?.length && (
-                <p className="mt-3 text-xs opacity-70">
-                  {aiInsight.data_notes.join(" • ")}
-                </p>
-              )}
-              <p className="mt-1 text-xs opacity-70">{aiInsight.disclaimer}</p>
+          {/* AI Panel (News + Forward View) */}
+          {error && (
+            <div className="mt-4 bg-red-50 text-red-700 border border-red-200 p-3 rounded text-sm">
+              {error}
             </div>
           )}
-
-          {insightError && (
-            <div className="mt-4 bg-red-50 text-red-700 border border-red-200 p-3 rounded text-sm">
-              {insightError}
-            </div>
+          {holdingAnalysis && (
+            <AIPanel
+              symbol={investment.symbol}
+              name={investment.name}
+              holdingAnalysis={holdingAnalysis}
+            />
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Right Actions */}
+        <div className="flex items-center gap-4 pl-4">
           <div className="text-right">
             <div
               className={`flex items-center gap-1 ${
@@ -269,10 +154,10 @@ export function InvestmentItem({ investment, onDelete }: InvestmentItemProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchInsight}
-            disabled={loadingInsight}
+            onClick={fetch}
+            disabled={loading}
           >
-            {loadingInsight ? "Analyzing..." : "AI Insight"}
+            {loading ? "Analyzing..." : "AI Insight"}
           </Button>
         </div>
       </div>

@@ -10,6 +10,17 @@ import { RANGE_PRESETS } from "@/types/market";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Stat } from "./stat";
 import { fmtCompact, fmtPct, fmtCurrency, fmtNum } from "@/utils/format";
+import {
+  Tabs,
+  TabList,
+  TabTrigger,
+  TabPanels,
+  TabPanel,
+} from "@/components/investment/tabs/tabs";
+import FinancialsTab from "@/components/investment/tabs/financials-tab";
+import EarningsTab from "@/components/investment/tabs/earnings-tab";
+import AnalystTab from "@/components/investment/tabs/analyst-tab";
+import ProfileTab from "@/components/investment/tabs/profile-tab";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]); // default 1Y
@@ -221,6 +232,29 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
           />
         </div>
       </Card>
+
+      <Tabs defaultValue="financials">
+        <TabList>
+          <TabTrigger value="financials">Financials</TabTrigger>
+          <TabTrigger value="earnings">Earnings & Events</TabTrigger>
+          <TabTrigger value="analyst">Analyst</TabTrigger>
+          <TabTrigger value="profile">Profile</TabTrigger>
+        </TabList>
+        <TabPanels>
+          <TabPanel value="financials" mount="mount-once">
+            <FinancialsTab symbol={symbol} />
+          </TabPanel>
+          <TabPanel value="earnings" mount="mount-once">
+            <EarningsTab symbol={symbol} />
+          </TabPanel>
+          <TabPanel value="analyst" mount="mount-once">
+            <AnalystTab symbol={symbol} />
+          </TabPanel>
+          <TabPanel value="profile" mount="mount-once">
+            <ProfileTab symbol={symbol} />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </div>
   );
 }

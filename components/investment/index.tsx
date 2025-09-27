@@ -21,6 +21,9 @@ import FinancialsTab from "@/components/investment/tabs/financials-tab";
 import EarningsTab from "@/components/investment/tabs/earnings-tab";
 import AnalystTab from "@/components/investment/tabs/analyst-tab";
 import ProfileTab from "@/components/investment/tabs/profile-tab";
+import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
+import { Button } from "../ui/button";
+import { SymbolAnalysis } from "@/components/ai/SymbolAnalysis";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]); // default 1Y
@@ -65,6 +68,8 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
       )
     );
   }, [quote]);
+
+  const { loading, error, analysis, fetch } = useAiInsightSymbol(symbol);
 
   return (
     <div className="space-y-6">
@@ -144,6 +149,21 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
           <div className="text-sm text-slate-600">No chart data.</div>
         )}
       </Card>
+
+      {analysis && (
+        // <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
+        //   {analysis.analysis}
+        // </p>
+        <SymbolAnalysis
+          symbol={symbol}
+          name={symbol}
+          holdingAnalysis={analysis}
+        />
+      )}
+
+      <Button variant="outline" size="sm" onClick={fetch} disabled={loading}>
+        {loading ? "Analyzing..." : "AI Insight"}
+      </Button>
 
       <Card className="p-4">
         <div className="space-y-1">

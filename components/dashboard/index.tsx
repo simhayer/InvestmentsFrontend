@@ -15,7 +15,7 @@ import { AddInvestmentCard } from "./add-investment-card";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import type { User } from "@/types/user";
 import { Sidebar } from "./sidebar";
-import { PortfolioAnalysisCard } from "../potfolio_analysis";
+import { AIInsights } from "../ai/AIInsights";
 
 const ALL_INSTITUTIONS = "__all__" as const;
 
@@ -93,7 +93,7 @@ export function Dashboard({
                 refreshing ? "opacity-60 pointer-events-none" : ""
               }`}
             >
-              {/* <PortfolioAnalysisCard /> */}
+              <AIInsights />
               <PortfolioOverview investments={grouped} />
               {showAddForm && (
                 <AddInvestmentCard

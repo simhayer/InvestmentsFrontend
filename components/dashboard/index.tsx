@@ -1,6 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
-import { DashboardHeader } from "./header";
+import { useEffect, useMemo, useState } from "react";
+import { Header } from "@/components/header";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -14,8 +14,9 @@ import { InvestmentList } from "@/components/investments-view/investment-list";
 import { AddInvestmentCard } from "./add-investment-card";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import type { User } from "@/types/user";
-import { Sidebar } from "./sidebar";
+import { Sidebar } from "@/components/sidebar";
 import { AIInsights } from "../ai/AIInsights";
+import { useTheme } from "next-themes";
 
 const ALL_INSTITUTIONS = "__all__" as const;
 
@@ -28,6 +29,7 @@ export function Dashboard({
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, setTheme, systemTheme } = useTheme();
 
   const {
     grouped,
@@ -41,6 +43,11 @@ export function Dashboard({
     deleteInvestment,
     reloadDashboardData,
   } = useDashboardData(onLogout);
+
+  useEffect(() => {
+    // setTheme(systemTheme || "light");
+    setTheme("dark"); //manually setting right now
+  }, [systemTheme, setTheme]);
 
   // Build a map of counts per institution for better filter labels
   const counts = useMemo(() => {
@@ -62,13 +69,12 @@ export function Dashboard({
   }, [grouped, selectedInstitution]);
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[16rem_1fr]">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16rem_1fr]">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader
+      <div className="min-h-screen bg-background">
+        <Header
           user={user}
           onRefresh={refreshPrices}
-          onLogout={onLogout}
           onAddClick={() => setShowAddForm(true)}
           refreshing={refreshing}
           onPlaidLinkSuccess={reloadDashboardData}
@@ -93,7 +99,7 @@ export function Dashboard({
                 refreshing ? "opacity-60 pointer-events-none" : ""
               }`}
             >
-              <AIInsights />
+              {/* <AIInsights /> */}
               <PortfolioOverview investments={grouped} />
               {showAddForm && (
                 <AddInvestmentCard
@@ -144,6 +150,7 @@ export function Dashboard({
           )}
         </main>
       </div>
+      ``
     </div>
   );
 }

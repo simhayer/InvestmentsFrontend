@@ -24,15 +24,19 @@ const mapToCamelCase = (holding: any): Investment => ({
   //accountName: holding.account_name,
   //source: holding.source,
   //externalId: holding.external_id,
- // userId: holding.user_id,
+  // userId: holding.user_id,
   avgPrice: holding.avg_price,
   purchaseDate: holding.purchase_date,
 });
 
 export function useDashboardData(onLogout: () => void) {
   const [investments, setInvestments] = useState<Investment[]>([]);
-  const [institutions, setInstitutions] = useState<{ institution_name: string; institution_id: string }[]>([]);
-  const [selectedInstitution, setSelectedInstitution] = useState<string | null>(null);
+  const [institutions, setInstitutions] = useState<
+    { institution_name: string; institution_id: string }[]
+  >([]);
+  const [selectedInstitution, setSelectedInstitution] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -100,6 +104,6 @@ export function useDashboardData(onLogout: () => void) {
     refreshPrices,
     addInvestment,
     deleteInvestment,
-    reloadDashboardData: loadHoldings
+    reloadDashboardData: loadHoldings,
   };
 }

@@ -4,28 +4,37 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Plus, RefreshCw, Menu } from "lucide-react";
 import { PlaidLinkButton } from "@/components/plaid/plaid-link-button";
 import { User } from "@/types/user";
+import { useRouter } from "next/navigation";
+import { logout } from "@/utils/authService";
 
 interface Props {
   user: User;
   refreshing: boolean;
   onRefresh: () => void;
-  onLogout: () => void;
   onAddClick: () => void;
   onPlaidLinkSuccess: () => void;
   setSidebarOpen: (open: boolean) => void;
 }
 
-export function DashboardHeader({
+export function Header({
   user,
   refreshing,
   onRefresh,
-  onLogout,
   onAddClick,
   onPlaidLinkSuccess,
   setSidebarOpen,
 }: Props) {
+  const router = useRouter();
+  const onLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace("/landing");
+    }
+  };
+
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0">
+    <header className="bg-background shadow-sm border-b sticky top-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Button

@@ -2,7 +2,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/portfolio"]; // add yours
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/settings",
+  "/portfolio",
+  "/connections",
+];
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;

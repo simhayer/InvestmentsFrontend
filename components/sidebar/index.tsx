@@ -1,31 +1,76 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { X, Home, PieChart, BarChart3, Target, Upload } from "lucide-react";
+import { useMemo } from "react";
+import {
+  X,
+  Home,
+  PieChart,
+  BarChart3,
+  Target,
+  Upload,
+  Link2,
+  BarChart2,
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+type NavItem = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Portfolio", href: "/portfolio", icon: PieChart },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Holdings", href: "/holdings", icon: BarChart2 },
+  { name: "Connections", href: "/connections", icon: Link2 },
+];
+
+// simple class joiner
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function useIsActive(href: string) {
+  const pathname = usePathname();
+
+  // exact match or nested route under href (e.g., /portfolio/123)
+  const active =
+    pathname === href || (pathname?.startsWith(href + "/") ?? false);
+
+  return active;
+}
+
 export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home, current: true },
-    { name: "Portfolio", href: "/portfolio", icon: PieChart, current: false },
-    { name: "Analytics", href: "/analytics", icon: BarChart3, current: false },
-    { name: "Goals", href: "/goals", icon: Target, current: false },
-    { name: "Import", href: "/import", icon: Upload, current: false },
-  ];
+  const pathname = usePathname();
+
+  const itemsWithActive = useMemo(
+    () =>
+      NAV_ITEMS.map((item) => ({
+        ...item,
+        active:
+          pathname === item.href ||
+          (pathname?.startsWith(item.href + "/") ?? false),
+      })),
+    [pathname]
+  );
 
   return (
     <div>
       {/* Mobile sidebar */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${
+        className={cx(
+          "fixed inset-0 z-50 lg:hidden",
           sidebarOpen ? "block" : "hidden"
-        }`}
+        )}
       >
         <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm"
@@ -46,17 +91,21 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               <X className="h-4 w-4" />
             </Button>
           </div>
+
           <nav className="px-4 py-4">
             <ul className="space-y-2">
-              {navigation.map((item) => (
+              {itemsWithActive.map((item) => (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      item.current
+                    onClick={() => setSidebarOpen(false)}
+                    aria-current={item.active ? "page" : undefined}
+                    className={cx(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      item.active
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
+                    )}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
@@ -78,17 +127,20 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               </span>
             </div>
           </div>
+
           <nav className="flex-1 px-4 py-4">
             <ul className="space-y-2">
-              {navigation.map((item) => (
+              {itemsWithActive.map((item) => (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      item.current
+                    aria-current={item.active ? "page" : undefined}
+                    className={cx(
+                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      item.active
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
+                    )}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>

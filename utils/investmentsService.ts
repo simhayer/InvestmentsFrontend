@@ -1,5 +1,4 @@
-import { Investment } from "@/types/investment";
-export const API_URL = process.env.NEXT_PUBLIC_API_URL
+export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const addHolding = async (data: any) => {
   const res = await fetch(`${API_URL}/holdings`, {
@@ -9,40 +8,45 @@ export const addHolding = async (data: any) => {
     },
     credentials: "include",
     body: JSON.stringify(data),
-  })
+  });
 
   if (!res.ok) {
-    throw new Error("Failed to add holding")
+    throw new Error("Failed to add holding");
   }
 
-  return res.json()
-}
+  return res.json();
+};
 
 export const getHoldings = async () => {
-  console.log('getting holdings')
-  const res = await fetch(`${API_URL}/holdings`, {
-    credentials: "include"
-  })
+  console.log("getting holdings");
+  const currency = "USD"; //Todo: make dynamic
+  const url = new URL(`${API_URL}/holdings`);
+  url.searchParams.set("includePrices", "true");
+  url.searchParams.set("currency", currency);
+
+  const res = await fetch(url.toString(), {
+    credentials: "include",
+  });
 
   if (!res.ok) {
-    throw new Error("Failed to fetch holdings")
+    throw new Error("Failed to fetch holdings");
   }
 
-  return res.json()
-}
+  return res.json();
+};
 
 export const deleteHolding = async (holdingId: string) => {
   const res = await fetch(`${API_URL}/holdings/${holdingId}`, {
     method: "DELETE",
-    credentials: "include"
-  })
+    credentials: "include",
+  });
 
   if (!res.ok) {
-    throw new Error("Failed to delete holding")
+    throw new Error("Failed to delete holding");
   }
 
-  return res.json()
-}
+  return res.json();
+};
 
 export async function getInstitutions() {
   const res = await fetch(`${API_URL}/api/plaid/institutions`, {
@@ -51,31 +55,4 @@ export async function getInstitutions() {
 
   if (!res.ok) throw new Error("Failed to fetch institutions");
   return await res.json();
-}
-
-
-export function groupInvestmentsBySymbol(investments: Investment[]): Investment[] {
-  const grouped = new Map<string, Investment>();
-
-  for (const inv of investments) {
-    const key = inv.symbol;
-
-    if (!grouped.has(key)) {
-      grouped.set(key, { ...inv, avgPrice: inv.purchasePrice });
-    } else {
-      const existing = grouped.get(key)!;
-      const totalQty = existing.quantity + inv.quantity;
-      const avgPrice =
-        (existing.purchasePrice * existing.quantity + inv.purchasePrice * inv.quantity) / totalQty;
-
-      grouped.set(key, {
-        ...existing,
-        quantity: totalQty,
-        purchasePrice: avgPrice,
-        avgPrice: avgPrice
-      });
-    }
-  }
-
-  return Array.from(grouped.values());
 }

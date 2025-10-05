@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/settings",
   "/portfolio",
   "/connections",
+  "/holdings",
 ];
 
 export function middleware(req: NextRequest) {

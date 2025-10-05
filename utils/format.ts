@@ -27,3 +27,17 @@ export const fmtPct = (v?: number | null) =>
   v == null ? "—" : `${v.toFixed(2)}%`;
 export const fmtNum = (v?: number | null) =>
   v == null ? "—" : new Intl.NumberFormat().format(v);
+
+const toCamel = (s: string) =>
+  s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+
+export function keysToCamel<T>(input: T): T {
+  if (Array.isArray(input)) return input.map(keysToCamel) as unknown as T;
+  if (input && typeof input === "object") {
+    const entries = Object.entries(input as Record<string, unknown>).map(
+      ([k, v]) => [toCamel(k), keysToCamel(v as unknown)]
+    );
+    return Object.fromEntries(entries) as T;
+  }
+  return input;
+}

@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from "react";
 import { getAiInsight } from "@/utils/aiService";
-import type { Investment } from "@/types/investment";
+import type { Investment } from "@/types/holding";
 import type { LinkupPayload, HoldingAIAnalysis } from "@/types/ai";
 import { isHoldingAnalysis } from "@/types/ai";
 
@@ -15,7 +15,8 @@ export function useAiInsight(investment: Investment) {
   const [news, setNews] = useState<LinkupPayload | null>(null);
 
   // NEW: this is the object your backend returns from Perplexity
-  const [holdingAnalysis, setHoldingAnalysis] = useState<HoldingAIAnalysis | null>(null);
+  const [holdingAnalysis, setHoldingAnalysis] =
+    useState<HoldingAIAnalysis | null>(null);
 
   const [rawResponse, setRawResponse] = useState<unknown>(null);
 
@@ -32,7 +33,11 @@ export function useAiInsight(investment: Investment) {
 
       // If backend returns a JSON string, parse it
       if (typeof res === "string") {
-        try { res = JSON.parse(res); } catch { /* ignore */ }
+        try {
+          res = JSON.parse(res);
+        } catch {
+          /* ignore */
+        }
       }
 
       // Combined response support: { holdingAnalysis, news } or { analysis, news }
@@ -57,7 +62,12 @@ export function useAiInsight(investment: Investment) {
           setNews(res.news as LinkupPayload);
         }
 
-        if (!isHoldingAnalysis(res) && !isHoldingAnalysis(res.holdingAnalysis ?? res.analysis) && !res.items && !res.news) {
+        if (
+          !isHoldingAnalysis(res) &&
+          !isHoldingAnalysis(res.holdingAnalysis ?? res.analysis) &&
+          !res.items &&
+          !res.news
+        ) {
           setError("AI returned an unexpected shape.");
         }
       } else {
@@ -74,8 +84,8 @@ export function useAiInsight(investment: Investment) {
   return {
     loading,
     error,
-    news,                 // optional; safe to ignore in UI if null
-    holdingAnalysis,      // <- use this in your AIPanel
+    news, // optional; safe to ignore in UI if null
+    holdingAnalysis, // <- use this in your AIPanel
     rawResponse,
     fetch,
   };

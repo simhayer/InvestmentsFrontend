@@ -1,5 +1,5 @@
 // utils/aiService.ts
-import { Investment } from "@/types/investment";
+import { Investment } from "@/types/holding";
 
 export async function getAiInsight(investment: Investment): Promise<string> {
   try {

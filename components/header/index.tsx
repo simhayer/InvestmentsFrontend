@@ -1,29 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, RefreshCw, Menu } from "lucide-react";
-import { PlaidLinkButton } from "@/components/plaid/plaid-link-button";
+import { LogOut, Menu } from "lucide-react";
 import { User } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { logout } from "@/utils/authService";
 
 interface Props {
   user: User;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onAddClick: () => void;
-  onPlaidLinkSuccess: () => void;
   setSidebarOpen: (open: boolean) => void;
 }
 
-export function Header({
-  user,
-  refreshing,
-  onRefresh,
-  onAddClick,
-  onPlaidLinkSuccess,
-  setSidebarOpen,
-}: Props) {
+export function Header({ user, setSidebarOpen }: Props) {
   const router = useRouter();
   const onLogout = async () => {
     try {
@@ -49,18 +37,6 @@ export function Header({
             <p className="text-sm text-gray-500">Welcome back, {user.name}</p>
           </div>
           <div className="flex items-center gap-4">
-            <PlaidLinkButton userId={user.id} onSuccess={onPlaidLinkSuccess} />
-            <Button onClick={onRefresh} disabled={refreshing} variant="outline">
-              <RefreshCw
-                className={`h-4 w-4 mr-1 ${
-                  refreshing ? "animate-spin" : "hidden"
-                }`}
-              />
-              {refreshing ? "Refreshing..." : "Refresh Prices"}
-            </Button>
-            <Button onClick={onAddClick} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Add Investment
-            </Button>
             <Button
               variant="outline"
               onClick={onLogout}

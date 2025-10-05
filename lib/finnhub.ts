@@ -1,11 +1,11 @@
-import type { Investment } from "@/types/investment";
+import type { Investment } from "@/types/holding";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const BACKEND_URL = `${API_URL}/api/finnhub`;
 
 // Send list of symbols to backend and get latest prices
 export async function fetchLivePricesForList(
-  invList: Investment[],
+  invList: Investment[]
 ): Promise<Investment[]> {
   if (!invList.length) return invList;
 
@@ -45,16 +45,20 @@ export async function fetchLivePricesForList(
 
 export async function searchSymbols(query: string) {
   if (!query) return [];
-  const res = await fetch(`${BACKEND_URL}/search?query=${encodeURIComponent(query)}`, {
-    credentials: "include"
-  });
+  const res = await fetch(
+    `${BACKEND_URL}/search?query=${encodeURIComponent(query)}`,
+    {
+      credentials: "include",
+    }
+  );
   const data = await res.json();
   return data;
 }
 
 export async function fetchQuote(symbol: string) {
   const res = await fetch(`${BACKEND_URL}/quote?symbol=${symbol}`, {
-    credentials: "include",});
+    credentials: "include",
+  });
   return res.json();
 }
 
@@ -65,7 +69,9 @@ export async function fetchProfile(symbol: string) {
   return res.json();
 }
 
-export function mapFinnhubType(apiType: string): "stock" | "cryptocurrency" | "etf" | "bond" {
+export function mapFinnhubType(
+  apiType: string
+): "stock" | "cryptocurrency" | "etf" | "bond" {
   const lower = apiType.toLowerCase();
 
   if (lower.includes("crypto")) return "cryptocurrency";

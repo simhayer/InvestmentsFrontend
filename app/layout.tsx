@@ -16,15 +16,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Helps native controls respect themes */}
         <meta name="color-scheme" content="light dark" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider
-          attribute="class" // adds 'class' to <html>
+          attribute="class"
           defaultTheme="system" // light | dark | system
           enableSystem
-          disableTransitionOnChange // avoids flashes during toggle
+          disableTransitionOnChange
         >
           {children}
         </ThemeProvider>

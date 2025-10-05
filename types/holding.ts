@@ -1,10 +1,10 @@
-export type InvestmentType = "stock" | "cryptocurrency" | "etf" | "bond";
+export type HoldingType = "stock" | "cryptocurrency" | "etf" | "bond";
 
-export interface Investment {
+export interface Holding {
   id: string;
   symbol: string;
   name: string;
-  type: InvestmentType;
+  type: HoldingType;
   quantity: number;
   purchasePrice: number;
   currentPrice: number;
@@ -12,4 +12,5 @@ export interface Investment {
   avgPrice: number;
   institution: string; // Name of the institution
   currency: string; // Currency code (e.g., USD, EUR)
+  price_status?: "live" | "stale" | "unavailable" | "unrequested";
 }

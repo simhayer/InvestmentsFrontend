@@ -5,31 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link2, RefreshCcw } from "lucide-react";
 import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import type { User } from "@/types/user";
-import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { getPlaidInvestments } from "@/utils/plaidService";
-import { Sidebar } from "@/components/sidebar";
-import { Header } from "@/components/header";
 import { getInstitutions } from "@/utils/investmentsService";
 import { ConnectionItem } from "./connection-item";
 import type { Connection } from "@/types/connection";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
-/* ---------- utils ---------- */
-
-const toCamel = (s: string) =>
-  s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
-
-function keysToCamel<T>(input: T): T {
-  if (Array.isArray(input)) return input.map(keysToCamel) as unknown as T;
-  if (input && typeof input === "object") {
-    const entries = Object.entries(input as Record<string, unknown>).map(
-      ([k, v]) => [toCamel(k), keysToCamel(v as unknown)]
-    );
-    return Object.fromEntries(entries) as T;
-  }
-  return input;
-}
-
+import { keysToCamel } from "@/utils/format";
 /* ---------- component ---------- */
 
 type ConnectionsProps = {
@@ -39,14 +21,10 @@ type ConnectionsProps = {
 };
 
 export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
-
-  // This hook fetches broader dashboard data (prices, etc.)
-  const { refreshing, refreshPrices, reloadDashboardData } =
-    useDashboardData(onLogout);
+  const [refreshing, setRefreshing] = useState(false);
 
   const hasConnections = useMemo(() => connections.length > 0, [connections]);
 
@@ -75,40 +53,23 @@ export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
 
   const onSyncNow = useCallback(async () => {
     try {
+      setRefreshing(true);
       await getPlaidInvestments(user.id);
-
-      await Promise.all([reloadDashboardData(), loadConnections()]);
+      await loadConnections(); // just to update the timestamp
     } catch (e) {
       console.error("Failed to get investments:", e);
+    } finally {
+      setRefreshing(false);
     }
-  }, [user.id, reloadDashboardData, loadConnections]);
+  }, [user.id, loadConnections]);
 
   const handlePlaidSuccess = useCallback(async () => {
-    await Promise.all([reloadDashboardData(), loadConnections()]);
-  }, [reloadDashboardData, loadConnections]);
-
-  const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[16rem_1fr]">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="min-h-screen bg-background">
-        <Header
-          user={user}
-          onRefresh={refreshPrices}
-          refreshing={refreshing}
-          onPlaidLinkSuccess={handlePlaidSuccess}
-          setSidebarOpen={setSidebarOpen}
-          onAddClick={() => {}}
-          // Optional: add a "Sync now" action if you expose it in Header
-          // onSyncNow={onSyncNow}
-        />
-        {children}
-      </div>
-    </div>
-  );
+    await Promise.resolve(loadConnections());
+  }, [loadConnections]);
 
   if (loading) {
     return (
-      <Shell>
+      <div className="min-h-screen bg-background">
         <div className="m-2 grid gap-4">
           <Skeleton className="h-8 w-48" />
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -117,13 +78,13 @@ export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
             <Skeleton className="h-44 rounded-md" />
           </div>
         </div>
-      </Shell>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Shell>
+      <div className="min-h-screen bg-background">
         <Card className="max-w-xl m-2 border-destructive/20">
           <CardHeader>
             <CardTitle className="text-lg">We hit a snag</CardTitle>
@@ -144,13 +105,13 @@ export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
             </div>
           </CardContent>
         </Card>
-      </Shell>
+      </div>
     );
   }
 
   if (!hasConnections) {
     return (
-      <Shell>
+      <div className="min-h-screen bg-background">
         <div className="flex flex-col items-center justify-center h-full p-4 ">
           <Card className="w-full h-full border-dashed shadow-sm ">
             <CardHeader className="text-center pb-4">
@@ -179,12 +140,12 @@ export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
             </CardContent>
           </Card>
         </div>
-      </Shell>
+      </div>
     );
   }
 
   return (
-    <Shell>
+    <div className="min-h-screen bg-background">
       {/* Toolbar */}
       <div className="m-2">
         <Card className="border-gray-200/80 shadow-sm">
@@ -240,6 +201,6 @@ export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
           </CardContent>
         </Card>
       </div>
-    </Shell>
+    </div>
   );
 }

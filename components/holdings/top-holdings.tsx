@@ -1,19 +1,33 @@
 "use client";
 
-import { useHolding } from "@/hooks/use-holdings";
-import { User } from "@/types/user";
+import { Holding } from "@/types/holding";
+import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "../ui/skeleton";
 
 interface Props {
-  user: User;
+  holdings: Holding[];
+  loading: boolean;
 }
 
-export function Holdings({ user }: Props) {
-  const { holdings, loading } = useHolding();
+export function TopHoldings({ holdings, loading }: Props) {
+  const router = useRouter();
+  const onHoldingsClick = () => {
+    router.replace("/holdings");
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-medium my-6">Holdings</h1>
+      <div className="flex justify-between items-center my-5">
+        <h1 className="text-2xl font-medium">Top Holdings</h1>
+        <button
+          className="text-sm text-primary flex items-center"
+          onClick={onHoldingsClick}
+        >
+          <p>Holdings overview</p>
+          <ArrowRight className="inline-block ml-1 h-4 w-4" />
+        </button>
+      </div>
       {loading ? (
         <Skeleton className="h-80 w-full rounded-md" />
       ) : (

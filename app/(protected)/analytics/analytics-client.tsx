@@ -1,8 +1,8 @@
 // app/dashboard/ConnectionsClient.tsx
 "use client";
-import { Connections } from "@/components/connections";
+import { Analytics } from "@/components/analytics";
 import { User } from "@/types/user";
 
 export default function ConnectionsClient({ user }: { user: User }) {
-  return <Connections user={user} />;
+  return <Analytics user={user} />;
 }

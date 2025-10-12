@@ -34,7 +34,7 @@ export function Header({ user, setSidebarOpen }: Props) {
             <Menu className="h-4 w-4" />
           </Button>
           <div>
-            <p className="text-sm text-gray-500">Welcome back, {user.name}</p>
+            <p className="text-sm text-gray-500"></p>
           </div>
           <div className="flex items-center gap-4">
             <Button

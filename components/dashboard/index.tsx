@@ -8,7 +8,6 @@ import { AIInsights } from "../ai/AIInsights";
 import { Holdings } from "@/components/holdings";
 
 export function Dashboard({ user }: { user: User }) {
-  const [showAddForm, setShowAddForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [investments, setInvestments] = useState<any[]>([]);
 
@@ -31,8 +30,6 @@ export function Dashboard({ user }: { user: User }) {
               onCancel={() => setShowAddForm(false)}
             />
           )} */}
-
-        <Holdings user={user} />
       </div>
     </main>
   );

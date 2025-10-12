@@ -1,5 +1,8 @@
 // --- Additions for portfolio summary ---
 
+import { Connection } from "@/types/connection";
+import { Holding } from "@/types/holding";
+
 export type AllocationItem = {
   key: string;
   value: number;
@@ -20,15 +23,8 @@ export type PortfolioSummary = {
     byType: AllocationItem[];
     byAccount: AllocationItem[];
   };
-  topPositions: Array<{
-    symbol: string;
-    name: string | null;
-    type: string | null;
-    value: number; // abs
-    weight: number | null; // %
-    unrealizedPl: number | null;
-    dayPl: number | null;
-  }>;
+  topPositions: Holding[];
+  connections: Connection[];
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

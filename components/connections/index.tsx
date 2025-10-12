@@ -16,11 +16,10 @@ import { keysToCamel } from "@/utils/format";
 
 type ConnectionsProps = {
   user: User;
-  onLogout: () => void;
   onRemove?: (id: string) => void;
 };
 
-export function Connections({ user, onLogout, onRemove }: ConnectionsProps) {
+export function Connections({ user, onRemove }: ConnectionsProps) {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);

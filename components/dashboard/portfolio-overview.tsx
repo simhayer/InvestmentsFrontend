@@ -12,10 +12,11 @@ type Props = {
   currency?: "USD" | "CAD";
 };
 
-const currencyFmt = (n: number | null | undefined, ccy: "USD" | "CAD") =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency: ccy }).format(
-    Number(n ?? 0)
-  );
+  const currencyFmt = (n: number | null | undefined, ccy?: string) =>
+  new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: ccy || "USD",   // fallback to USD if undefined
+  }).format(Number(n ?? 0));
 
 const pctFmt = (n: number | null | undefined) =>
   n == null ? "—" : `${n.toFixed(2)}%`;

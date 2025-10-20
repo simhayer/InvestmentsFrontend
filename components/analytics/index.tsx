@@ -3,9 +3,11 @@ import { useState } from "react";
 import type { User } from "@/types/user";
 import { AIInsights } from "../ai/AIInsights";
 import { News } from "./news";
+import { PortfolioNewsSummary } from "./portfolio-news-summary";
 
 export function Analytics({ user }: { user: User }) {
   const [refreshing, setRefreshing] = useState(false);
+  const dummySymbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"];
 
   return (
     <main
@@ -19,6 +21,7 @@ export function Analytics({ user }: { user: User }) {
         }`}
       >
         {/* <AIInsights /> */}
+        <PortfolioNewsSummary symbols={dummySymbols || []} />
         <News user={user} />
       </div>
     </main>

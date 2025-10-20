@@ -36,7 +36,7 @@ export function useFinancials(symbol: string, period: "annual" | "quarterly") {
       try {
         const f = await fetchJSON<FinancialsResponse>(
           apiUrl(
-            `/api/market/financials/${encodeURIComponent(
+            `/api/investment/financials/${encodeURIComponent(
               symbol
             )}?period=${period}`
           )
@@ -69,7 +69,7 @@ export function useEarnings(symbol: string) {
       setError(null);
       try {
         const e = await fetchJSON<EarningsResponse>(
-          apiUrl(`/api/market/earnings/${encodeURIComponent(symbol)}`)
+          apiUrl(`/api/investment/earnings/${encodeURIComponent(symbol)}`)
         );
         if (!cancelled) setData(e);
       } catch (err: any) {
@@ -99,7 +99,7 @@ export function useAnalyst(symbol: string) {
       setError(null);
       try {
         const a = await fetchJSON<AnalystResponse>(
-          apiUrl(`/api/market/analyst/${encodeURIComponent(symbol)}`)
+          apiUrl(`/api/investment/analyst/${encodeURIComponent(symbol)}`)
         );
         if (!cancelled) setData(a);
       } catch (err: any) {
@@ -129,7 +129,7 @@ export function useProfile(symbol: string) {
       setError(null);
       try {
         const p = await fetchJSON<ProfileResponse>(
-          apiUrl(`/api/market/overview/${encodeURIComponent(symbol)}`)
+          apiUrl(`/api/investment/overview/${encodeURIComponent(symbol)}`)
         );
         if (!cancelled) setData(p);
       } catch (err: any) {

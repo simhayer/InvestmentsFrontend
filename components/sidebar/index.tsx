@@ -2,35 +2,50 @@
 
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
-import {
-  X,
-  Home,
-  PieChart,
-  BarChart3,
-  Target,
-  Upload,
-  Link2,
-  BarChart2,
-} from "lucide-react";
+import { X, Home, BarChart3, Link2, BarChart2, Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  user?: { id?: string } | null; // << new (pass from Header/ProtectedShell)
 };
 
 type NavItem = {
   name: string;
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  public?: boolean; // visible when logged out
+  disabledWhenLoggedOut?: boolean; // show but locked
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Holdings", href: "/holdings", icon: BarChart2 },
-  { name: "Connections", href: "/connections", icon: Link2 },
+  { name: "Market Overview", href: "/market", icon: Home, public: true },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: Home,
+    disabledWhenLoggedOut: true,
+  },
+  {
+    name: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    disabledWhenLoggedOut: true,
+  },
+  {
+    name: "Holdings",
+    href: "/holdings",
+    icon: BarChart2,
+    disabledWhenLoggedOut: true,
+  },
+  {
+    name: "Connections",
+    href: "/connections",
+    icon: Link2,
+    disabledWhenLoggedOut: true,
+  },
 ];
 
 // simple class joiner
@@ -38,28 +53,80 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function useIsActive(href: string) {
+export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
   const pathname = usePathname();
-
-  // exact match or nested route under href (e.g., /portfolio/123)
-  const active =
-    pathname === href || (pathname?.startsWith(href + "/") ?? false);
-
-  return active;
-}
-
-export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
-  const pathname = usePathname();
+  const isAuthed = Boolean(user?.id);
 
   const itemsWithActive = useMemo(
     () =>
-      NAV_ITEMS.map((item) => ({
-        ...item,
-        active:
-          pathname === item.href ||
-          (pathname?.startsWith(item.href + "/") ?? false),
-      })),
-    [pathname]
+      NAV_ITEMS.filter((i) => i.public || isAuthed) // hide private items when logged out
+        .map((item) => {
+          const active =
+            pathname === item.href ||
+            (pathname?.startsWith(item.href + "/") ?? false);
+          const locked = !isAuthed && item.disabledWhenLoggedOut;
+          return { ...item, active, locked };
+        }),
+    [pathname, isAuthed]
+  );
+
+  const renderLinkClass = (active: boolean, locked: boolean | undefined) =>
+    cx(
+      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+      locked
+        ? "opacity-60 cursor-not-allowed"
+        : active
+        ? "bg-primary text-primary-foreground"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+    );
+
+  const loginHref = (to: string) => `/login?next=${encodeURIComponent(to)}`;
+
+  // Shared nav list
+  const NavList = ({ onItemClick }: { onItemClick?: () => void }) => (
+    <nav className="px-4 py-4 flex-1">
+      <ul className="space-y-2">
+        {itemsWithActive.map((item) => (
+          <li key={item.name}>
+            <Link
+              href={item.locked ? loginHref(item.href) : item.href}
+              aria-current={item.active ? "page" : undefined}
+              aria-disabled={item.locked ? true : undefined}
+              onClick={(e) => {
+                if (item.locked) {
+                  // allow navigation to login, but if you prefer to block clicks entirely:
+                  // e.preventDefault();
+                }
+                onItemClick?.();
+              }}
+              className={renderLinkClass(item.active, item.locked)}
+              title={item.locked ? "Sign in to access" : item.name}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.name}</span>
+              {item.locked && (
+                <Lock className="ml-auto h-3.5 w-3.5 opacity-70" />
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      {!isAuthed && (
+        <div className="mt-4 rounded-xl border p-3 text-sm bg-muted">
+          <div className="font-medium mb-1">Unlock your dashboard</div>
+          <p className="text-muted-foreground mb-2">
+            Sign in to see your portfolio, analytics, and alerts.
+          </p>
+          <Link
+            href={loginHref(pathname || "/dashboard")}
+            className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Sign in
+          </Link>
+        </div>
+      )}
+    </nav>
   );
 
   return (
@@ -77,11 +144,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         />
         <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border">
           <div className="flex h-16 items-center justify-between px-4">
-            <div className="flex items-center space-x-2">
-              <span className="font-mono text-lg font-bold">
-                AI Investments
-              </span>
-            </div>
+            <span className="font-mono text-lg font-bold">AI Investments</span>
             <Button
               variant="ghost"
               size="sm"
@@ -90,29 +153,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               <X className="h-4 w-4" />
             </Button>
           </div>
-
-          <nav className="px-4 py-4">
-            <ul className="space-y-2">
-              {itemsWithActive.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    aria-current={item.active ? "page" : undefined}
-                    className={cx(
-                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      item.active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <NavList onItemClick={() => setSidebarOpen(false)} />
         </div>
       </div>
 
@@ -120,34 +161,9 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block">
         <div className="flex h-full flex-col bg-card border-r border-border">
           <div className="flex h-16 items-center px-4">
-            <div className="flex items-center space-x-2">
-              <span className="font-mono text-lg font-bold">
-                AI Investments
-              </span>
-            </div>
+            <span className="font-mono text-lg font-bold">AI Investments</span>
           </div>
-
-          <nav className="flex-1 px-4 py-4">
-            <ul className="space-y-2">
-              {itemsWithActive.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    aria-current={item.active ? "page" : undefined}
-                    className={cx(
-                      "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      item.active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <NavList />
         </div>
       </div>
     </div>

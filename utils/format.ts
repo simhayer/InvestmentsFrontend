@@ -41,3 +41,6 @@ export function keysToCamel<T>(input: T): T {
   }
   return input;
 }
+
+export const fmtNumber = (n: number) =>
+  new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);

@@ -24,6 +24,7 @@ import ProfileTab from "@/components/investment/tabs/profile-tab";
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { Button } from "../ui/button";
 import { SymbolAnalysis } from "@/components/ai/SymbolAnalysis";
+import { NewsTab } from "./tabs/news-tab";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]); // default 1Y
@@ -259,6 +260,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
           <TabTrigger value="earnings">Earnings & Events</TabTrigger>
           <TabTrigger value="analyst">Analyst</TabTrigger>
           <TabTrigger value="profile">Profile</TabTrigger>
+          <TabTrigger value="news">News</TabTrigger>
         </TabList>
         <TabPanels>
           <TabPanel value="financials" mount="mount-once">
@@ -272,6 +274,9 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
           </TabPanel>
           <TabPanel value="profile" mount="mount-once">
             <ProfileTab symbol={symbol} />
+          </TabPanel>
+          <TabPanel value="news" mount="mount-once">
+            <NewsTab symbol={symbol} />
           </TabPanel>
         </TabPanels>
       </Tabs>

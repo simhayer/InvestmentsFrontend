@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  console.log("Rendering LoginPage");
 
   const handleLoginSuccess = (userData: any) => {
     const user = {
@@ -27,6 +28,7 @@ export default function LoginPage() {
       title: "Welcome back!",
       description: "You have successfully logged in.",
     });
+    console.log("Login successful, redirecting to dashboard");
     router.push("/dashboard");
   };
 

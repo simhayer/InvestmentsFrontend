@@ -15,5 +15,6 @@ export type MarketIndexItem = {
 
 export type MarketOverviewData = {
   top_items: MarketIndexItem[];
+  ai_summary?: string;
   // future expansion: sectors, commodities, forex, etc.
 };

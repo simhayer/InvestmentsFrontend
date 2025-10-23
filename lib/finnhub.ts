@@ -1,12 +1,12 @@
-import type { Investment } from "@/types/holding";
+import type { Holding } from "@/types/holding";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const BACKEND_URL = `${API_URL}/api/finnhub`;
 
 // Send list of symbols to backend and get latest prices
 export async function fetchLivePricesForList(
-  invList: Investment[]
-): Promise<Investment[]> {
+  invList: Holding[]
+): Promise<Holding[]> {
   if (!invList.length) return invList;
 
   const symbols = invList.map((inv) => inv.symbol);
@@ -45,8 +45,9 @@ export async function fetchLivePricesForList(
 
 export async function searchSymbols(query: string) {
   if (!query) return [];
+  // limit to 5 results
   const res = await fetch(
-    `${BACKEND_URL}/search?query=${encodeURIComponent(query)}`,
+    `${BACKEND_URL}/search?query=${encodeURIComponent(query)}&limit=5`,
     {
       credentials: "include",
     }

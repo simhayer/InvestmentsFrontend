@@ -18,5 +18,5 @@ export default function DashboardClient({ user }: { user: User }) {
     }
   };
 
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  return <Dashboard user={user} />;
 }

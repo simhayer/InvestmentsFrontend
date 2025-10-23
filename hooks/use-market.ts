@@ -49,7 +49,7 @@ export function useHistory(symbol: string, period: string, interval: string) {
         if (!cached) setLoading(true);
         const h = await fetchJSON<HistoryResponse>(
           apiUrl(
-            `/api/market/history/${encodeURIComponent(
+            `/api/investment/history/${encodeURIComponent(
               symbol
             )}?period=${period}&interval=${interval}`
           )
@@ -93,7 +93,7 @@ export function useQuote(symbol: string) {
       setError(null);
       try {
         const q = await fetchJSON<QuoteResponse>(
-          apiUrl(`/api/market/quote/${encodeURIComponent(symbol)}`)
+          apiUrl(`/api/investment/quote/${encodeURIComponent(symbol)}`)
         );
         if (!cancelled) setData(q);
       } catch (e: any) {

@@ -2,24 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu } from "lucide-react";
-import { User } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { logout } from "@/utils/authService";
+import { CommandSearch } from "./command-search";
 
 interface Props {
-  user: User;
   setSidebarOpen: (open: boolean) => void;
 }
 
-export function Header({ user, setSidebarOpen }: Props) {
+export function Header({ setSidebarOpen }: Props) {
   const router = useRouter();
-  const onLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      router.replace("/landing");
-    }
-  };
 
   return (
     <header className="bg-background shadow-sm border-b sticky top-0">
@@ -33,10 +25,16 @@ export function Header({ user, setSidebarOpen }: Props) {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <div>
-            <p className="text-sm text-gray-500"></p>
+          <div className="w-full flex justify-center lg:mr-16 z-50 relative ">
+            {/* <SearchBar
+              onSelect={(symbol) => {
+                console.log("Selected:", symbol);
+                // e.g. router.push(`/symbol/${symbol.symbol}`)
+              }}
+            /> */}
+            <CommandSearch />
           </div>
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <Button
               variant="outline"
               onClick={onLogout}
@@ -44,7 +42,7 @@ export function Header({ user, setSidebarOpen }: Props) {
             >
               <LogOut className="h-4 w-4" /> Logout
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
     </header>

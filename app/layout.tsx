@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { NProgressProvider } from "@/app/nprogress-provider";
 
 export const metadata: Metadata = {
   title: "Ai for Investments",
@@ -25,6 +26,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <NProgressProvider />
           {children}
         </ThemeProvider>
       </body>

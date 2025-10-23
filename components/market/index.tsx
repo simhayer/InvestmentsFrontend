@@ -15,7 +15,15 @@ export default function MarketOverview() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <MarketOverviewGrid compact={true} items={items} />
+      <MarketOverviewGrid
+        compact={true}
+        items={items}
+        isLoading={loading}
+        error={error}
+      />
+      <p className="text-sm text-muted-foreground">
+        {data?.ai_summary || "No summary available."}
+      </p>
     </div>
   );
 }

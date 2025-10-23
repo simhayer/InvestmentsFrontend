@@ -27,15 +27,14 @@ import { SymbolAnalysis } from "@/components/ai/SymbolAnalysis";
 import { NewsTab } from "./tabs/news-tab";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
-  const [r, setR] = useState(RANGE_PRESETS[5]); // default 1Y
+  const [r, setR] = useState(RANGE_PRESETS[5]);
 
-  const [range, setRange] = useState(RANGE_PRESETS[5]);
   const { data: quote, loading: loadingQ, error: errorQ } = useQuote(symbol);
   const {
     data: history,
     loading: loadingH,
     error: errorH,
-  } = useHistory(symbol, range.period, range.interval);
+  } = useHistory(symbol, r.period, r.interval);
 
   const title = useMemo(
     () => (quote?.name ? `${quote.name} (${symbol})` : symbol),
@@ -77,8 +76,8 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
-          <div className="text-sm text-slate-600">
+          <h1 className="text-xl font-semibold text-primary">{title}</h1>
+          <div className="text-sm text-primary-600">
             {quote?.exchange || "—"} • {quote?.currency || "—"}
           </div>
           {quote?.data_quality?.fetched_at_utc && (
@@ -115,37 +114,22 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         </div>
       </div>
 
-      {/* Range selector */}
-      <div className="flex flex-wrap gap-2">
-        {RANGE_PRESETS.map((p) => {
-          const active = p.label === r.label;
-          return (
-            <button
-              key={p.label}
-              onClick={() => setR(p)}
-              className={`px-2.5 py-1 text-xs rounded border ${
-                active
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              {p.label}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Chart */}
-      <Card className="p-3">
+      <Card className="p-0">
         {loadingH && !history ? (
-          <div className="space-y-2">
+          <div className="space-y-2 m-3">
             <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-[360px] w-full" />
+            <Skeleton className="h-[280px] w-full" />
           </div>
         ) : errorH ? (
           <div className="text-sm text-red-600">{errorH}</div>
         ) : history?.status === "ok" && history.points?.length ? (
-          <PriceChartCard candles={history.points} height={360} />
+          <PriceChartCard
+            candles={history.points}
+            height={280}
+            r={r}
+            setR={setR}
+          />
         ) : (
           <div className="text-sm text-slate-600">No chart data.</div>
         )}

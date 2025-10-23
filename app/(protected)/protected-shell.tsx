@@ -16,9 +16,13 @@ export default function ProtectedShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        user={user}
+      />
       <div className="min-h-screen flex flex-col">
-        <Header user={user} setSidebarOpen={setSidebarOpen} />
+        <Header setSidebarOpen={setSidebarOpen} />
         <main className="flex-1 p-2">{children}</main>
       </div>
     </div>

@@ -2,22 +2,30 @@
 
 import { Button } from "@/components/ui/button";
 import { useMemo } from "react";
-import { X, Home, BarChart3, Link2, BarChart2, Lock } from "lucide-react";
+import {
+  X,
+  Home,
+  BarChart3,
+  Link2,
+  BarChart2,
+  Lock,
+  LogOut,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  user?: { id?: string } | null; // << new (pass from Header/ProtectedShell)
+  user?: { id?: string } | null;
 };
 
 type NavItem = {
   name: string;
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  public?: boolean; // visible when logged out
-  disabledWhenLoggedOut?: boolean; // show but locked
+  public?: boolean;
+  disabledWhenLoggedOut?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -48,29 +56,28 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// simple class joiner
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAuthed = Boolean(user?.id);
 
   const itemsWithActive = useMemo(
     () =>
-      NAV_ITEMS.filter((i) => i.public || isAuthed) // hide private items when logged out
-        .map((item) => {
-          const active =
-            pathname === item.href ||
-            (pathname?.startsWith(item.href + "/") ?? false);
-          const locked = !isAuthed && item.disabledWhenLoggedOut;
-          return { ...item, active, locked };
-        }),
+      NAV_ITEMS.filter((i) => i.public || isAuthed).map((item) => {
+        const active =
+          pathname === item.href ||
+          (pathname?.startsWith(item.href + "/") ?? false);
+        const locked = !isAuthed && item.disabledWhenLoggedOut;
+        return { ...item, active, locked };
+      }),
     [pathname, isAuthed]
   );
 
-  const renderLinkClass = (active: boolean, locked: boolean | undefined) =>
+  const renderLinkClass = (active: boolean, locked?: boolean) =>
     cx(
       "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
       locked
@@ -82,23 +89,21 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
 
   const loginHref = (to: string) => `/login?next=${encodeURIComponent(to)}`;
 
-  // Shared nav list
+  // simple mock logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
   const NavList = ({ onItemClick }: { onItemClick?: () => void }) => (
-    <nav className="px-4 py-4 flex-1">
-      <ul className="space-y-2">
+    <nav className="flex flex-col flex-1 px-4 py-4">
+      <ul className="space-y-2 flex-1">
         {itemsWithActive.map((item) => (
           <li key={item.name}>
             <Link
               href={item.locked ? loginHref(item.href) : item.href}
               aria-current={item.active ? "page" : undefined}
-              aria-disabled={item.locked ? true : undefined}
-              onClick={(e) => {
-                if (item.locked) {
-                  // allow navigation to login, but if you prefer to block clicks entirely:
-                  // e.preventDefault();
-                }
-                onItemClick?.();
-              }}
+              onClick={() => onItemClick?.()}
               className={renderLinkClass(item.active, item.locked)}
               title={item.locked ? "Sign in to access" : item.name}
             >
@@ -112,7 +117,16 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
         ))}
       </ul>
 
-      {!isAuthed && (
+      {isAuthed ? (
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="w-full mt-4 justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      ) : (
         <div className="mt-4 rounded-xl border p-3 text-sm bg-muted">
           <div className="font-medium mb-1">Unlock your dashboard</div>
           <p className="text-muted-foreground mb-2">
@@ -142,7 +156,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
           className="fixed inset-0 bg-background/80 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border">
+        <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col">
           <div className="flex h-16 items-center justify-between px-4">
             <span className="font-mono text-lg font-bold">AI Investments</span>
             <Button

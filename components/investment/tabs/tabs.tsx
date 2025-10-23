@@ -31,8 +31,8 @@ export function TabTrigger({
       onClick={() => ctx.setValue(value)}
       className={`px-3 py-2 text-sm border-b-2 -mb-px ${
         active
-          ? "border-slate-900 text-slate-900"
-          : "border-transparent text-slate-600 hover:text-slate-900"
+          ? "border-slate-900 text-primary-900"
+          : "border-transparent text-primary-600 hover:text-primary-900"
       }`}
       aria-pressed={active}
     >

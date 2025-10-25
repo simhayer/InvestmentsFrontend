@@ -1,15 +1,16 @@
+// components/auth/login-form.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { login, getMe } from "@/utils/authService";
+import type { User } from "@/types/user";
 
 interface LoginFormProps {
-  onSuccess?: (userData: any) => void;
+  onSuccess?: (user: User | null) => void;
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -17,25 +18,19 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const result = await login(email, password); // sets cookie
+      const result = await login(email, password); // sets httpOnly cookie
       if (!result?.ok) throw new Error("Invalid response");
-
-      const user = await getMe().catch(() => null);
-      onSuccess?.(user ?? { email });
-
-      // Redirect (support return-to)
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next") || "/dashboard";
-      router.replace(next);
-    } catch (error) {
-      console.error("Login error:", error);
+      const me = await getMe().catch(() => null); // fetch current user
+      // map Me -> User by ensuring id is a string to match User type
+      const user = me ? { ...me, id: String((me as any).id) } : null;
+      onSuccess?.(user);
+    } catch (err) {
+      console.error("Login error:", err);
       toast({
         title: "Login Failed",
         description: "Invalid email or password. Please try again.",
@@ -53,7 +48,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <Input
           id="email"
           type="email"
-          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -64,7 +58,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <Input
           id="password"
           type="password"
-          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

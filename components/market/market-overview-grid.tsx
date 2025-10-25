@@ -142,7 +142,7 @@ export default function MarketOverviewGrid({
           transition={{ duration: 0.25, ease: "easeOut" }}
         >
           <Card
-            className="group rounded-2xl shadow-sm ring-1 ring-transparent hover:shadow-lg hover:ring-foreground/10 transition-all duration-200 will-change-transform"
+            className="group rounded-2xl cursor-pointer shadow-sm ring-1 ring-transparent hover:shadow-lg hover:ring-foreground/10 transition-all duration-200 will-change-transform mt-5"
             // Card-level click (keyboard handled on inner button region)
             onClick={() => handleClick(it.symbol)}
           >
@@ -196,7 +196,7 @@ export default function MarketOverviewGrid({
             >
               {/* Clickable sparkline region with proper cursor inside SVG */}
               <div
-                className="h-20 w-full cursor-pointer rounded-md bg-gradient-to-b from-transparent to-muted/20 group-hover:to-muted/30 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:cursor-pointer"
+                className="h-20 w-full cursor-pointer rounded-md from-transparent to-muted/20 group-hover:to-muted/30 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:cursor-pointer"
                 role="button"
                 tabIndex={0}
                 aria-label={`Open ${it.symbol}`}

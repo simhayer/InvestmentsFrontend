@@ -44,3 +44,19 @@ export function keysToCamel<T>(input: T): T {
 
 export const fmtNumber = (n: number) =>
   new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);
+
+export function fmtAsOf(asOf?: string) {
+  if (!asOf) return undefined;
+  try {
+    const d = new Date(asOf);
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return asOf;
+  }
+}

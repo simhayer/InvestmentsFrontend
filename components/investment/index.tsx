@@ -139,11 +139,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         // <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
         //   {analysis.analysis}
         // </p>
-        <SymbolAnalysis
-          symbol={symbol}
-          name={symbol}
-          holdingAnalysis={analysis}
-        />
+        <SymbolAnalysis symbol={symbol} name={symbol} analysis={analysis} />
       )}
 
       <Button variant="outline" size="sm" onClick={fetch} disabled={loading}>

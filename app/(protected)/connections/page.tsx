@@ -3,20 +3,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import ConnectionsClient from "./connections-client";
 import { User } from "@/types/user";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function DashboardPage() {
-  const token = (await cookies()).get("auth_token")?.value;
-  console.log("Token:", token);
-  if (!token) redirect("/landing");
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-    credentials: "include",
-  });
-
-  if (!res.ok) redirect("/landing");
-
-  const user = (await res.json()) as User;
+  const user = (await getCurrentUser()) as User | null;
+  if (!user) redirect("/landing?next=/connections");
   return <ConnectionsClient user={user} />;
 }

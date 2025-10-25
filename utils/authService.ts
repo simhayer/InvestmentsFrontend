@@ -1,5 +1,3 @@
-import { useRouter } from "next/router";
-
 // utils/authService.ts
 export const API_URL = process.env.NEXT_PUBLIC_API_URL!; // e.g. http://localhost:8000
 

@@ -1,30 +1,19 @@
-// app/(protected)/protected-shell.tsx
-"use client";
+// app/(protected)/protected-shell.tsx  (Server component)
+import { getCurrentUser } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth-provider";
+import { ProtectedClientShell } from "./protected-client-shell"; // ⬅️ separate file
 
-import * as React from "react";
-import { Sidebar } from "@/components/sidebar";
-import { Header } from "@/components/header";
-
-export default function ProtectedShell({
+export default async function ProtectedShell({
   children,
-  user,
 }: {
   children: React.ReactNode;
-  user?: any;
 }) {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const user = await getCurrentUser();
 
+  console.log("ProtectedShell user:", user);
   return (
-    <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        user={user}
-      />
-      <div className="min-h-screen flex flex-col">
-        <Header setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 p-2">{children}</main>
-      </div>
-    </div>
+    <AuthProvider initialUser={user}>
+      <ProtectedClientShell>{children}</ProtectedClientShell>
+    </AuthProvider>
   );
 }

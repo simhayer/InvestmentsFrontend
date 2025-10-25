@@ -1,3 +1,4 @@
+// components/sidebar.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-provider";
 
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  user?: { id?: string } | null;
+  user?: never; // force consumers to not pass user; we read from context
 };
 
 type NavItem = {
@@ -60,9 +62,12 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
+export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isLoading, refresh } = useAuth();
+  console.log("Sidebar user:", user);
+
   const isAuthed = Boolean(user?.id);
 
   const itemsWithActive = useMemo(
@@ -89,9 +94,14 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
 
   const loginHref = (to: string) => `/login?next=${encodeURIComponent(to)}`;
 
-  // simple mock logout
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    // call backend logout to clear httpOnly cookie
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
+    // refresh auth state everywhere
+    refresh();
     router.push("/login");
   };
 
@@ -117,7 +127,12 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, user }: SidebarProps) {
         ))}
       </ul>
 
-      {isAuthed ? (
+      {isLoading ? (
+        <div className="mt-4 rounded-xl border p-3 text-sm bg-muted animate-pulse">
+          <div className="h-4 w-1/2 bg-foreground/20 rounded mb-2" />
+          <div className="h-6 w-2/3 bg-foreground/10 rounded" />
+        </div>
+      ) : isAuthed ? (
         <Button
           variant="ghost"
           onClick={handleLogout}

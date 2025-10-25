@@ -6,111 +6,145 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Brain,
-  AlertTriangle,
   ExternalLink,
-  TrendingUp,
+  Newspaper,
   Info,
+  AlertTriangle,
+  LineChart,
+  Calendar,
+  Sparkles,
 } from "lucide-react";
 
-// ---- Types
-type Citation = { title: string; url: string };
-type Rationale = { text: string; source_idx: number };
-type RangeVal = { low: number; high: number };
-type Highlight = {
-  label: string;
-  value: string | number | RangeVal;
-  as_of?: string | null;
-  source_idx: number;
-};
-type Risk = { title: string; detail: string; source_idx: number };
+/* =========================
+   Types for the NEW schema
+========================= */
 
-type Insight = {
-  schema_version: string;
-  symbol: string;
+type LatestDev = {
   headline: string;
-  recommendation: "buy" | "hold" | "sell" | "neutral" | string;
-  conviction: number;
-  rationale: Rationale[];
-  highlights: Highlight[];
-  risks: Risk[];
-  citations: Citation[];
-  [k: string]: unknown;
+  date?: string;
+  source?: string;
+  url?: string;
+  cause?: string;
+  impact?: string;
+  assets_affected?: string[];
 };
 
-// ---- Helpers
-function isPlainObject(v: unknown): v is Record<string, unknown> {
-  return (
-    typeof v === "object" &&
-    v !== null &&
-    Object.getPrototypeOf(v) === Object.prototype
-  );
+type Catalyst = {
+  date?: string;
+  type?: string;
+  description?: string;
+  expected_direction?: string;
+  magnitude_basis?: string;
+  confidence?: number; // 0..1
+};
+
+type RiskItem = {
+  risk: string;
+  why_it_matters?: string;
+  monitor?: string;
+};
+
+type Valuation = {
+  multiples?: Record<string, number | string | null | undefined>;
+  peer_set?: string[];
+};
+
+type Technicals = {
+  trend?: string;
+  levels?: { support?: number; resistance?: number };
+  momentum?: { rsi?: number; comment?: string };
+};
+
+type KeyDate = { date?: string; event?: string };
+
+type Scenarios = { bull?: string; base?: string; bear?: string };
+
+type AnalysisShape = {
+  summary?: string;
+  latest_developments?: LatestDev[];
+  catalysts?: Catalyst[];
+  risks?: RiskItem[];
+  valuation?: Valuation;
+  technicals?: Technicals;
+  key_dates?: KeyDate[];
+  scenarios?: Scenarios;
+
+  headline?: string;
+  recommendation?: string;
+  conviction?: number; // 0..1
+};
+
+/* =========================
+   Helpers
+========================= */
+
+function isObj(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null;
 }
 
-function parseJsonLoose(input: string): any {
-  // tolerant parse for string inputs (handles extra text wrapping the JSON)
-  const s = input.indexOf("{");
-  const e = input.lastIndexOf("}");
-  if (s >= 0 && e > s) {
-    try {
-      return JSON.parse(input.slice(s, e + 1));
-    } catch {}
-  }
-  try {
-    return JSON.parse(input);
-  } catch {
-    return null;
-  }
-}
-
-function coerceInsight(input: unknown): Insight | null {
-  if (!input) return null;
+function looseParse(input: unknown): AnalysisShape | null {
+  if (isObj(input)) return input as AnalysisShape;
   if (typeof input === "string") {
-    const parsed = parseJsonLoose(input);
-    return parsed && isPlainObject(parsed) ? (parsed as Insight) : null;
-  }
-  if (isPlainObject(input)) {
-    return input as Insight;
+    const s = input.indexOf("{");
+    const e = input.lastIndexOf("}");
+    const maybe = s >= 0 && e > s ? input.slice(s, e + 1) : input;
+    try {
+      const parsed = JSON.parse(maybe);
+      return isObj(parsed) ? (parsed as AnalysisShape) : null;
+    } catch {
+      return null;
+    }
   }
   return null;
 }
 
-function recColor(rec: string) {
-  const r = (rec || "").toLowerCase();
-  if (r === "buy") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (r === "sell") return "bg-rose-100 text-rose-700 border-rose-200";
-  if (r === "hold" || r === "neutral")
-    return "bg-amber-100 text-amber-700 border-amber-200";
-  return "bg-slate-100 text-slate-700 border-slate-200";
+function fmtNum(n: unknown) {
+  const v = typeof n === "string" ? Number(n) : (n as number);
+  if (typeof v === "number" && Number.isFinite(v)) {
+    return new Intl.NumberFormat(undefined, {
+      maximumFractionDigits: 2,
+    }).format(v);
+  }
+  return String(n ?? "—");
 }
 
-function formatNumber(n: number) {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(
-    n
-  );
+function shortDate(d?: string) {
+  if (!d) return "";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function formatValue(v: Highlight["value"]) {
-  if (v == null) return "—";
-  if (typeof v === "number") return formatNumber(v);
-  if (typeof v === "string") return v; // keep strings like "3.54T" / "-4%" / "trillion USD"
-  return `${formatNumber(v.low)} – ${formatNumber(v.high)}`; // range
+type Citation = { title: string; url: string };
+function makeCitations(devs: LatestDev[] | undefined): Citation[] {
+  if (!Array.isArray(devs)) return [];
+  const uniq = new Map<string, Citation>();
+  for (const d of devs) {
+    const key = d.url || d.headline || `${d.source}-${d.date}`;
+    if (!key) continue;
+    if (!uniq.has(key)) {
+      uniq.set(key, {
+        title: d.headline || d.source || "Source",
+        url: d.url || "#",
+      });
+    }
+  }
+  return Array.from(uniq.values());
 }
 
-function SourcePill({
-  idx,
-  citations,
-}: {
-  idx: number | undefined;
-  citations: Citation[];
-}) {
-  if (idx == null || idx <= 0 || idx > citations.length) return null;
-  const c = citations[idx - 1];
+function SourcePill({ idx, cites }: { idx?: number; cites: Citation[] }) {
+  if (!idx || idx < 1 || idx > cites.length) return null;
+  const c = cites[idx - 1];
   return (
     <a
       href={c.url}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
       title={c.title}
     >
       <ExternalLink className="h-3 w-3" />
@@ -119,39 +153,66 @@ function SourcePill({
   );
 }
 
-// ---- Component
+function Section({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function recBadgeClasses(rec?: string) {
+  const r = (rec || "").toLowerCase();
+  if (r === "buy")
+    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  if (r === "sell")
+    return "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400";
+  if (r === "hold" || r === "neutral")
+    return "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+  return "border-border bg-secondary text-secondary-foreground";
+}
+
+/* =========================
+   Main Component
+========================= */
+
 export function SymbolAnalysis({
   symbol,
   name,
-  holdingAnalysis,
+  analysis,
 }: {
   symbol: string;
   name?: string | null;
-  // Accept both string or object now:
-  holdingAnalysis: unknown;
+  analysis: unknown;
 }) {
-  const data: Insight | null = useMemo(
-    () => coerceInsight(holdingAnalysis),
-    [holdingAnalysis]
-  );
+  const data = useMemo(() => looseParse(analysis), [analysis]);
 
-  if (!holdingAnalysis) return null;
+  if (!analysis) return null;
 
-  // Fallback if JSON parsing/shape fails
   if (!data) {
     return (
       <div className="mt-4">
         <Card className="p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Brain className="h-5 w-5 text-purple-600" />
-            <span className="text-sm font-medium text-slate-900">
-              AI Analysis
-            </span>
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">AI Analysis</span>
           </div>
-          <pre className="whitespace-pre-wrap text-sm text-slate-700">
-            {typeof holdingAnalysis === "string"
-              ? holdingAnalysis
-              : JSON.stringify(holdingAnalysis, null, 2)}
+          <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
+            {typeof analysis === "string"
+              ? analysis
+              : JSON.stringify(analysis, null, 2)}
           </pre>
         </Card>
       </div>
@@ -162,129 +223,357 @@ export function SymbolAnalysis({
     headline,
     recommendation,
     conviction,
-    rationale = [],
-    highlights = [],
+    summary,
+    latest_developments = [],
+    catalysts = [],
     risks = [],
-    citations = [],
+    valuation,
+    technicals,
+    key_dates = [],
+    scenarios,
   } = data;
-  const convPct = Math.max(0, Math.min(1, Number(conviction || 0))) * 100;
+
+  const citations = makeCitations(latest_developments);
+  const convictionPct =
+    typeof conviction === "number" && conviction >= 0 && conviction <= 1
+      ? Math.round(conviction * 100)
+      : null;
 
   return (
     <div className="mt-4">
-      <Card className="p-4 space-y-4">
+      <Card className="p-4 space-y-4 bg-card text-card-foreground">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-600" />
-            <div className="text-sm font-medium text-slate-900">
-              AI Analysis {name ? `• ${name}` : ""} ({symbol.toUpperCase()})
+            <Brain className="h-5 w-5 text-primary" />
+            <div className="text-sm font-medium">
+              AI Analysis {name ? `• ${name}` : ""} ({symbol?.toUpperCase?.()})
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Badge
-              className={`border ${recColor(recommendation || "")}`}
-              variant="outline"
-            >
-              {String(recommendation || "—").toUpperCase()}
-            </Badge>
-            <div className="flex items-center gap-2 min-w-[180px]">
-              <div className="text-xs text-slate-500">Conviction</div>
-              <div className="w-36 h-2 rounded bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full bg-purple-500"
-                  style={{ width: `${convPct}%` }}
-                  aria-label={`Conviction ${convPct.toFixed(0)}%`}
-                />
+            {recommendation ? (
+              <Badge
+                variant="outline"
+                className={`border ${recBadgeClasses(recommendation)}`}
+              >
+                {recommendation.toUpperCase()}
+              </Badge>
+            ) : null}
+            {convictionPct !== null ? (
+              <div className="flex items-center gap-2 min-w-[180px]">
+                <div className="text-xs text-muted-foreground">Conviction</div>
+                <div className="w-36 h-2 rounded bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${convictionPct}%` }}
+                    aria-label={`Conviction ${convictionPct}%`}
+                  />
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
 
         {/* Headline */}
         {headline ? (
           <div className="flex items-start gap-2">
-            <TrendingUp className="h-4 w-4 mt-0.5 text-slate-500" />
-            <p className="text-sm text-slate-800">{headline}</p>
+            <Sparkles className="h-4 w-4 mt-0.5 text-muted-foreground" />
+            <p className="text-sm">{headline}</p>
           </div>
         ) : null}
 
-        {/* Highlights */}
-        {highlights.length > 0 && (
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Highlights
+        {/* Summary */}
+        {summary ? (
+          <Section
+            title="Summary"
+            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="rounded-xl border border-border p-3 bg-card">
+              <p className="text-sm whitespace-pre-wrap">{summary}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {highlights.map((h, i) => (
-                <div
-                  key={`${h.label}-${i}`}
-                  className="rounded-xl border border-slate-200 p-3 bg-white"
-                >
-                  <div className="text-xs text-slate-500">{h.label}</div>
-                  <div className="text-sm font-medium text-slate-900">
-                    {formatValue(h.value)}
-                  </div>
-                  <div className="mt-1 flex items-center justify-between">
-                    <div className="text-[10px] text-slate-400">
-                      {h.as_of ? `as of ${h.as_of}` : ""}
+          </Section>
+        ) : null}
+
+        {/* Latest developments */}
+        {latest_developments.length > 0 ? (
+          <Section
+            title="Latest developments"
+            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {latest_developments.map((d, i) => {
+                const citeIdx =
+                  citations.findIndex(
+                    (c) => c.url === d.url || c.title === d.headline
+                  ) + 1 || undefined;
+                return (
+                  <div
+                    key={String(d.url || d.headline || i) + "-" + i}
+                    className="rounded-xl border border-border p-3 bg-card"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm font-medium">{d.headline}</div>
+                      <div className="text-[10px] text-muted-foreground shrink-0">
+                        {shortDate(d.date)}
+                      </div>
                     </div>
-                    <SourcePill idx={h.source_idx} citations={citations} />
+                    <div className="mt-1 text-xs text-muted-foreground space-y-1">
+                      {d.cause ? (
+                        <div>
+                          <span className="font-medium text-foreground">
+                            Cause:
+                          </span>{" "}
+                          {d.cause}
+                        </div>
+                      ) : null}
+                      {d.impact ? (
+                        <div>
+                          <span className="font-medium text-foreground">
+                            Impact:
+                          </span>{" "}
+                          {d.impact}
+                        </div>
+                      ) : null}
+                      {d.assets_affected?.length ? (
+                        <div>
+                          <span className="font-medium text-foreground">
+                            Assets:
+                          </span>{" "}
+                          {d.assets_affected.join(", ")}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="text-[10px] text-muted-foreground">
+                        {d.source || ""}
+                      </div>
+                      <SourcePill idx={citeIdx} cites={citations} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        ) : null}
+
+        {/* Catalysts */}
+        {catalysts.length > 0 ? (
+          <Section
+            title="Upcoming catalysts"
+            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {catalysts.map((c, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-border p-3 bg-card"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">
+                      {c.type
+                        ? c.type.charAt(0).toUpperCase() + c.type.slice(1)
+                        : "Catalyst"}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {shortDate(c.date)}
+                    </div>
+                  </div>
+                  {c.description ? (
+                    <div className="text-sm mt-1">{c.description}</div>
+                  ) : null}
+                  <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
+                    {c.expected_direction ? (
+                      <span>
+                        <span className="font-medium text-foreground">
+                          Direction:
+                        </span>{" "}
+                        {c.expected_direction}
+                      </span>
+                    ) : null}
+                    {c.magnitude_basis ? (
+                      <span>
+                        <span className="font-medium text-foreground">
+                          Basis:
+                        </span>{" "}
+                        {c.magnitude_basis}
+                      </span>
+                    ) : null}
+                    {typeof c.confidence === "number" ? (
+                      <span>
+                        <span className="font-medium text-foreground">
+                          Confidence:
+                        </span>{" "}
+                        {Math.round(c.confidence * 100)}%
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Rationale */}
-        {rationale.length > 0 && (
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Why this view
-            </div>
-            <ul className="space-y-2">
-              {rationale.map((r, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Info className="h-4 w-4 mt-0.5 text-slate-500" />
-                  <div className="text-sm text-slate-800">
-                    {r.text}{" "}
-                    <SourcePill idx={r.source_idx} citations={citations} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          </Section>
+        ) : null}
 
         {/* Risks */}
-        {risks.length > 0 && (
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Key risks
-            </div>
+        {risks.length > 0 ? (
+          <Section
+            title="Key risks"
+            icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+          >
             <ul className="space-y-2">
-              {risks.map((rk, i) => (
+              {risks.map((r, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600" />
+                  <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
                   <div className="text-sm">
-                    <span className="font-medium text-slate-900">
-                      {rk.title}:
-                    </span>{" "}
-                    <span className="text-slate-800">{rk.detail}</span>{" "}
-                    <SourcePill idx={rk.source_idx} citations={citations} />
+                    <span className="font-medium">{r.risk}:</span>{" "}
+                    <span className="text-muted-foreground">
+                      {[r.why_it_matters, r.monitor]
+                        .filter(Boolean)
+                        .join(" — ")}
+                    </span>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          </Section>
+        ) : null}
 
-        {/* Citations */}
-        {citations.length > 0 && (
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Sources
+        {/* Valuation */}
+        {valuation?.multiples || valuation?.peer_set ? (
+          <Section
+            title="Valuation"
+            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {valuation?.multiples ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                    Multiples
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    {Object.entries(valuation.multiples).map(([k, v]) => (
+                      <div key={k} className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          {k.replace(/_/g, " ").toUpperCase()}
+                        </span>
+                        <span className="font-medium">{fmtNum(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {valuation?.peer_set ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs font-medium text-muted-foreground mb-1">
+                    Peer set
+                  </div>
+                  <div className="text-sm">{valuation.peer_set.join(", ")}</div>
+                </div>
+              ) : null}
             </div>
+          </Section>
+        ) : null}
+
+        {/* Technicals */}
+        {technicals ? (
+          <Section
+            title="Technicals"
+            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {technicals.trend ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Trend</div>
+                  <div className="text-sm font-medium">{technicals.trend}</div>
+                </div>
+              ) : null}
+              {technicals.levels ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Levels</div>
+                  <div className="text-sm">
+                    <span className="font-medium">Support:</span>{" "}
+                    {fmtNum(technicals.levels.support)} &nbsp;•&nbsp;
+                    <span className="font-medium">Resistance:</span>{" "}
+                    {fmtNum(technicals.levels.resistance)}
+                  </div>
+                </div>
+              ) : null}
+              {technicals.momentum ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Momentum</div>
+                  <div className="text-sm">
+                    {technicals.momentum.rsi != null ? (
+                      <>
+                        <span className="font-medium">RSI:</span>{" "}
+                        {fmtNum(technicals.momentum.rsi)}
+                        {technicals.momentum.comment ? " — " : ""}
+                      </>
+                    ) : null}
+                    {technicals.momentum.comment || ""}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </Section>
+        ) : null}
+
+        {/* Key dates */}
+        {key_dates.length > 0 ? (
+          <Section
+            title="Key dates"
+            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="rounded-xl border border-border p-3 bg-card">
+              <ul className="text-sm space-y-1">
+                {key_dates.map((k, i) => (
+                  <li key={i} className="flex items-center justify-between">
+                    <span>{k.event || "Event"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {shortDate(k.date)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Section>
+        ) : null}
+
+        {/* Scenarios */}
+        {scenarios && (scenarios.bull || scenarios.base || scenarios.bear) ? (
+          <Section
+            title="Scenarios"
+            icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {scenarios.bull ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Bull</div>
+                  <div className="text-sm">{scenarios.bull}</div>
+                </div>
+              ) : null}
+              {scenarios.base ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Base</div>
+                  <div className="text-sm">{scenarios.base}</div>
+                </div>
+              ) : null}
+              {scenarios.bear ? (
+                <div className="rounded-xl border border-border p-3 bg-card">
+                  <div className="text-xs text-muted-foreground">Bear</div>
+                  <div className="text-sm">{scenarios.bear}</div>
+                </div>
+              ) : null}
+            </div>
+          </Section>
+        ) : null}
+
+        {/* Sources */}
+        {citations.length > 0 ? (
+          <Section
+            title="Sources"
+            icon={
+              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+            }
+          >
             <ul className="text-sm space-y-1">
               {citations.map((c, i) => (
                 <li key={i}>
@@ -292,18 +581,22 @@ export function SymbolAnalysis({
                     href={c.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-slate-700 hover:text-slate-900 underline underline-offset-4"
+                    className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-foreground text-muted-foreground"
                   >
-                    <span className="text-xs text-slate-500">[{i + 1}]</span>
+                    <span className="text-xs text-muted-foreground">
+                      [{i + 1}]
+                    </span>
                     <span>{c.title}</span>
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          </Section>
+        ) : null}
       </Card>
     </div>
   );
 }
+
+export default SymbolAnalysis;

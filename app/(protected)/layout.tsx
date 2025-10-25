@@ -23,5 +23,5 @@ export default async function ProtectedLayout({
   }
 
   const user = await res.json();
-  return <ProtectedShell user={user}>{children}</ProtectedShell>;
+  return <ProtectedShell>{children}</ProtectedShell>;
 }

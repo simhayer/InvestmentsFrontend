@@ -4,13 +4,21 @@
 import { useEffect } from "react";
 import MarketOverviewGrid from "./market-overview-grid";
 import { useMarketOverview } from "@/hooks/use-market-overview";
+import { MarketSummary, MarketSummaryPanel } from "./market-summary";
 
 export default function MarketOverview() {
-  const { data, loading, error, fetchOverview } = useMarketOverview();
+  const {
+    data,
+    overviewLoading,
+    overviewError,
+    fetchOverview,
+    fetchMarketSummary,
+  } = useMarketOverview();
   const items = data?.top_items || [];
 
   useEffect(() => {
     fetchOverview();
+    fetchMarketSummary();
   }, []);
   return (
     <div className="space-y-6">
@@ -18,12 +26,11 @@ export default function MarketOverview() {
       <MarketOverviewGrid
         compact={true}
         items={items}
-        isLoading={loading}
-        error={error}
+        isLoading={overviewLoading}
+        error={overviewError}
       />
-      <p className="text-sm text-muted-foreground">
-        {data?.ai_summary || "No summary available."}
-      </p>
+      {/* AI Summary */}
+      <MarketSummaryPanel />
     </div>
   );
 }

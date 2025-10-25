@@ -1,27 +1,13 @@
-// app/page.tsx  (SERVER component — no "use client")
+// app/page.tsx  (Server Component)
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/auth";
 
 export default async function LandingPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-
-  // Optional: verify token so an expired cookie doesn’t show “Go to Dashboard”
-  let isAuthed = false;
-  if (token) {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-      isAuthed = res.ok;
-    } catch {
-      isAuthed = false;
-    }
-  }
+  const user = await getCurrentUser();
+  const isAuthed = !!user;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+    <main className="min-h-full flex flex-col items-center justify-center px-6">
       <div className="max-w-3xl text-center space-y-6">
         <h1 className="text-4xl md:text-5xl font-bold">AI for Investments</h1>
         <p className="text-base md:text-lg text-gray-600">
@@ -52,7 +38,6 @@ export default async function LandingPage() {
           )}
         </div>
 
-        {/* Placeholder section for a bit of marketing copy/features */}
         <div className="mt-10 grid gap-4 md:grid-cols-3 text-left">
           <Feature
             title="Holdings Analysis"

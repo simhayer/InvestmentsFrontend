@@ -1,6 +1,8 @@
+// app/login/login-client.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 import { LoginForm } from "@/components/auth/login-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,25 +13,29 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getMe } from "@/utils/authService";
+import type { User } from "@/types/user";
 
-export default function LoginPage() {
+export default function LoginClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { mutate } = useSWRConfig();
   const { toast } = useToast();
-  console.log("Rendering LoginPage");
 
-  const handleLoginSuccess = (userData: any) => {
-    const user = {
-      id: userData.user_id || "1",
-      email: userData.email || userData.username,
-      name: userData.name || userData.email?.split("@")[0] || userData.username,
-    };
-    localStorage.setItem("user", JSON.stringify(user));
+  const handleLoginSuccess = async (_user: User | null) => {
+    // 1) Warm global auth cache so UI flips immediately
+    const me = (await getMe().catch(() => null)) as User | null;
+    await mutate("auth:/me", { user: me }, false);
+
     toast({
       title: "Welcome back!",
       description: "You have successfully logged in.",
     });
-    console.log("Login successful, redirecting to dashboard");
-    router.push("/dashboard");
+
+    // 2) Navigate to next (or /dashboard) and force RSC refresh
+    const next = searchParams.get("next") || "/dashboard";
+    router.replace(next);
+    router.refresh(); // ← re-run server components; /login will redirect away if authed
   };
 
   return (

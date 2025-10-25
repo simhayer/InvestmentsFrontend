@@ -1,20 +1,17 @@
-// app/login/page.tsx (Server Component)
-import { cookies } from "next/headers";
+// app/login/page.tsx  (Server Component)
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth"; // SSR helper that forwards cookies
 import LoginClient from "./login-client";
 
-export default async function LoginPage() {
-  const token = (await cookies()).get("auth_token")?.value;
-  if (token) {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-      if (res.ok) redirect("/dashboard");
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { next?: string };
+}) {
+  const user = await getCurrentUser();
+  if (user) {
+    redirect(searchParams?.next ?? "/dashboard");
   }
+
   return <LoginClient />;
 }

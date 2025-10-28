@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
+import Image from "next/image";
 
 type SidebarProps = {
   sidebarOpen: boolean;
@@ -173,7 +174,17 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         />
         <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col">
           <div className="flex h-16 items-center justify-between px-4">
-            <span className="font-mono text-lg font-bold">AI Investments</span>
+            <div className="flex items-center space-x-2">
+              <img
+                src="/logo-full-dark-nobg.png"
+                alt="AI Investments Logo"
+                className="h-6 w-6"
+              />
+              <span className="font-mono text-lg font-bold">
+                AI Investments
+              </span>
+            </div>
+
             <Button
               variant="ghost"
               size="sm"
@@ -190,7 +201,24 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block">
         <div className="flex h-full flex-col bg-card border-r border-border">
           <div className="flex h-16 items-center px-4">
-            <span className="font-mono text-lg font-bold">AI Investments</span>
+            <div className="flex mt-4">
+              <Image
+                src="/logo-full-dark-nobg.png"
+                alt="AI Investments Logo"
+                width={200}
+                height={60}
+                className="block dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo-full-light-nobg.png"
+                alt="AI Investments Logo"
+                width={200}
+                height={60}
+                className="hidden dark:block"
+                priority
+              />
+            </div>
           </div>
           <NavList />
         </div>

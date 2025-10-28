@@ -20,8 +20,8 @@ export function Analytics({ user }: { user: User }) {
           refreshing ? "opacity-60 pointer-events-none" : ""
         }`}
       >
-        {/* <AIInsights /> */}
-        <PortfolioNewsSummary symbols={dummySymbols || []} />
+        <AIInsights />
+        {/* <PortfolioNewsSummary symbols={dummySymbols || []} /> */}
         <News user={user} />
       </div>
     </main>

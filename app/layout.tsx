@@ -4,9 +4,22 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NProgressProvider } from "@/app/nprogress-provider";
 
 export const metadata: Metadata = {
-  title: "Ai for Investments",
+  title: "AI for Investments",
   description: "AI-powered investment portfolio manager",
   generator: "Simrat",
+  icons: [
+    {
+      rel: "icon",
+      url: "/favicon-dark.png?v=1",
+      media: "(prefers-color-scheme: dark)",
+    },
+    {
+      rel: "icon",
+      url: "/favicon-light.png?v=1",
+      media: "(prefers-color-scheme: light)",
+    },
+    { rel: "apple-touch-icon", url: "/apple-touch-icon.png" },
+  ],
 };
 
 export default function RootLayout({
@@ -22,7 +35,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system" // light | dark | system
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >

@@ -18,10 +18,13 @@ const AuthContext = createContext<AuthContextValue>({
   refresh: () => {},
 });
 
-// SWR fetcher that calls your backend directly and wraps into { user }
 const fetcher = async () => {
-  const me = await getMe(); // returns User | null from your backend
-  return { user: me as User | null };
+  try {
+    const me = await getMe();
+    return { user: (me as User | null) ?? null };
+  } catch {
+    return { user: null };
+  }
 };
 
 export function AuthProvider({
@@ -39,7 +42,7 @@ export function AuthProvider({
       // hydrate to prevent “logged-out” flash
       fallbackData: { user: initialUser ?? null },
       // tweak to taste:
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
       revalidateIfStale: false,
       // if you want to skip the first revalidation on mount:
       // revalidateOnMount: false,
@@ -47,17 +50,12 @@ export function AuthProvider({
     }
   );
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user: data?.user ?? null,
-        isLoading,
-        refresh: () => mutate(), // refetch /me
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = React.useMemo<AuthContextValue>(
+    () => ({ user: data?.user ?? null, isLoading, refresh: () => mutate() }),
+    [data?.user, isLoading, mutate]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

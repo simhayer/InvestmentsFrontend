@@ -14,7 +14,7 @@ export default function PublicShell({
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[16rem_1fr]">
+      <div className="min-h-screen bg-background text-foreground grid lg:grid-cols-[16rem_1fr]">
         <Sidebar
           user={undefined}
           sidebarOpen={sidebarOpen}

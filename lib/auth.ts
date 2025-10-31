@@ -24,7 +24,8 @@ export async function getCurrentUser(): Promise<User | null> {
 
     if (!res.ok) return null;
     return (await res.json()) as User;
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch current user", error);
     return null;
   }
 }

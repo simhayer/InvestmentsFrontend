@@ -1,0 +1,26 @@
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/dist/**": true,
+    "**/build/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+
+  // Keep TS small; let your dev server handle full-type checks
+  "typescript.validate.enable": false,
+  "typescript.tsserver.maxTsServerMemory": 1024,
+  // Use diagnostics only for opened files to avoid project-wide scans
+  "typescript.tsserver.enableProjectDiagnostics": false,
+
+  // If ESLint is heavy, scope it to the folder
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+
+  "git.autofetch": false,
+  "npm.fetchOnlinePackageInfo": false
+}

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const AUTH_COOKIE = "auth_token";
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/settings",
@@ -9,7 +10,6 @@ const PROTECTED_PREFIXES = [
   "/connections",
   "/holdings",
 ];
-const AUTH_COOKIE_CANDIDATES = ["auth_token", "session", "access_token"];
 
 function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -17,23 +17,37 @@ function isProtectedPath(pathname: string) {
   );
 }
 
-function hasAuthCookie(req: NextRequest) {
-  return AUTH_COOKIE_CANDIDATES.some((n) => !!req.cookies.get(n)?.value);
-}
+const hasAuth = (req: NextRequest) => !!req.cookies.get(AUTH_COOKIE)?.value;
 
 export function middleware(req: NextRequest) {
+  // If you have non-GET pages that need guarding (actions/forms), remove this line.
   if (req.method !== "GET") return NextResponse.next();
 
-  const { pathname } = req.nextUrl;
+  const { pathname, search } = req.nextUrl;
 
-  if (isProtectedPath(pathname) && !hasAuthCookie(req)) {
+  // 1) Guard protected routes
+  if (isProtectedPath(pathname) && !hasAuth(req)) {
     const url = req.nextUrl.clone();
-    url.pathname = "/landing";
-    url.searchParams.set("next", pathname + (req.nextUrl.search || ""));
+    url.pathname = "/login";
+    url.searchParams.set("next", pathname + (search || ""));
     return NextResponse.redirect(url);
   }
 
-  // No “auth-entry” redirect here to avoid loops.
+  // 2) Authed users hitting public /market → go to protected version
+  if (pathname === "/market" && hasAuth(req)) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/dashboard/market";
+    // use redirect so URL/pathname match authed sidebar's active state
+    return NextResponse.redirect(url);
+  }
+
+  // 3) Optional: keep authed users away from /login
+  if (pathname === "/login" && hasAuth(req)) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 

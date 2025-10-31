@@ -1,9 +1,9 @@
 // app/(public)/public-shell.tsx
 "use client";
-import { Sidebar } from "@/components/sidebar";
-import { Header } from "@/components/header";
-import { AuthProvider } from "@/lib/auth-provider";
+
 import * as React from "react";
+import SidebarPublic from "@/components/sidebar/sidebar-public";
+import { Header } from "@/components/header";
 
 export default function PublicShell({
   children,
@@ -13,18 +13,15 @@ export default function PublicShell({
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-background text-foreground grid lg:grid-cols-[16rem_1fr]">
-        <Sidebar
-          user={undefined}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-        <div className="flex flex-col min-h-screen">
-          <Header setSidebarOpen={setSidebarOpen} />
-          <main className="flex-1 p-2">{children}</main>
-        </div>
+    <div className="min-h-screen bg-background text-foreground grid lg:grid-cols-[16rem_1fr]">
+      <SidebarPublic
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+      <div className="flex flex-col min-h-screen">
+        <Header setSidebarOpen={setSidebarOpen} />
+        <main className="flex-1 p-2">{children}</main>
       </div>
-    </AuthProvider>
+    </div>
   );
 }

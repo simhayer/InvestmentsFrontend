@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { X, Home } from "lucide-react";
 import darkLogo from "@/public/logo-full-dark-nobg.png";
+import lightLogo from "@/public/logo-full-light-nobg.png";
 
 type Props = {
   sidebarOpen: boolean;
@@ -28,12 +29,21 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
   const NavList = ({ onItemClick }: { onItemClick?: () => void }) => (
     <nav className="p-4 space-y-2">
       <div className="mb-6 flex items-center gap-2">
+        {/* Show in light mode */}
         <Image
           src={darkLogo}
           alt="Logo"
           height={32}
           priority
-          className="block"
+          className="block dark:hidden"
+        />
+        {/* Show in dark mode */}
+        <Image
+          src={lightLogo}
+          alt="Logo"
+          height={32}
+          priority
+          className="hidden dark:block"
         />
       </div>
 

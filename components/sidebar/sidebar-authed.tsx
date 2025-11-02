@@ -9,6 +9,7 @@ import { X, Home, BarChart3, Link2, BarChart2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-provider";
 import darkLogo from "@/public/logo-full-dark-nobg.png";
+import lightLogo from "@/public/logo-full-light-nobg.png";
 
 type Props = {
   sidebarOpen: boolean;
@@ -36,10 +37,12 @@ function NavList({
 }) {
   return (
     <nav className="p-4 space-y-2">
-      <div className="mb-6 flex items-center gap-2">
+      <div className="mb-6 flex items-center gap-2 dark:hidden">
         <Image src={darkLogo} alt="Logo" height={32} priority />
       </div>
-
+      <div className="mb-6 hidden dark:flex items-center gap-2">
+        <Image src={lightLogo} alt="Logo" height={32} priority />
+      </div>
       {NAV_ITEMS.map((item) => {
         const active =
           pathname === item.href || pathname?.startsWith(item.href + "/");
@@ -103,9 +106,6 @@ function SidebarAuthedImpl({ sidebarOpen, setSidebarOpen }: Props) {
           aria-modal="true"
         >
           <div className="flex h-16 items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <Image src={darkLogo} alt="Logo" height={24} priority />
-            </div>
             <button
               aria-label="Close sidebar"
               className="inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"

@@ -12,18 +12,19 @@ import type { Connection } from "@/types/connection";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { keysToCamel } from "@/utils/format";
+import { useAuth } from "@/lib/auth-provider";
 /* ---------- component ---------- */
 
 type ConnectionsProps = {
-  user: User;
   onRemove?: (id: string) => void;
 };
 
-export function Connections({ user, onRemove }: ConnectionsProps) {
+export function Connections({ onRemove }: ConnectionsProps) {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
 
   const hasConnections = useMemo(() => connections.length > 0, [connections]);
 
@@ -53,14 +54,14 @@ export function Connections({ user, onRemove }: ConnectionsProps) {
   const onSyncNow = useCallback(async () => {
     try {
       setRefreshing(true);
-      await getPlaidInvestments(user.id);
+      await getPlaidInvestments();
       await loadConnections(); // just to update the timestamp
     } catch (e) {
       console.error("Failed to get investments:", e);
     } finally {
       setRefreshing(false);
     }
-  }, [user.id, loadConnections]);
+  }, [loadConnections]);
 
   const handlePlaidSuccess = useCallback(async () => {
     await Promise.resolve(loadConnections());
@@ -98,7 +99,7 @@ export function Connections({ user, onRemove }: ConnectionsProps) {
                 Retry
               </button>
               <PlaidLinkButton
-                userId={user.id}
+                userId={user?.id || ""}
                 onSuccess={handlePlaidSuccess}
               />
             </div>
@@ -130,7 +131,7 @@ export function Connections({ user, onRemove }: ConnectionsProps) {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-3 pb-6">
               <PlaidLinkButton
-                userId={user.id}
+                userId={user?.id || ""}
                 onSuccess={handlePlaidSuccess}
               />
               <p className="text-xs text-muted-foreground">
@@ -196,7 +197,10 @@ export function Connections({ user, onRemove }: ConnectionsProps) {
               Link more brokerages, banks, and exchanges to keep your portfolio
               in sync.
             </p>
-            <PlaidLinkButton userId={user.id} onSuccess={handlePlaidSuccess} />
+            <PlaidLinkButton
+              userId={user?.id || ""}
+              onSuccess={handlePlaidSuccess}
+            />
           </CardContent>
         </Card>
       </div>

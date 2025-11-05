@@ -40,6 +40,7 @@ export async function register(email: string, password: string) {
 }
 
 export async function getMe(): Promise<Me> {
+  if (!API_URL) return null;
   const res = await fetch(
     `${API_URL}/me`,
     withCreds({ method: "GET", cache: "no-store" })

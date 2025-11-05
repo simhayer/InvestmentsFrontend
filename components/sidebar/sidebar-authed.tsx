@@ -18,7 +18,7 @@ type Props = {
 
 const NAV_ITEMS = [
   { name: "Market Overview", href: "/dashboard/market", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home, exact: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Holdings", href: "/holdings", icon: BarChart2 },
   { name: "Connections", href: "/connections", icon: Link2 },
@@ -26,6 +26,13 @@ const NAV_ITEMS = [
 
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
+}
+
+function isActive(pathname: string | null, href: string, exact?: boolean) {
+  if (!pathname) return false;
+  return exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + "/");
 }
 
 function NavList({
@@ -43,27 +50,28 @@ function NavList({
       <div className="mb-6 hidden dark:flex items-center gap-2">
         <Image src={lightLogo} alt="Logo" height={32} priority />
       </div>
-      {NAV_ITEMS.map((item) => {
-        const active =
-          pathname === item.href || pathname?.startsWith(item.href + "/");
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => onItemClick?.()}
-            aria-current={active ? "page" : undefined}
-            className={cx(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.name}</span>
-          </Link>
-        );
-      })}
+      <div className="pt-4 space-y-1">
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(pathname, item.href, (item as any).exact);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => onItemClick?.()}
+              aria-current={active ? "page" : undefined}
+              className={cx(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

@@ -3,11 +3,11 @@ import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortfolioOverview } from "@/components/dashboard/portfolio-overview";
 import { AddInvestmentCard } from "./add-investment-card";
-import type { User } from "@/types/user";
 import { AIInsights } from "../ai/AIInsights";
 import { Holdings } from "@/components/holdings";
+import { useAuth } from "@/lib/auth-provider";
 
-export function Dashboard({ user }: { user: User }) {
+export function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [investments, setInvestments] = useState<any[]>([]);
 

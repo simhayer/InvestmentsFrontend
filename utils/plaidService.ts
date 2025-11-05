@@ -26,7 +26,9 @@ interface ExchangePayload {
   institution_name: string | null;
 }
 
-export async function exchangePublicToken(payload: ExchangePayload): Promise<void> {
+export async function exchangePublicToken(
+  payload: ExchangePayload
+): Promise<void> {
   // Step 1: Exchange token
   const res = await fetch(`${API_URL}/api/plaid/exchange-token`, {
     method: "POST",
@@ -58,21 +60,20 @@ export async function exchangePublicToken(payload: ExchangePayload): Promise<voi
   console.log("Synced holdings:", data.count);
 }
 
-export async function getPlaidInvestments(userId: string) {
-  const res = await fetch(
-    `${API_URL}/api/plaid/investments?user_id=${encodeURIComponent(userId)}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    }
-  );
+export async function getPlaidInvestments() {
+  const res = await fetch(`${API_URL}/api/plaid/investments`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
 
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData?.detail || `Failed to get investments: ${res.status}`);
+    throw new Error(
+      errorData?.detail || `Failed to get investments: ${res.status}`
+    );
   }
 
   return res.json();

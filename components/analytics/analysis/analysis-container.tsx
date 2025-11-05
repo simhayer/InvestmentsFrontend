@@ -1,0 +1,384 @@
+"use client";
+
+import * as React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Brain,
+  Loader2,
+  ArrowRight,
+  Newspaper,
+  CalendarDays,
+  Target,
+  ShieldAlert,
+  AlertTriangle,
+  Activity,
+} from "lucide-react";
+import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
+
+import type {
+  PerformanceAnalysis,
+  SentimentBlock,
+  PredictionsBlock,
+} from "@/types/portfolio-ai";
+
+import { SummaryTab } from "./tabs/SummaryTab";
+import { NewsTab } from "./tabs/NewsTab";
+import { CatalystsTab } from "./tabs/CatalystsTab";
+import { ScenariosTab } from "./tabs/ScenariosTab";
+import { ActionsTab } from "./tabs/ActionsTab";
+import { RisksTab } from "./tabs/RisksTab";
+import { AlertsTab } from "./tabs/AlertsTab";
+import { SentimentTab } from "./tabs/SentimentTab";
+import { PerformanceTab } from "./tabs/PerformanceTab";
+import { PredictionsTab } from "./tabs/PredictionsTab";
+
+export function AnalysisContainer() {
+  const { data, loading, error, refetching, refetch } = usePortfolioAi(7);
+
+  const latest = data?.latest_developments ?? [];
+  const catalysts = data?.catalysts ?? [];
+  const actions = data?.actions ?? [];
+  const risks = data?.risks_list ?? [];
+  const alerts = data?.alerts ?? [];
+  const scenarios = data?.scenarios;
+  const hasScenarios =
+    !!scenarios && (scenarios.bull || scenarios.base || scenarios.bear);
+
+  const performance = data?.performance_analysis as
+    | PerformanceAnalysis
+    | undefined;
+  const sentiment = data?.sentiment as SentimentBlock | undefined;
+  const predictions = data?.predictions as PredictionsBlock | undefined;
+  const predictionsCount = predictions?.assets?.length ?? 0;
+
+  const totalItems =
+    latest.length + catalysts.length + actions.length + risks.length;
+
+  const defaultTab = React.useMemo(() => {
+    if (data?.summary) return "summary";
+    if (latest.length) return "news";
+    if (catalysts.length) return "catalysts";
+    if (performance) return "performance";
+    if (sentiment) return "sentiment";
+    if (predictionsCount) return "predictions";
+    if (hasScenarios) return "scenarios";
+    if (actions.length) return "actions";
+    if (risks.length) return "risks";
+    if (alerts.length) return "alerts";
+    return "summary";
+  }, [
+    data?.summary,
+    latest.length,
+    catalysts.length,
+    performance,
+    sentiment,
+    predictionsCount,
+    hasScenarios,
+    actions.length,
+    risks.length,
+    alerts.length,
+  ]);
+
+  const [active, setActive] = React.useState<string>(defaultTab);
+  React.useEffect(() => setActive(defaultTab), [defaultTab]);
+
+  // Keep mobile anchored-left; scroller is the WRAPPER, not the TabsList.
+  const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      el.scrollTo({ left: 0, behavior: "auto" });
+    }
+  }, [active]);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <CardTitle>AI Insights</CardTitle>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {refetching ? (
+              <Badge variant="secondary" className="gap-1">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Updating…
+              </Badge>
+            ) : (
+              <Badge variant="secondary">{totalItems} items</Badge>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading || refetching}
+              className="gap-1"
+            >
+              {refetching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Refreshing
+                </>
+              ) : (
+                <>
+                  Refresh <ArrowRight className="h-3.5 w-3.5" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <CardDescription className="mt-2">
+          Narrative, events, scenarios, and action ideas tailored to your
+          holdings
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Loading */}
+        {loading && (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-lg border p-4 space-y-2"
+              >
+                <div className="h-4 w-1/5 bg-muted rounded" />
+                <div className="h-3 w-4/5 bg-muted rounded" />
+                <div className="h-3 w-2/5 bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error */}
+        {!loading && error && (
+          <div className="rounded-lg border p-4">
+            <p className="text-sm text-destructive">
+              {error || "Failed to load AI insights."}
+            </p>
+            <Button
+              onClick={refetch}
+              size="sm"
+              variant="outline"
+              className="mt-2"
+            >
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {/* Tabs */}
+        {!loading && !error && (
+          <Tabs
+            value={active}
+            onValueChange={(v) => v && setActive(v)}
+            className="w-full"
+          >
+            {/* Sticky header with OUTER SCROLLER to avoid clipping */}
+            <div className="sticky -top-0.5 z-10 bg-card/95 backdrop-blur-sm border-b">
+              <div
+                ref={scrollRef}
+                className={[
+                  "w-full overflow-x-auto",
+                  "[-webkit-overflow-scrolling:touch]", // iOS smooth
+                  "scroll-smooth scrollbar-hide",
+                ].join(" ")}
+              >
+                {/* Left spacer prevents first tab from touching edge / getting clipped */}
+                <div className="inline-flex min-w-max items-center gap-1 px-3 py-2">
+                  <span aria-hidden className="w-1 shrink-0" />
+                  <TabsList
+                    className={[
+                      // keep TabsList purely as the row; no overflow here
+                      "inline-flex items-center gap-1",
+                      "bg-transparent p-0 text-foreground",
+                    ].join(" ")}
+                  >
+                    <TabsTrigger
+                      value="summary"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Summary
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="news"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <Newspaper className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      News
+                      {latest.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {latest.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="catalysts"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Catalysts
+                      {catalysts.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {catalysts.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="scenarios"
+                      disabled={!hasScenarios}
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10 disabled:opacity-50"
+                    >
+                      <Target className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Scenarios
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="actions"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <Target className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Actions
+                      {actions.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {actions.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="risks"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <ShieldAlert className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Risks
+                      {risks.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {risks.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="performance"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      Performance
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="sentiment"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      Sentiment
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="predictions"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      Predictions
+                      {predictionsCount > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {predictionsCount}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                      value="alerts"
+                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                      Alerts
+                      {alerts.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {alerts.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                  {/* Right spacer keeps last tab clear of edge */}
+                  <span aria-hidden className="w-1 shrink-0" />
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <TabsContent value="summary" className="mt-4">
+              <SummaryTab
+                summary={data?.summary}
+                sectionConfidence={data?.section_confidence}
+              />
+            </TabsContent>
+
+            <TabsContent value="news" className="mt-4">
+              <NewsTab items={latest} />
+            </TabsContent>
+
+            <TabsContent value="catalysts" className="mt-4">
+              <CatalystsTab
+                items={catalysts.map((c) => ({
+                  ...c,
+                  expected_direction:
+                    c.expected_direction === "unclear"
+                      ? "neutral"
+                      : c.expected_direction,
+                }))}
+              />
+            </TabsContent>
+
+            <TabsContent value="scenarios" className="mt-4">
+              <ScenariosTab scenarios={scenarios} />
+            </TabsContent>
+
+            <TabsContent value="actions" className="mt-4">
+              <ActionsTab items={actions} />
+            </TabsContent>
+
+            <TabsContent value="risks" className="mt-4">
+              <RisksTab items={risks} />
+            </TabsContent>
+
+            <TabsContent value="performance" className="mt-4">
+              <PerformanceTab data={performance} />
+            </TabsContent>
+
+            <TabsContent value="sentiment" className="mt-4">
+              <SentimentTab data={sentiment} />
+            </TabsContent>
+
+            <TabsContent value="predictions" className="mt-4">
+              <PredictionsTab data={predictions} />
+            </TabsContent>
+
+            <TabsContent value="alerts" className="mt-4">
+              <AlertsTab items={alerts} />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Disclaimer */}
+        {!loading && !error && data?.disclaimer && (
+          <p className="text-[11px] text-muted-foreground">{data.disclaimer}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

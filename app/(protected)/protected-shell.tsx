@@ -1,16 +1,15 @@
-// app/(protected)/protected-shell.tsx  (Server component)
-import { getCurrentUser } from "@/lib/auth";
+// app/(protected)/protected-shell.tsx  (SERVER)
 import { AuthProvider } from "@/lib/auth-provider";
-import { ProtectedClientShell } from "./protected-client-shell"; // ⬅️ separate file
+import { ProtectedClientShell } from "./protected-client-shell";
+import type { User } from "@/types/user";
 
-export default async function ProtectedShell({
+export default function ProtectedShell({
+  user,
   children,
 }: {
+  user: User;
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-
-  console.log("ProtectedShell user:", user);
   return (
     <AuthProvider initialUser={user}>
       <ProtectedClientShell>{children}</ProtectedClientShell>

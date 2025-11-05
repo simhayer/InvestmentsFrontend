@@ -1,14 +1,9 @@
 "use client";
 
 import { useHolding } from "@/hooks/use-holdings";
-import { User } from "@/types/user";
 import { Skeleton } from "../ui/skeleton";
 
-interface Props {
-  user: User;
-}
-
-export function Holdings({ user }: Props) {
+export function Holdings() {
   const { holdings, loading } = useHolding();
 
   return (

@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import type { User } from "@/types/user";
 import { AIInsights } from "../ai/AIInsights";
 import { News } from "./news";
 import { PortfolioNewsSummary } from "./portfolio-news-summary";
+import { AnalysisContainer } from "./analysis/analysis-container";
 
-export function Analytics({ user }: { user: User }) {
+export function Analytics() {
   const [refreshing, setRefreshing] = useState(false);
   const dummySymbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"];
 
@@ -20,9 +20,10 @@ export function Analytics({ user }: { user: User }) {
           refreshing ? "opacity-60 pointer-events-none" : ""
         }`}
       >
-        <AIInsights />
+        {/* <AIInsights /> */}
+        <AnalysisContainer />
         {/* <PortfolioNewsSummary symbols={dummySymbols || []} /> */}
-        <News user={user} />
+        <News />
       </div>
     </main>
   );

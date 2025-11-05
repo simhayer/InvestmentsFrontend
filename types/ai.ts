@@ -25,14 +25,14 @@ export type Scenario = {
 };
 
 export type ForecastEvent = {
-  date: string;              // ISO-8601
+  date: string; // ISO-8601
   event: string;
   why: string;
   url?: string;
 };
 
 export type ForecastAnalysis = {
-  confidence: number;        // 0..1
+  confidence: number; // 0..1
   scenarios: Scenario[];
   events: ForecastEvent[];
   notes?: string[];
@@ -88,7 +88,6 @@ export const isHoldingAnalysis = (v: any): v is HoldingAIAnalysis => {
     typeof v.disclaimer === "string"
   );
 };
-
 
 export type HoldingAIAnalysis = {
   symbol: string;

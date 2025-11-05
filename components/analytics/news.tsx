@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { User } from "@/types/user";
 import { fetchNewsForUser } from "@/hooks/use-news";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,7 +96,7 @@ function NewsCard({ item, symbol }: { item: NewsItem; symbol: string }) {
   );
 }
 
-export function News({ user }: { user: User }) {
+export function News() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

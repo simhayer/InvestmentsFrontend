@@ -40,9 +40,11 @@ import { AlertsTab } from "./tabs/AlertsTab";
 import { SentimentTab } from "./tabs/SentimentTab";
 import { PerformanceTab } from "./tabs/PerformanceTab";
 import { PredictionsTab } from "./tabs/PredictionsTab";
+import { PortfolioAnalyticsLoading } from "../portfolio-analytics-loading";
 
 export function AnalysisContainer() {
-  const { data, loading, error, refetching, refetch } = usePortfolioAi(7);
+  // ⬇️ meta now available from hook
+  const { data, meta, loading, error, refetching, refetch } = usePortfolioAi(7);
 
   const latest = data?.latest_developments ?? [];
   const catalysts = data?.catalysts ?? [];
@@ -101,6 +103,14 @@ export function AnalysisContainer() {
     }
   }, [active]);
 
+  // meta conveniences
+  const cached = !!meta?.cached;
+  const ttl = meta?.ttlSeconds ?? 0;
+  const nextUpdateIn = meta?.nextUpdateIn ?? "now";
+  const hasWarnings = (meta?.warnings?.length ?? 0) > 0;
+  const canRefreshNow = meta?.canRefreshNow ?? true;
+  const showForce = meta?.showForce ?? false;
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -117,13 +127,38 @@ export function AnalysisContainer() {
                 Updating…
               </Badge>
             ) : (
-              <Badge variant="secondary">{totalItems} items</Badge>
+              <>
+                {cached && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1"
+                    title={
+                      meta?.cachedAt ? `Cached at ${meta.cachedAt}` : undefined
+                    }
+                  >
+                    Cached • next in {nextUpdateIn}
+                  </Badge>
+                )}
+                {hasWarnings && (
+                  <Badge variant="destructive" className="gap-1">
+                    Partial
+                  </Badge>
+                )}
+                <Badge variant="secondary">{totalItems} items</Badge>
+              </>
             )}
+
+            {/* Normal refresh respects TTL; disabled until window expires */}
             <Button
               variant="outline"
               size="sm"
-              onClick={refetch}
-              disabled={loading || refetching}
+              onClick={() => refetch(false)}
+              disabled={loading || refetching || !canRefreshNow}
+              title={
+                !canRefreshNow
+                  ? `Next automatic refresh in ${nextUpdateIn}`
+                  : "Refresh now"
+              }
               className="gap-1"
             >
               {refetching ? (
@@ -136,18 +171,39 @@ export function AnalysisContainer() {
                 </>
               )}
             </Button>
+
+            {/* Optional: force refresh (bypass TTL) for devs/admins */}
+            {showForce && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetch(true)}
+                disabled={loading || refetching}
+                className="gap-1"
+                title="Force recompute (bypass daily limit)"
+              >
+                Force
+              </Button>
+            )}
           </div>
         </div>
 
         <CardDescription className="mt-2">
           Narrative, events, scenarios, and action ideas tailored to your
-          holdings
+          holdings.{" "}
+          {cached ? (
+            <span className="text-muted-foreground">
+              Next automatic update in {nextUpdateIn}.
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Freshly computed.</span>
+          )}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Loading */}
-        {loading && (
+        {/* {loading && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div
@@ -160,7 +216,9 @@ export function AnalysisContainer() {
               </div>
             ))}
           </div>
-        )}
+        )} */}
+
+        {loading && <PortfolioAnalyticsLoading estimatedMs={20000} />}
 
         {/* Error */}
         {!loading && error && (
@@ -169,7 +227,7 @@ export function AnalysisContainer() {
               {error || "Failed to load AI insights."}
             </p>
             <Button
-              onClick={refetch}
+              onClick={() => refetch(false)}
               size="sm"
               variant="outline"
               className="mt-2"
@@ -177,6 +235,18 @@ export function AnalysisContainer() {
               Try again
             </Button>
           </div>
+        )}
+
+        {/* Optional partial warning banner */}
+        {!loading && !error && hasWarnings && (
+          <div className="rounded-md border p-3 text-sm">
+            Some insight layers were unavailable. We’ll retry on the next
+            refresh.
+          </div>
+        )}
+
+        {refetching && !loading && (
+          <PortfolioAnalyticsLoading subtle estimatedMs={20000} />
         )}
 
         {/* Tabs */}
@@ -192,16 +262,14 @@ export function AnalysisContainer() {
                 ref={scrollRef}
                 className={[
                   "w-full overflow-x-auto",
-                  "[-webkit-overflow-scrolling:touch]", // iOS smooth
+                  "[-webkit-overflow-scrolling:touch]",
                   "scroll-smooth scrollbar-hide",
                 ].join(" ")}
               >
-                {/* Left spacer prevents first tab from touching edge / getting clipped */}
                 <div className="inline-flex min-w-max items-center gap-1 px-3 py-2">
                   <span aria-hidden className="w-1 shrink-0" />
                   <TabsList
                     className={[
-                      // keep TabsList purely as the row; no overflow here
                       "inline-flex items-center gap-1",
                       "bg-transparent p-0 text-foreground",
                     ].join(" ")}
@@ -314,7 +382,6 @@ export function AnalysisContainer() {
                       )}
                     </TabsTrigger>
                   </TabsList>
-                  {/* Right spacer keeps last tab clear of edge */}
                   <span aria-hidden className="w-1 shrink-0" />
                 </div>
               </div>

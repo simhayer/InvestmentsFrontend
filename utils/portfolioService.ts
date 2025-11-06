@@ -2,30 +2,7 @@
 
 import { Connection } from "@/types/connection";
 import { Holding } from "@/types/holding";
-
-export type AllocationItem = {
-  key: string;
-  value: number;
-  weight: number | null; // percentage (0-100) or null when not computable
-};
-
-export type PortfolioSummary = {
-  asOf: number; // unix seconds
-  currency: "USD" | "CAD";
-  positionsCount: number;
-  marketValue: number; // total
-  costBasis: number; // total
-  unrealizedPl: number | null; // abs
-  unrealizedPlPct: number | null;
-  dayPl: number | null; // abs
-  dayPlPct: number | null;
-  allocations: {
-    byType: AllocationItem[];
-    byAccount: AllocationItem[];
-  };
-  topPositions: Holding[];
-  connections: Connection[];
-};
+import { PortfolioSummary } from "@/types/portfolio-simmary";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 

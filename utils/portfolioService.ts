@@ -2,7 +2,7 @@
 
 import { Connection } from "@/types/connection";
 import { Holding } from "@/types/holding";
-import { PortfolioSummary } from "@/types/portfolio-simmary";
+import { PortfolioSummary } from "@/types/portfolio-summary";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 

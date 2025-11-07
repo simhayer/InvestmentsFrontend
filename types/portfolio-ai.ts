@@ -51,18 +51,6 @@ export interface RiskItem {
   assets_affected?: string[];
 }
 
-export interface Explainability {
-  assumptions?: string[];
-  confidence_overall?: number; // 0..1
-  limitations?: string[];
-}
-
-export interface SectionConfidence {
-  scenarios?: number;
-  news?: number;
-  actions?: number;
-}
-
 export interface PortfolioAiData {
   latest_developments?: LatestDevelopment[];
   catalysts?: Catalyst[];
@@ -70,13 +58,9 @@ export interface PortfolioAiData {
   actions?: ActionItem[];
   alerts?: { condition: string; status?: AlertStatus }[];
   risks_list?: RiskItem[];
-  explainability?: Explainability;
-  section_confidence?: SectionConfidence;
   summary?: string;
   disclaimer?: string;
   // optional v2 sections
-  performance_analysis?: PerformanceAnalysis;
-  sentiment?: SentimentBlock;
   predictions?: PredictionsBlock;
 }
 
@@ -92,25 +76,6 @@ export type PortfolioAiResponse =
 
 // v2
 export type Direction = "up" | "down" | "neutral";
-
-export interface PerformanceAnalysis {
-  summary?: string;
-  leaders?: string[];
-  laggards?: string[];
-  notable_shifts?: string[];
-}
-
-export interface SentimentDriver {
-  theme: string;
-  tone?: "positive" | "neutral" | "negative";
-  impact?: string;
-}
-export interface SentimentBlock {
-  overall_sentiment?: "bullish" | "neutral" | "bearish";
-  sources_considered?: string[];
-  drivers?: SentimentDriver[];
-  summary?: string;
-}
 
 export interface PredictionAsset {
   symbol: string;

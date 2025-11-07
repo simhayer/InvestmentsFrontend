@@ -96,29 +96,15 @@ export function AnalysisSummaryCard() {
           </>
         ) : (
           <>
-            <Link href="/analysis" className="mr-auto">
+            <div className="text-m text-muted-foreground mr-auto">
+              {data?.summary ||
+                "Your portfolio has been analyzed. View the full report for details."}
+            </div>
+            <Link href="/analytics" className="mr-auto">
               <Button className="gap-1">
                 View full analysis <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
-            <Button
-              onClick={() => refetch(false)}
-              disabled={loading || refetching || !canRefreshNow}
-              variant="outline"
-              className="gap-1"
-              title={canRefreshNow ? "Refresh now" : `Next in ${nextIn}`}
-            >
-              Refresh
-            </Button>
-            {showForce && (
-              <Button
-                onClick={() => refetch(true)}
-                disabled={loading || refetching}
-                variant="ghost"
-              >
-                Force
-              </Button>
-            )}
           </>
         )}
       </CardContent>

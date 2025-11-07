@@ -2,17 +2,13 @@
 "use client";
 
 import {
-  PerformanceAnalysis,
   PredictionsBlock,
-  SentimentBlock,
   PortfolioAiData,
   LatestDevelopment,
   Catalyst,
   Scenarios,
   ActionItem,
   RiskItem,
-  Explainability,
-  SectionConfidence,
 } from "@/types/portfolio-ai";
 import { useEffect, useRef, useState, useCallback } from "react";
 
@@ -137,20 +133,8 @@ export function usePortfolioAi(daysOfNews = 7) {
             actions: arr<ActionItem>(d.actions),
             alerts: arr(d.alerts),
             risks_list: arr<RiskItem>(d.risks_list),
-            explainability: isRecord(d.explainability)
-              ? (d.explainability as Explainability)
-              : {},
-            section_confidence: isRecord(d.section_confidence)
-              ? (d.section_confidence as SectionConfidence)
-              : {},
             summary: typeof d.summary === "string" ? d.summary : "",
             disclaimer: typeof d.disclaimer === "string" ? d.disclaimer : "",
-            performance_analysis: isRecord(d.performance_analysis)
-              ? (d.performance_analysis as PerformanceAnalysis)
-              : {},
-            sentiment: isRecord(d.sentiment)
-              ? (d.sentiment as SentimentBlock)
-              : {},
             predictions: isRecord(d.predictions)
               ? (d.predictions as PredictionsBlock)
               : {},

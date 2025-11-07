@@ -98,6 +98,10 @@ export function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/dashboard/market";
     return NextResponse.redirect(url);
+  } else if (pathname.startsWith("/investment/") && isAuthed) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname.replace("/investment/", "/dashboard/symbol/");
+    return NextResponse.redirect(url);
   }
 
   // 3) Keep authed users away from /login

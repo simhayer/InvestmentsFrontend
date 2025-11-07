@@ -7,7 +7,7 @@ import { keysToCamel } from "@/utils/format";
 import { toast } from "@/components/ui/use-toast";
 import { TopHoldings } from "@/components/holdings/top-holdings";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PortfolioSummary } from "@/types/portfolio-simmary";
+import { PortfolioSummary } from "@/types/portfolio-summary";
 import {
   Card,
   CardHeader,
@@ -99,7 +99,7 @@ export function PortfolioOverview({ currency = "USD" }: Props) {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle>Portfolio</CardTitle>
+            <CardTitle></CardTitle>
             <div className="flex items-center gap-2">
               <PriceStatusBadge status={(data as any).priceStatus} />
               <Badge variant="secondary">
@@ -108,9 +108,6 @@ export function PortfolioOverview({ currency = "USD" }: Props) {
               <Badge variant="outline">{ccy}</Badge>
             </div>
           </div>
-          <CardDescription>
-            Market value, returns, and allocations
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -151,6 +148,9 @@ export function PortfolioOverview({ currency = "USD" }: Props) {
         </CardContent>
       </Card>
 
+      {/* Top Holdings */}
+      <TopHoldings holdings={(data as any).topPositions} loading={loading} />
+
       {/* Connections */}
       <Card>
         <CardHeader className="pb-2">
@@ -189,9 +189,6 @@ export function PortfolioOverview({ currency = "USD" }: Props) {
           })}
         </CardContent>
       </Card>
-
-      {/* Top Holdings */}
-      <TopHoldings holdings={(data as any).topPositions} loading={loading} />
     </section>
   );
 }

@@ -24,11 +24,7 @@ import {
 } from "lucide-react";
 import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 
-import type {
-  PerformanceAnalysis,
-  SentimentBlock,
-  PredictionsBlock,
-} from "@/types/portfolio-ai";
+import type { PredictionsBlock } from "@/types/portfolio-ai";
 
 import { SummaryTab } from "./tabs/SummaryTab";
 import { NewsTab } from "./tabs/NewsTab";
@@ -37,8 +33,6 @@ import { ScenariosTab } from "./tabs/ScenariosTab";
 import { ActionsTab } from "./tabs/ActionsTab";
 import { RisksTab } from "./tabs/RisksTab";
 import { AlertsTab } from "./tabs/AlertsTab";
-import { SentimentTab } from "./tabs/SentimentTab";
-import { PerformanceTab } from "./tabs/PerformanceTab";
 import { PredictionsTab } from "./tabs/PredictionsTab";
 import { PortfolioAnalyticsLoading } from "../portfolio-analytics-loading";
 
@@ -55,10 +49,6 @@ export function AnalysisContainer() {
   const hasScenarios =
     !!scenarios && (scenarios.bull || scenarios.base || scenarios.bear);
 
-  const performance = data?.performance_analysis as
-    | PerformanceAnalysis
-    | undefined;
-  const sentiment = data?.sentiment as SentimentBlock | undefined;
   const predictions = data?.predictions as PredictionsBlock | undefined;
   const predictionsCount = predictions?.assets?.length ?? 0;
 
@@ -69,8 +59,6 @@ export function AnalysisContainer() {
     if (data?.summary) return "summary";
     if (latest.length) return "news";
     if (catalysts.length) return "catalysts";
-    if (performance) return "performance";
-    if (sentiment) return "sentiment";
     if (predictionsCount) return "predictions";
     if (hasScenarios) return "scenarios";
     if (actions.length) return "actions";
@@ -81,8 +69,6 @@ export function AnalysisContainer() {
     data?.summary,
     latest.length,
     catalysts.length,
-    performance,
-    sentiment,
     predictionsCount,
     hasScenarios,
     actions.length,
@@ -344,20 +330,6 @@ export function AnalysisContainer() {
                     </TabsTrigger>
 
                     <TabsTrigger
-                      value="performance"
-                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
-                    >
-                      Performance
-                    </TabsTrigger>
-
-                    <TabsTrigger
-                      value="sentiment"
-                      className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
-                    >
-                      Sentiment
-                    </TabsTrigger>
-
-                    <TabsTrigger
                       value="predictions"
                       className="min-w-max rounded-full px-3 py-2 text-xs md:text-sm data-[state=active]:bg-primary/10"
                     >
@@ -389,10 +361,7 @@ export function AnalysisContainer() {
 
             {/* Content */}
             <TabsContent value="summary" className="mt-4">
-              <SummaryTab
-                summary={data?.summary}
-                sectionConfidence={data?.section_confidence}
-              />
+              <SummaryTab summary={data?.summary} />
             </TabsContent>
 
             <TabsContent value="news" className="mt-4">
@@ -421,14 +390,6 @@ export function AnalysisContainer() {
 
             <TabsContent value="risks" className="mt-4">
               <RisksTab items={risks} />
-            </TabsContent>
-
-            <TabsContent value="performance" className="mt-4">
-              <PerformanceTab data={performance} />
-            </TabsContent>
-
-            <TabsContent value="sentiment" className="mt-4">
-              <SentimentTab data={sentiment} />
             </TabsContent>
 
             <TabsContent value="predictions" className="mt-4">

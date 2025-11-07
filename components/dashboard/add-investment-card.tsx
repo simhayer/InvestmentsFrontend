@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Investment } from "@/types/holding";
+import { Holding } from "@/types/holding";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 type InvestmentFormData = {
   symbol: string;
   name: string;
-  type: Investment["type"];
+  type: Holding["type"];
   quantity: string;
   purchasePrice: string;
   currentPrice: number;
@@ -32,7 +32,7 @@ type InvestmentFormData = {
 };
 
 interface Props {
-  onAdd: (investment: Omit<Investment, "id">) => void;
+  onAdd: (investment: Omit<Holding, "id">) => void;
   onCancel: () => void;
 }
 
@@ -114,7 +114,7 @@ export function AddInvestmentCard({ onAdd, onCancel }: Props) {
 
     const parsedPurchasePrice = parseFloat(formData.purchasePrice);
 
-    const investment: Investment = {
+    const investment: Holding = {
       ...formData,
       id: Date.now().toString(),
       symbol: formData.symbol.toUpperCase(),

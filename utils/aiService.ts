@@ -1,7 +1,7 @@
 // utils/aiService.ts
-import { Investment } from "@/types/holding";
+import { Holding } from "@/types/holding";
 
-export async function getAiInsight(investment: Investment): Promise<string> {
+export async function getAiInsight(holding: Holding): Promise<string> {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/ai/analyze-holding`,
@@ -11,14 +11,14 @@ export async function getAiInsight(investment: Investment): Promise<string> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          symbol: investment.symbol,
-          name: investment.name,
-          quantity: investment.quantity,
-          purchase_price: investment.avgPrice,
-          current_price: investment.currentPrice,
-          type: investment.type,
-          institution: investment.institution || "Unknown",
-          currency: investment.currency || "USD",
+          symbol: holding.symbol,
+          name: holding.name,
+          quantity: holding.quantity,
+          purchase_price: holding.avgPrice,
+          current_price: holding.currentPrice,
+          type: holding.type,
+          institution: holding.institution || "Unknown",
+          currency: holding.currency || "USD",
         }),
         credentials: "include",
       }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link2, RefreshCcw } from "lucide-react";
 import { PlaidLinkButton } from "../plaid/plaid-link-button";
-import type { User } from "@/types/user";
 import { getPlaidInvestments } from "@/utils/plaidService";
 import { getInstitutions } from "@/utils/investmentsService";
 import { ConnectionItem } from "./connection-item";

@@ -44,12 +44,6 @@ function NavList({
 }) {
   return (
     <nav className="p-4 space-y-2">
-      <div className="mb-6 flex items-center gap-2 dark:hidden">
-        <Image src={darkLogo} alt="Logo" height={32} priority />
-      </div>
-      <div className="mb-6 hidden dark:flex items-center gap-2">
-        <Image src={lightLogo} alt="Logo" height={32} priority />
-      </div>
       <div className="pt-4 space-y-1">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, (item as any).exact);
@@ -122,6 +116,25 @@ function SidebarAuthedImpl({ sidebarOpen, setSidebarOpen }: Props) {
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          <button className="mb-6 flex items-center gap-2">
+            {/* Show in light mode */}
+            <Image
+              src={darkLogo}
+              alt="Logo"
+              height={32}
+              priority
+              className="block dark:hidden"
+            />
+            {/* Show in dark mode */}
+            <Image
+              src={lightLogo}
+              alt="Logo"
+              height={32}
+              priority
+              className="hidden dark:block"
+            />
+          </button>
 
           <NavList
             pathname={pathname}

@@ -1,8 +1,7 @@
 // app/login/login-client.tsx
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useSWRConfig } from "swr";
+import { useRouter } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,31 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { getMe } from "@/utils/authService";
-import type { User } from "@/types/user";
 
 export default function LoginClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { mutate } = useSWRConfig();
-  const { toast } = useToast();
-
-  const handleLoginSuccess = async (_user: User | null) => {
-    // 1) Warm global auth cache so UI flips immediately
-    const me = (await getMe().catch(() => null)) as User | null;
-    await mutate("auth:/me", { user: me }, false);
-
-    toast({
-      title: "Welcome back!",
-      description: "You have successfully logged in.",
-    });
-
-    // 2) Navigate to next (or /dashboard) and force RSC refresh
-    const next = searchParams.get("next") || "/dashboard";
-    router.replace(next);
-    router.refresh(); // ← re-run server components; /login will redirect away if authed
-  };
 
   return (
     <div className="min-h-full flex items-center justify-center p-4">
@@ -46,7 +23,7 @@ export default function LoginClient() {
           <CardDescription>Access your investment dashboard</CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm onSuccess={handleLoginSuccess} />
+          <LoginForm />
           <div className="mt-4 text-center">
             <Button
               variant="link"

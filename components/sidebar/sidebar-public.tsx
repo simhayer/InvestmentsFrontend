@@ -28,7 +28,7 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
 
   const NavList = ({ onItemClick }: { onItemClick?: () => void }) => (
     <nav className="p-4 space-y-2">
-      <div className="mb-6 flex items-center gap-2">
+      <button className="mb-6 flex items-center gap-2">
         {/* Show in light mode */}
         <Image
           src={darkLogo}
@@ -45,7 +45,7 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
           priority
           className="hidden dark:block"
         />
-      </div>
+      </button>
 
       {NAV_PUBLIC.map((item) => {
         const active =

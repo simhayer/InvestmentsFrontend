@@ -70,3 +70,29 @@ export async function authedFetch(path: string, init?: RequestInit) {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res;
 }
+
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(
+    `${API_URL}/password/forgot`,
+    withCreds({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    })
+  );
+  if (!res.ok) throw new Error("Failed to request password reset");
+  return res.json();
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const res = await fetch(
+    `${API_URL}/password/reset`,
+    withCreds({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    })
+  );
+  if (!res.ok) throw new Error("Failed to reset password");
+  return res.json();
+}

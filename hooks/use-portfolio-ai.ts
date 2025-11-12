@@ -1,16 +1,8 @@
-// app/hooks/use-portfolio-ai.ts
 "use client";
 
-import {
-  PredictionsBlock,
-  PortfolioAiData,
-  LatestDevelopment,
-  Catalyst,
-  Scenarios,
-  ActionItem,
-  RiskItem,
-} from "@/types/portfolio-ai";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { PortfolioAnalysisResponse, AiLayers } from "@/types/portfolio-ai";
+import { safeParseAnalysis } from "@/utils/aiService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 const BACKEND_URL = `${API_URL}/api/ai/analyze-portfolio`;
@@ -20,9 +12,7 @@ const SHOW_FORCE = (process.env.NEXT_PUBLIC_SHOW_FORCE || "0") === "1";
 function isRecord(v: unknown): v is Record<string, any> {
   return !!v && typeof v === "object";
 }
-function arr<T = any>(v: unknown): T[] {
-  return Array.isArray(v) ? v : [];
-}
+
 function humanizeSeconds(s?: number) {
   if (s == null || s <= 0) return "now";
   const h = Math.floor(s / 3600);
@@ -33,8 +23,8 @@ function humanizeSeconds(s?: number) {
   return parts.join(" ");
 }
 
-/** ---------- types ---------- */
-type BackendEnvelope = {
+/** ---------- envelope/meta ---------- */
+export type BackendEnvelope = {
   status?: string;
   ai_layers?: any;
   cached?: boolean;
@@ -45,21 +35,22 @@ type BackendEnvelope = {
   error?: string; // error
 };
 
-type Meta = {
+export type PortfolioAiMeta = {
   cached: boolean;
   cachedAt?: string;
   ttlSeconds: number;
   nextUpdateIn: string; // e.g., "3h 12m" or "now"
   nextUpdateAt?: Date;
   warnings?: string[];
-  showForce: boolean; // expose env-driven ability to show Force button
+  showForce: boolean; // env-driven ability to show Force button
   canRefreshNow: boolean; // convenience: ttlSeconds <= 0
 };
 
-/** ---------- hook ---------- */
-export function usePortfolioAi(daysOfNews = 7) {
-  const [data, setData] = useState<PortfolioAiData | null>(null);
-  const [meta, setMeta] = useState<Meta | null>(null);
+export function usePortfolioAi() {
+  const [analysis, setAnalysis] = useState<PortfolioAnalysisResponse | null>(
+    null
+  );
+  const [meta, setMeta] = useState<PortfolioAiMeta | null>(null);
   const [loading, setLoading] = useState(false);
   const [refetching, setRefetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +66,6 @@ export function usePortfolioAi(daysOfNews = 7) {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        // NOTE: backend handles `?force=true`. We’re keeping POST to include cookies.
         const url = opts?.force ? `${BACKEND_URL}?force=true` : BACKEND_URL;
 
         const res = await fetch(url, {
@@ -84,7 +74,7 @@ export function usePortfolioAi(daysOfNews = 7) {
           credentials: "include",
           cache: "no-store",
           signal: controller.signal,
-          // body: JSON.stringify({ days_of_news: daysOfNews }),
+          // body: JSON.stringify({}) // keep blank; backend derives context
         });
 
         const isJson = res.headers
@@ -95,18 +85,15 @@ export function usePortfolioAi(daysOfNews = 7) {
         ) as BackendEnvelope | null;
 
         if (!res.ok) {
-          const msg =
-            (json?.detail as string) ||
-            (json?.error as string) ||
-            `HTTP ${res.status}`;
+          const msg = json?.detail || json?.error || `HTTP ${res.status}`;
           throw new Error(msg);
         }
 
-        // pull meta up front
+        // meta
         const ttl = Number(json?.ttl_seconds_remaining ?? 0) || 0;
         const nextUpdateAt =
           ttl > 0 ? new Date(Date.now() + ttl * 1000) : undefined;
-        const metaNext: Meta = {
+        const metaNext: PortfolioAiMeta = {
           cached: !!json?.cached,
           cachedAt: json?.cached_at,
           ttlSeconds: ttl,
@@ -117,53 +104,43 @@ export function usePortfolioAi(daysOfNews = 7) {
           canRefreshNow: ttl <= 0,
         };
 
-        // Accept either:
-        // A) { status:"ok", ai_layers: { ...actualData... } }
-        // B) { status:"ok", ai_layers: { data: { ...actualData... } } }
+        // Accept either ai_layers directly or nested data
         const payload =
           isRecord(json) && isRecord(json.ai_layers) ? json.ai_layers : null;
-        const d: unknown =
-          payload && isRecord(payload.data) ? payload.data : payload;
+        const maybeData: unknown =
+          payload && isRecord((payload as any).data)
+            ? (payload as any).data
+            : payload;
 
-        if (isRecord(d)) {
-          const normalized: PortfolioAiData = {
-            latest_developments: arr<LatestDevelopment>(d.latest_developments),
-            catalysts: arr<Catalyst>(d.catalysts),
-            scenarios: isRecord(d.scenarios) ? (d.scenarios as Scenarios) : {},
-            actions: arr<ActionItem>(d.actions),
-            alerts: arr(d.alerts),
-            risks_list: arr<RiskItem>(d.risks_list),
-            summary: typeof d.summary === "string" ? d.summary : "",
-            disclaimer: typeof d.disclaimer === "string" ? d.disclaimer : "",
-            predictions: isRecord(d.predictions)
-              ? (d.predictions as PredictionsBlock)
-              : {},
-          };
+        // Stitch back into a typed response for the UI
+        const stitched: PortfolioAnalysisResponse | null = safeParseAnalysis({
+          status: "ok",
+          user_id: 0,
+          ai_layers: maybeData as AiLayers,
+        });
 
-          setData(normalized);
+        if (!stitched) {
+          const msg =
+            json?.detail || json?.error || "Unexpected response shape";
+          setError(msg);
+          setAnalysis(null);
           setMeta(metaNext);
           return;
         }
 
-        // Shape didn’t match
-        const msg =
-          (isRecord(json) && (json.detail as string)) ||
-          (isRecord(json) && (json.error as string)) ||
-          "Unexpected response shape";
-        setError(msg);
-        setData(null);
+        setAnalysis(stitched);
         setMeta(metaNext);
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           setError(e?.message || "Failed to load");
-          setData(null);
+          setAnalysis(null);
           setMeta((m) => m ?? null);
         }
       } finally {
         isRefetch ? setRefetching(false) : setLoading(false);
       }
     },
-    [daysOfNews]
+    []
   );
 
   useEffect(() => {
@@ -172,12 +149,12 @@ export function usePortfolioAi(daysOfNews = 7) {
   }, [fetchAi]);
 
   return {
-    data,
-    meta, // <-- new
+    analysis, // full typed envelope
+    layers: analysis?.ai_layers ?? null, // convenience alias
+    meta,
     loading,
     refetching,
     error,
-    // normal refetch respects TTL; force=true bypasses
     refetch: (force = false) => fetchAi(true, { force }),
-  };
+  } as const;
 }

@@ -1,46 +1,38 @@
-"use client";
-
 import * as React from "react";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "./EmptyState";
-import { ShieldAlert } from "lucide-react";
 
-type RiskItem = {
-  risk?: string;
-  assets_affected?: string[];
-  why_it_matters?: string;
-  monitor?: string;
-};
-
-export function RisksTab({ items }: { items?: RiskItem[] }) {
-  if (!items || items.length === 0) {
-    return (
-      <EmptyState
-        icon={<ShieldAlert className="h-5 w-5" />}
-        title="No risks identified"
-        desc="Key portfolio risks will appear here."
-      />
-    );
-  }
-
+export function RisksTab({
+  data,
+}: {
+  data: Array<{
+    risk: string;
+    monitor: string;
+    why_it_matters: string;
+    assets_affected: string[];
+  }>;
+}) {
+  if (!data?.length) return <Empty msg="No explicit risks reported." />;
   return (
-    <ul className="space-y-3">
-      {items.map((r, idx) => (
-        <li key={idx} className="rounded-lg border p-4 sm:p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="font-medium">{r.risk}</div>
-            {r.assets_affected?.length ? (
-              <Badge variant="outline">{r.assets_affected.join(", ")}</Badge>
-            ) : null}
+    <div className="space-y-3">
+      {data.map((r, i) => (
+        <div key={i} className="rounded-xl border p-3">
+          <div className="text-sm font-semibold">{r.risk}</div>
+          <div className="text-sm opacity-80 mt-1">
+            Why it matters: {r.why_it_matters}
           </div>
-          {(r.why_it_matters || r.monitor) && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              {r.why_it_matters ? <span>{r.why_it_matters} </span> : null}
-              {r.monitor ? <span>· Monitor: {r.monitor}</span> : null}
-            </p>
-          )}
-        </li>
+          <div className="text-sm mt-1">Monitor: {r.monitor}</div>
+          <div className="text-xs mt-2 flex flex-wrap gap-1">
+            {r.assets_affected.map((a) => (
+              <span key={a} className="px-2 py-0.5 rounded bg-muted">
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
       ))}
-    </ul>
+    </div>
   );
+}
+
+function Empty({ msg }: { msg: string }) {
+  return <div className="text-sm text-muted-foreground italic">{msg}</div>;
 }

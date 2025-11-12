@@ -1,13 +1,10 @@
 "use client";
 import { useState } from "react";
-import { AIInsights } from "../ai/AIInsights";
 import { News } from "./news";
-import { PortfolioNewsSummary } from "./portfolio-news-summary";
 import { AnalysisContainer } from "./analysis/analysis-container";
 
 export function Analytics() {
   const [refreshing, setRefreshing] = useState(false);
-  const dummySymbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"];
 
   return (
     <main
@@ -20,7 +17,6 @@ export function Analytics() {
           refreshing ? "opacity-60 pointer-events-none" : ""
         }`}
       >
-        {/* <AIInsights /> */}
         <AnalysisContainer />
         {/* <PortfolioNewsSummary symbols={dummySymbols || []} /> */}
         <News />

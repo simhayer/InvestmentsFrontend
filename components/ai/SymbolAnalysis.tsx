@@ -1,602 +1,707 @@
-// components/ai/AIPanel.tsx
-"use client";
+import React from "react";
 
-import { useMemo } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Brain,
-  ExternalLink,
-  Newspaper,
-  Info,
-  AlertTriangle,
-  LineChart,
-  Calendar,
-  Sparkles,
-} from "lucide-react";
-
-/* =========================
-   Types for the NEW schema
-========================= */
-
-type LatestDev = {
-  headline: string;
-  date?: string;
-  source?: string;
-  url?: string;
-  cause?: string;
-  impact?: string;
-  assets_affected?: string[];
+type CompanyProfile = {
+  name: string;
+  sector: string;
+  industry: string;
+  country: string;
+  business_model: string;
+  key_products_services: string[];
+  revenue_drivers: string[];
+  moat_and_competitive_advantages: string;
+  cyclicality: string;
+  capital_intensity: string;
 };
 
-type Catalyst = {
-  date?: string;
-  type?: string;
-  description?: string;
-  expected_direction?: string;
-  magnitude_basis?: string;
-  confidence?: number; // 0..1
+type FinancialAndOperatingSummary = {
+  top_line_trend: string;
+  profitability_trend: string;
+  balance_sheet_health: string;
+  cash_flow_and_capex: string;
+  capital_allocation: string;
+};
+
+type CompetitivePositioning = {
+  peer_set: string[];
+  position_vs_peers: string;
+  structural_tailwinds: string[];
+  structural_headwinds: string[];
+};
+
+type RecentDevelopment = {
+  headline: string;
+  date: string;
+  source: string;
+  url: string;
+  summary: string;
+  impact: string;
+};
+
+type SentimentDriver = {
+  theme: string;
+  tone: string;
+  commentary: string;
+};
+
+type SentimentSnapshot = {
+  overall_sentiment: string;
+  drivers: SentimentDriver[];
+  sources_considered: string[];
+};
+
+type Thesis = {
+  bull_case: string;
+  base_case: string;
+  bear_case: string;
+  key_drivers: string[];
+  typical_time_horizon: string;
 };
 
 type RiskItem = {
   risk: string;
-  why_it_matters?: string;
-  monitor?: string;
+  why_it_matters: string;
+  how_to_monitor: string;
 };
 
-type Valuation = {
-  multiples?: Record<string, number | string | null | undefined>;
-  peer_set?: string[];
+type ValuationContext = {
+  relative_positioning: string;
+  key_multiples_mentioned: string[];
+  valuation_narrative: string;
 };
 
-type Technicals = {
-  trend?: string;
-  levels?: { support?: number; resistance?: number };
-  momentum?: { rsi?: number; comment?: string };
+type ScenarioProbabilities = {
+  bull: number;
+  base: number;
+  bear: number;
 };
 
-type KeyDate = { date?: string; event?: string };
-
-type Scenarios = { bull?: string; base?: string; bear?: string };
-
-type AnalysisShape = {
-  summary?: string;
-  latest_developments?: LatestDev[];
-  catalysts?: Catalyst[];
-  risks?: RiskItem[];
-  valuation?: Valuation;
-  technicals?: Technicals;
-  key_dates?: KeyDate[];
-  scenarios?: Scenarios;
-
-  headline?: string;
-  recommendation?: string;
-  conviction?: number; // 0..1
+type Scenarios = {
+  bull: string;
+  base: string;
+  bear: string;
+  probabilities: ScenarioProbabilities;
 };
 
-/* =========================
-   Helpers
-========================= */
+type FAQItem = {
+  question: string;
+  answer: string;
+};
 
-function isObj(x: unknown): x is Record<string, unknown> {
-  return typeof x === "object" && x !== null;
-}
+type Explainability = {
+  assumptions: string[];
+  limitations: string[];
+  section_confidence: Record<string, number>;
+  confidence_overall: number;
+};
 
-function looseParse(input: unknown): AnalysisShape | null {
-  if (isObj(input)) return input as AnalysisShape;
-  if (typeof input === "string") {
-    const s = input.indexOf("{");
-    const e = input.lastIndexOf("}");
-    const maybe = s >= 0 && e > s ? input.slice(s, e + 1) : input;
-    try {
-      const parsed = JSON.parse(maybe);
-      return isObj(parsed) ? (parsed as AnalysisShape) : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function fmtNum(n: unknown) {
-  const v = typeof n === "string" ? Number(n) : (n as number);
-  if (typeof v === "number" && Number.isFinite(v)) {
-    return new Intl.NumberFormat(undefined, {
-      maximumFractionDigits: 2,
-    }).format(v);
-  }
-  return String(n ?? "—");
-}
-
-function shortDate(d?: string) {
-  if (!d) return "";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-type Citation = { title: string; url: string };
-function makeCitations(devs: LatestDev[] | undefined): Citation[] {
-  if (!Array.isArray(devs)) return [];
-  const uniq = new Map<string, Citation>();
-  for (const d of devs) {
-    const key = d.url || d.headline || `${d.source}-${d.date}`;
-    if (!key) continue;
-    if (!uniq.has(key)) {
-      uniq.set(key, {
-        title: d.headline || d.source || "Source",
-        url: d.url || "#",
-      });
-    }
-  }
-  return Array.from(uniq.values());
-}
-
-function SourcePill({ idx, cites }: { idx?: number; cites: Citation[] }) {
-  if (!idx || idx < 1 || idx > cites.length) return null;
-  const c = cites[idx - 1];
-  return (
-    <a
-      href={c.url}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      title={c.title}
-    >
-      <ExternalLink className="h-3 w-3" />
-      <span>[{idx}]</span>
-    </a>
-  );
-}
-
-function Section({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {icon}
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function recBadgeClasses(rec?: string) {
-  const r = (rec || "").toLowerCase();
-  if (r === "buy")
-    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-  if (r === "sell")
-    return "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400";
-  if (r === "hold" || r === "neutral")
-    return "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400";
-  return "border-border bg-secondary text-secondary-foreground";
-}
-
-/* =========================
-   Main Component
-========================= */
-
-export function SymbolAnalysis({
-  symbol,
-  name,
-  analysis,
-}: {
+export type StockAnalysis = {
   symbol: string;
-  name?: string | null;
-  analysis: unknown;
-}) {
-  const data = useMemo(() => looseParse(analysis), [analysis]);
+  company_profile: CompanyProfile;
+  financial_and_operating_summary: FinancialAndOperatingSummary;
+  competitive_positioning: CompetitivePositioning;
+  recent_developments: RecentDevelopment[];
+  sentiment_snapshot: SentimentSnapshot;
+  thesis: Thesis;
+  risks: RiskItem[];
+  valuation_context: ValuationContext;
+  scenarios: Scenarios;
+  faq: FAQItem[];
+  explainability: Explainability;
+  disclaimer: string;
+};
 
-  if (!analysis) return null;
+interface StockAnalysisCardProps {
+  stock: StockAnalysis;
+}
 
-  if (!data) {
-    return (
-      <div className="mt-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">AI Analysis</span>
-          </div>
-          <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
-            {typeof analysis === "string"
-              ? analysis
-              : JSON.stringify(analysis, null, 2)}
-          </pre>
-        </Card>
+/**
+ * Helper: extract first percentage (e.g. "+62%") from a string.
+ */
+function extractFirstPercentage(text?: string): string | null {
+  if (!text) return null;
+  const match = text.match(/([-+]?\d+(\.\d+)?)%/);
+  return match ? `${match[1]}%` : null;
+}
+
+/**
+ * Helper: extract a money figure like "$51.2 billion" from a string.
+ */
+function extractFirstMoneyFigure(text?: string): string | null {
+  if (!text) return null;
+  const match = text.match(/\$[\d,.]+\s*\w+/);
+  return match ? match[0] : null;
+}
+
+/**
+ * Simple badge chip.
+ */
+const Chip: React.FC<
+  React.PropsWithChildren<{ tone?: "default" | "accent" }>
+> = ({ children, tone = "default" }) => {
+  const base =
+    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium";
+  const styles =
+    tone === "accent"
+      ? "bg-blue-50 text-blue-700 border border-blue-100"
+      : "bg-slate-100 text-slate-700 border border-slate-200";
+
+  return <span className={`${base} ${styles}`}>{children}</span>;
+};
+
+/**
+ * Simple section using native <details> for accessible accordion.
+ */
+const AccordionSection: React.FC<
+  React.PropsWithChildren<{ title: string; defaultOpen?: boolean }>
+> = ({ title, children, defaultOpen }) => {
+  return (
+    <details
+      className="group rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+        <span className="text-sm font-semibold text-slate-900">{title}</span>
+        <span className="ml-2 h-5 w-5 shrink-0 rounded-full border border-slate-300 text-xs text-slate-500 flex items-center justify-center">
+          <span className="transition-transform group-open:rotate-90">›</span>
+        </span>
+      </summary>
+      <div className="border-t border-slate-100 bg-slate-50 px-4 py-4 text-sm text-slate-700 space-y-3">
+        {children}
       </div>
-    );
-  }
+    </details>
+  );
+};
 
-  const {
-    headline,
-    recommendation,
-    conviction,
-    summary,
-    latest_developments = [],
-    catalysts = [],
-    risks = [],
-    valuation,
-    technicals,
-    key_dates = [],
-    scenarios,
-  } = data;
+export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
+  stock,
+}) => {
+  const { company_profile, financial_and_operating_summary, thesis } = stock;
 
-  const citations = makeCitations(latest_developments);
-  const convictionPct =
-    typeof conviction === "number" && conviction >= 0 && conviction <= 1
-      ? Math.round(conviction * 100)
-      : null;
+  const revenueGrowth = extractFirstPercentage(
+    financial_and_operating_summary.top_line_trend
+  );
+  const profitGrowth = extractFirstPercentage(
+    financial_and_operating_summary.profitability_trend
+  );
+  const dataCenterRev = extractFirstMoneyFigure(
+    financial_and_operating_summary.top_line_trend
+  );
+  const horizon = thesis?.typical_time_horizon ?? "—";
+  const sentiment = stock.sentiment_snapshot?.overall_sentiment ?? "—";
+
+  const probabilities = stock.scenarios?.probabilities ?? {
+    bull: 0.3,
+    base: 0.5,
+    bear: 0.2,
+  };
+
+  const formatProb = (val: number | undefined) =>
+    typeof val === "number" ? `${Math.round(val * 100)}%` : "—";
 
   return (
-    <div className="mt-4">
-      <Card className="p-4 space-y-4 bg-card text-card-foreground">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <div className="text-sm font-medium">
-              AI Analysis {name ? `• ${name}` : ""} ({symbol?.toUpperCase?.()})
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {recommendation ? (
-              <Badge
-                variant="outline"
-                className={`border ${recBadgeClasses(recommendation)}`}
-              >
-                {recommendation.toUpperCase()}
-              </Badge>
-            ) : null}
-            {convictionPct !== null ? (
-              <div className="flex items-center gap-2 min-w-[180px]">
-                <div className="text-xs text-muted-foreground">Conviction</div>
-                <div className="w-36 h-2 rounded bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary"
-                    style={{ width: `${convictionPct}%` }}
-                    aria-label={`Conviction ${convictionPct}%`}
-                  />
-                </div>
-              </div>
-            ) : null}
-          </div>
+    <div className="max-w-3xl mx-auto rounded-2xl bg-slate-50 p-5 md:p-6 border border-slate-200 shadow-sm space-y-6">
+      {/* Header */}
+      <header className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xl md:text-2xl font-semibold text-slate-900">
+            {stock.symbol}
+          </span>
+          <span className="hidden md:inline text-slate-400">•</span>
+          <span className="text-sm md:text-base text-slate-700">
+            {company_profile.name}
+          </span>
         </div>
 
-        {/* Headline */}
-        {headline ? (
-          <div className="flex items-start gap-2">
-            <Sparkles className="h-4 w-4 mt-0.5 text-muted-foreground" />
-            <p className="text-sm">{headline}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone="accent">{company_profile.sector}</Chip>
+          <Chip>{company_profile.industry}</Chip>
+          <Chip>{company_profile.country}</Chip>
+          <Chip>
+            Sentiment:{" "}
+            <span
+              className={`ml-1 inline-flex items-center gap-1 capitalize ${
+                sentiment === "bullish"
+                  ? "text-green-600"
+                  : sentiment === "bearish"
+                  ? "text-red-600"
+                  : "text-slate-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  sentiment === "bullish"
+                    ? "bg-green-500"
+                    : sentiment === "bearish"
+                    ? "bg-red-500"
+                    : "bg-slate-400"
+                }`}
+              />
+              {sentiment}
+            </span>
+          </Chip>
+        </div>
+      </header>
+
+      {/* Quick Stats */}
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Quick snapshot
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              Revenue growth
+            </div>
+            <div className="text-lg font-semibold text-slate-900">
+              {revenueGrowth ?? "—"}
+            </div>
           </div>
-        ) : null}
-
-        {/* Summary */}
-        {summary ? (
-          <Section
-            title="Summary"
-            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="rounded-xl border border-border p-3 bg-card">
-              <p className="text-sm whitespace-pre-wrap">{summary}</p>
+          <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              Profit growth
             </div>
-          </Section>
-        ) : null}
+            <div className="text-lg font-semibold text-slate-900">
+              {profitGrowth ?? "—"}
+            </div>
+          </div>
+          <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              Data center rev
+            </div>
+            <div className="text-lg font-semibold text-slate-900">
+              {dataCenterRev ?? "—"}
+            </div>
+          </div>
+          <div className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm">
+            <div className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+              Time horizon
+            </div>
+            <div className="text-lg font-semibold text-slate-900 capitalize">
+              {horizon}
+            </div>
+          </div>
+        </div>
+      </section>
 
-        {/* Latest developments */}
-        {latest_developments.length > 0 ? (
-          <Section
-            title="Latest developments"
-            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {latest_developments.map((d, i) => {
-                const citeIdx =
-                  citations.findIndex(
-                    (c) => c.url === d.url || c.title === d.headline
-                  ) + 1 || undefined;
-                return (
-                  <div
-                    key={String(d.url || d.headline || i) + "-" + i}
-                    className="rounded-xl border border-border p-3 bg-card"
+      {/* Accordions */}
+      <section className="space-y-3">
+        <AccordionSection title="Company profile" defaultOpen>
+          <p className="text-sm text-slate-700">
+            {company_profile.business_model}
+          </p>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Key products & services
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {company_profile.key_products_services.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Revenue drivers
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {company_profile.revenue_drivers.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Moat
+              </h3>
+              <p>{company_profile.moat_and_competitive_advantages}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Cyclicality
+              </h3>
+              <p>{company_profile.cyclicality}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Capital intensity
+              </h3>
+              <p>{company_profile.capital_intensity}</p>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Financial & operating summary">
+          <div className="space-y-2">
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">
+                Top line trend
+              </h3>
+              <p>{financial_and_operating_summary.top_line_trend}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">
+                Profitability
+              </h3>
+              <p>{financial_and_operating_summary.profitability_trend}</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm">
+                  Balance sheet
+                </h3>
+                <p>{financial_and_operating_summary.balance_sheet_health}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm">
+                  Cash flow & capex
+                </h3>
+                <p>{financial_and_operating_summary.cash_flow_and_capex}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm">
+                  Capital allocation
+                </h3>
+                <p>{financial_and_operating_summary.capital_allocation}</p>
+              </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Competitive positioning">
+          <div className="space-y-3">
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                Peer set
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {stock.competitive_positioning.peer_set.map((peer) => (
+                  <Chip key={peer}>{peer}</Chip>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                Position vs peers
+              </h3>
+              <p>{stock.competitive_positioning.position_vs_peers}</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                  Structural tailwinds
+                </h3>
+                <ul className="list-disc list-inside space-y-1">
+                  {stock.competitive_positioning.structural_tailwinds.map(
+                    (item) => (
+                      <li key={item}>{item}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                  Structural headwinds
+                </h3>
+                <ul className="list-disc list-inside space-y-1">
+                  {stock.competitive_positioning.structural_headwinds.map(
+                    (item) => (
+                      <li key={item}>{item}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Recent developments (news)">
+          <div className="space-y-3">
+            {stock.recent_developments.map((news) => (
+              <article
+                key={news.headline}
+                className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <a
+                    href={news.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-blue-600 hover:underline"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-medium">{d.headline}</div>
-                      <div className="text-[10px] text-muted-foreground shrink-0">
-                        {shortDate(d.date)}
-                      </div>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground space-y-1">
-                      {d.cause ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Cause:
-                          </span>{" "}
-                          {d.cause}
-                        </div>
-                      ) : null}
-                      {d.impact ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Impact:
-                          </span>{" "}
-                          {d.impact}
-                        </div>
-                      ) : null}
-                      {d.assets_affected?.length ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Assets:
-                          </span>{" "}
-                          {d.assets_affected.join(", ")}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="text-[10px] text-muted-foreground">
-                        {d.source || ""}
-                      </div>
-                      <SourcePill idx={citeIdx} cites={citations} />
-                    </div>
-                  </div>
-                );
-              })}
+                    {news.headline}
+                  </a>
+                  <span className="text-xs text-slate-500">
+                    {news.source} • {news.date}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-600">{news.summary}</p>
+                <p className="mt-2 text-xs text-slate-700">
+                  <span className="font-semibold">Impact: </span>
+                  {news.impact}
+                </p>
+              </article>
+            ))}
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Sentiment snapshot">
+          <div className="space-y-3">
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                Overall sentiment
+              </h3>
+              <Chip tone="accent">
+                {sentiment.charAt(0).toUpperCase()}
+                {sentiment.slice(1)}
+              </Chip>
             </div>
-          </Section>
-        ) : null}
-
-        {/* Catalysts */}
-        {catalysts.length > 0 ? (
-          <Section
-            title="Upcoming catalysts"
-            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {catalysts.map((c, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-border p-3 bg-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">
-                      {c.type
-                        ? c.type.charAt(0).toUpperCase() + c.type.slice(1)
-                        : "Catalyst"}
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                Drivers
+              </h3>
+              <ul className="space-y-2">
+                {stock.sentiment_snapshot.drivers.map((driver) => (
+                  <li key={driver.theme}>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {driver.theme} ({driver.tone})
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {shortDate(c.date)}
-                    </div>
-                  </div>
-                  {c.description ? (
-                    <div className="text-sm mt-1">{c.description}</div>
-                  ) : null}
-                  <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-                    {c.expected_direction ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Direction:
-                        </span>{" "}
-                        {c.expected_direction}
-                      </span>
-                    ) : null}
-                    {c.magnitude_basis ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Basis:
-                        </span>{" "}
-                        {c.magnitude_basis}
-                      </span>
-                    ) : null}
-                    {typeof c.confidence === "number" ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Confidence:
-                        </span>{" "}
-                        {Math.round(c.confidence * 100)}%
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-        ) : null}
-
-        {/* Risks */}
-        {risks.length > 0 ? (
-          <Section
-            title="Key risks"
-            icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
-          >
-            <ul className="space-y-2">
-              {risks.map((r, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div className="text-sm">
-                    <span className="font-medium">{r.risk}:</span>{" "}
-                    <span className="text-muted-foreground">
-                      {[r.why_it_matters, r.monitor]
-                        .filter(Boolean)
-                        .join(" — ")}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-
-        {/* Valuation */}
-        {valuation?.multiples || valuation?.peer_set ? (
-          <Section
-            title="Valuation"
-            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {valuation?.multiples ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">
-                    Multiples
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    {Object.entries(valuation.multiples).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {k.replace(/_/g, " ").toUpperCase()}
-                        </span>
-                        <span className="font-medium">{fmtNum(v)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {valuation?.peer_set ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">
-                    Peer set
-                  </div>
-                  <div className="text-sm">{valuation.peer_set.join(", ")}</div>
-                </div>
-              ) : null}
-            </div>
-          </Section>
-        ) : null}
-
-        {/* Technicals */}
-        {technicals ? (
-          <Section
-            title="Technicals"
-            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {technicals.trend ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Trend</div>
-                  <div className="text-sm font-medium">{technicals.trend}</div>
-                </div>
-              ) : null}
-              {technicals.levels ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Levels</div>
-                  <div className="text-sm">
-                    <span className="font-medium">Support:</span>{" "}
-                    {fmtNum(technicals.levels.support)} &nbsp;•&nbsp;
-                    <span className="font-medium">Resistance:</span>{" "}
-                    {fmtNum(technicals.levels.resistance)}
-                  </div>
-                </div>
-              ) : null}
-              {technicals.momentum ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Momentum</div>
-                  <div className="text-sm">
-                    {technicals.momentum.rsi != null ? (
-                      <>
-                        <span className="font-medium">RSI:</span>{" "}
-                        {fmtNum(technicals.momentum.rsi)}
-                        {technicals.momentum.comment ? " — " : ""}
-                      </>
-                    ) : null}
-                    {technicals.momentum.comment || ""}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </Section>
-        ) : null}
-
-        {/* Key dates */}
-        {key_dates.length > 0 ? (
-          <Section
-            title="Key dates"
-            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="rounded-xl border border-border p-3 bg-card">
-              <ul className="text-sm space-y-1">
-                {key_dates.map((k, i) => (
-                  <li key={i} className="flex items-center justify-between">
-                    <span>{k.event || "Event"}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {shortDate(k.date)}
-                    </span>
+                    <p>{driver.commentary}</p>
                   </li>
                 ))}
               </ul>
             </div>
-          </Section>
-        ) : null}
-
-        {/* Scenarios */}
-        {scenarios && (scenarios.bull || scenarios.base || scenarios.bear) ? (
-          <Section
-            title="Scenarios"
-            icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {scenarios.bull ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Bull</div>
-                  <div className="text-sm">{scenarios.bull}</div>
-                </div>
-              ) : null}
-              {scenarios.base ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Base</div>
-                  <div className="text-sm">{scenarios.base}</div>
-                </div>
-              ) : null}
-              {scenarios.bear ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Bear</div>
-                  <div className="text-sm">{scenarios.bear}</div>
-                </div>
-              ) : null}
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                Sources considered
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {stock.sentiment_snapshot.sources_considered.map((source) => (
+                  <Chip key={source}>{source}</Chip>
+                ))}
+              </div>
             </div>
-          </Section>
-        ) : null}
+          </div>
+        </AccordionSection>
 
-        {/* Sources */}
-        {citations.length > 0 ? (
-          <Section
-            title="Sources"
-            icon={
-              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-            }
-          >
-            <ul className="text-sm space-y-1">
-              {citations.map((c, i) => (
-                <li key={i}>
-                  <a
-                    href={c.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-foreground text-muted-foreground"
-                  >
-                    <span className="text-xs text-muted-foreground">
-                      [{i + 1}]
-                    </span>
-                    <span>{c.title}</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-      </Card>
+        <AccordionSection title="Thesis (bull / base / bear)" defaultOpen>
+          <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1">
+                  Bull case
+                </div>
+                <p className="text-sm text-emerald-900">
+                  {stock.thesis.bull_case}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1">
+                  Base case
+                </div>
+                <p className="text-sm text-slate-900">
+                  {stock.thesis.base_case}
+                </p>
+              </div>
+              <div className="rounded-lg border border-rose-200 bg-rose-50/70 p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-rose-700 mb-1">
+                  Bear case
+                </div>
+                <p className="text-sm text-rose-900">
+                  {stock.thesis.bear_case}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Key drivers
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {stock.thesis.key_drivers.map((driver) => (
+                  <li key={driver}>{driver}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Typical time horizon
+              </h3>
+              <p className="text-sm capitalize">{horizon}</p>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Risks">
+          <ul className="space-y-3">
+            {stock.risks.map((risk) => (
+              <li
+                key={risk.risk}
+                className="rounded-lg border border-amber-200 bg-amber-50/80 p-3"
+              >
+                <div className="text-xs font-semibold uppercase tracking-wide text-amber-800 mb-1">
+                  {risk.risk}
+                </div>
+                <p className="text-sm text-slate-800 mb-1">
+                  <span className="font-semibold">Why it matters: </span>
+                  {risk.why_it_matters}
+                </p>
+                <p className="text-xs text-slate-700">
+                  <span className="font-semibold">How to monitor: </span>
+                  {risk.how_to_monitor}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </AccordionSection>
+
+        <AccordionSection title="Valuation context">
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Relative positioning
+              </h3>
+              <p>{stock.valuation_context.relative_positioning}</p>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Key multiples mentioned
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {stock.valuation_context.key_multiples_mentioned.map((m) => (
+                  <Chip key={m}>{m}</Chip>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Narrative
+              </h3>
+              <p>{stock.valuation_context.valuation_narrative}</p>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="Scenarios & probabilities">
+          <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-lg border border-emerald-200 bg-white p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    Bull
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formatProb(probabilities.bull)}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-800">{stock.scenarios.bull}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+                    Base
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formatProb(probabilities.base)}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-800">{stock.scenarios.base}</p>
+              </div>
+              <div className="rounded-lg border border-rose-200 bg-white p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-rose-700">
+                    Bear
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formatProb(probabilities.bear)}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-800">{stock.scenarios.bear}</p>
+              </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        <AccordionSection title="FAQ">
+          <ul className="space-y-3">
+            {stock.faq.map((faq) => (
+              <li key={faq.question}>
+                <div className="font-semibold text-sm text-slate-900">
+                  {faq.question}
+                </div>
+                <p className="text-sm text-slate-700">{faq.answer}</p>
+              </li>
+            ))}
+          </ul>
+        </AccordionSection>
+
+        <AccordionSection title="Explainability & confidence">
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Assumptions
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {stock.explainability.assumptions.map((a) => (
+                  <li key={a}>{a}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Limitations
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                {stock.explainability.limitations.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Section confidence
+              </h3>
+              <div className="grid gap-2 md:grid-cols-2">
+                {Object.entries(stock.explainability.section_confidence).map(
+                  ([section, value]) => (
+                    <div
+                      key={section}
+                      className="flex items-center justify-between rounded-md bg-white px-3 py-1.5 border border-slate-200"
+                    >
+                      <span className="text-xs text-slate-600">
+                        {section.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {(value * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Overall confidence
+              </h3>
+              <Chip tone="accent">
+                {(stock.explainability.confidence_overall * 100).toFixed(0)}%
+              </Chip>
+            </div>
+          </div>
+        </AccordionSection>
+      </section>
+
+      {/* Disclaimer */}
+      <footer className="border-t border-slate-200 pt-3">
+        <p className="text-[11px] leading-relaxed text-slate-500">
+          {stock.disclaimer}
+        </p>
+      </footer>
     </div>
   );
-}
-
-export default SymbolAnalysis;
+};

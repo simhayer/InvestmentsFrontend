@@ -23,7 +23,10 @@ import AnalystTab from "@/components/investment/tabs/analyst-tab";
 import ProfileTab from "@/components/investment/tabs/profile-tab";
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { Button } from "../ui/button";
-import { SymbolAnalysis } from "@/components/ai/SymbolAnalysis";
+import {
+  StockAnalysisCard,
+  StockAnalysis,
+} from "@/components/ai/SymbolAnalysis";
 import { NewsTab } from "./tabs/news-tab";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
@@ -139,7 +142,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         // <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
         //   {analysis.analysis}
         // </p>
-        <SymbolAnalysis symbol={symbol} name={symbol} analysis={analysis} />
+        <StockAnalysisCard stock={analysis} />
       )}
 
       <Button variant="outline" size="sm" onClick={fetch} disabled={loading}>

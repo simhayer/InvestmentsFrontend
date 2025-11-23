@@ -89,21 +89,29 @@ export function AnalysisContainer() {
   const showForce = meta?.showForce ?? false;
 
   return (
-    <div className="w-full space-y-3">
-      {/* Top controls */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          {cached && (
-            <Badge variant="outline">Cached • next in {nextUpdateIn}</Badge>
-          )}
-          {refetching && (
-            <Badge variant="secondary" className="gap-1">
-              Refreshing…
-            </Badge>
-          )}
+    <div className="w-full space-y-4 md:space-y-5">
+      {/* Header & controls */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500">
+            Portfolio AI Insights
+          </p>
+          <p className="text-sm text-slate-600">
+            Multi-layer view across summary, metrics, risks, and actions
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {cached && (
+              <Badge variant="outline">Cached • next in {nextUpdateIn}</Badge>
+            )}
+            {refetching && (
+              <Badge variant="secondary" className="gap-1">
+                Refreshing…
+              </Badge>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -137,57 +145,71 @@ export function AnalysisContainer() {
       </div>
 
       {/* Tabs header */}
-      <div className="relative">
-        <div className="flex items-center gap-2">
-          <button
-            aria-label="Scroll tabs left"
-            onClick={() => scrollBy(-200)}
-            className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-xl border text-sm disabled:opacity-40"
-            disabled={!canScrollLeft}
-          >
-            ←
-          </button>
-          <div
-            ref={scrollerRef}
-            className="flex-1 overflow-x-auto scrollbar-hide [-webkit-overflow-scrolling:touch] scroll-smooth"
-            role="tablist"
-            aria-label="AI Insights tabs"
-          >
-            <div className="flex gap-1 min-w-max">
-              {TAB_LIST.map((t) => (
-                <button
-                  key={t.key}
-                  role="tab"
-                  aria-selected={active === t.key}
-                  onClick={() => setActive(t.key)}
-                  className={
-                    "px-3 py-2 rounded-xl text-sm whitespace-nowrap transition" +
-                    (active === t.key
-                      ? " bg-primary text-primary-foreground shadow"
-                      : " bg-secondary hover:bg-accent hover:text-accent-foreground")
-                  }
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center justify-between gap-2 pb-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.1em] text-slate-500">
+              Navigate layers
+            </p>
+            <p className="text-sm text-slate-600">
+              Scrollable tabs for all insights
+            </p>
           </div>
-          <button
-            aria-label="Scroll tabs right"
-            onClick={() => scrollBy(200)}
-            className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-xl border text-sm disabled:opacity-40"
-            disabled={!canScrollRight}
-          >
-            →
-          </button>
+          <div className="hidden text-xs text-slate-500 sm:inline">
+            {meta?.updatedAt ? `Updated ${meta.updatedAt}` : ""}
+          </div>
         </div>
-        {/* fade edges */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent" />
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <button
+              aria-label="Scroll tabs left"
+              onClick={() => scrollBy(-200)}
+              className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-sm text-slate-600 disabled:opacity-40"
+              disabled={!canScrollLeft}
+            >
+              ←
+            </button>
+            <div
+              ref={scrollerRef}
+              className="flex-1 overflow-x-auto scrollbar-hide [-webkit-overflow-scrolling:touch] scroll-smooth"
+              role="tablist"
+              aria-label="AI Insights tabs"
+            >
+              <div className="flex min-w-max gap-1 rounded-xl bg-slate-50/80 p-1">
+                {TAB_LIST.map((t) => (
+                  <button
+                    key={t.key}
+                    role="tab"
+                    aria-selected={active === t.key}
+                    onClick={() => setActive(t.key)}
+                    className={
+                      "px-3 py-2 rounded-lg text-sm whitespace-nowrap transition border" +
+                      (active === t.key
+                        ? " bg-white text-slate-900 shadow-sm border-slate-200"
+                        : " bg-transparent text-slate-600 hover:bg-white/70 border-transparent")
+                    }
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              aria-label="Scroll tabs right"
+              onClick={() => scrollBy(200)}
+              className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-sm text-slate-600 disabled:opacity-40"
+              disabled={!canScrollRight}
+            >
+              →
+            </button>
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
+        </div>
       </div>
 
       {/* Tab content */}
-      <div className="rounded-2xl border p-3 sm:p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
         {active === "summary" && <SummaryTab data={data.ai_layers.summary} />}
         {active === "metrics" && (
           <PortfolioMetricsTab data={data.ai_layers.metrics} />

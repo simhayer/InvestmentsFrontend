@@ -17,16 +17,21 @@ export function LatestDevelopmentsTab({
           href={n.url}
           target="_blank"
           rel="noreferrer noopener"
-          className="block rounded-xl border p-3 hover:bg-muted/50"
+          className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow"
         >
-          <div className="text-sm font-medium mb-1">{n.headline}</div>
-          <div className="text-xs opacity-70 mb-1">
+          <div className="text-sm font-semibold text-slate-900 mb-1">
+            {n.headline}
+          </div>
+          <div className="text-xs text-slate-600 mb-1">
             {n.source} · {n.date}
           </div>
-          <div className="text-sm opacity-90">{n.impact}</div>
-          <div className="text-xs mt-2 flex flex-wrap gap-1">
+          <div className="text-sm text-slate-800 leading-relaxed">{n.impact}</div>
+          <div className="text-xs mt-3 flex flex-wrap gap-1">
             {n.assets_affected.map((a) => (
-              <span key={a} className="px-2 py-0.5 rounded bg-muted">
+              <span
+                key={a}
+                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700"
+              >
                 {a}
               </span>
             ))}
@@ -38,5 +43,9 @@ export function LatestDevelopmentsTab({
 }
 
 function Empty({ msg }: { msg: string }) {
-  return <div className="text-sm text-muted-foreground italic">{msg}</div>;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+      {msg}
+    </div>
+  );
 }

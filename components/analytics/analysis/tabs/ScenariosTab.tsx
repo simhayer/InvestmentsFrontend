@@ -12,22 +12,44 @@ export function ScenariosTab({
 }) {
   if (!data) return <Empty msg="No scenarios available." />;
   return (
-    <div className="grid md:grid-cols-3 gap-3">
-      {(["base", "bull", "bear"] as const).map((k) => (
-        <div key={k} className="rounded-xl border p-3">
-          <div className="text-sm font-semibold capitalize mb-1">{k} Case</div>
-          <div className="text-xs mb-2 opacity-70">
-            Probability: {Math.round((data.probabilities as any)[k] * 100)}%
+    <div className="grid gap-3 md:grid-cols-3">
+      {(["base", "bull", "bear"] as const).map((k) => {
+        const prob = Math.round((data.probabilities as any)[k] * 100);
+        const tone =
+          k === "bull" ? "bg-emerald-500" : k === "bear" ? "bg-rose-500" : "bg-slate-600";
+        return (
+          <div
+            key={k}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-sm font-semibold capitalize text-slate-900">
+                {k} Case
+              </div>
+              <span className="text-xs rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
+                {prob}%
+              </span>
+            </div>
+            <div className="mt-1 h-2 rounded-full bg-slate-100">
+              <div
+                className={`h-2 rounded-full ${tone}`}
+                style={{ width: `${Math.min(100, Math.max(0, prob))}%` }}
+              />
+            </div>
+            <p className="mt-2 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+              {(data as any)[k]}
+            </p>
           </div>
-          <p className="text-sm opacity-90 whitespace-pre-wrap">
-            {(data as any)[k]}
-          </p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 function Empty({ msg }: { msg: string }) {
-  return <div className="text-sm text-muted-foreground italic">{msg}</div>;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+      {msg}
+    </div>
+  );
 }

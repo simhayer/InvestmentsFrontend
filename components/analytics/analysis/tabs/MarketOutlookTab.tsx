@@ -24,9 +24,11 @@ export function MarketOutlookTab({ data }: { data: MarketOutlookData }) {
 
 function CardBlock({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl border p-3">
-      <div className="text-sm font-semibold mb-1">{title}</div>
-      <p className="text-sm opacity-90 whitespace-pre-wrap">{body}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-sm font-semibold text-slate-900 mb-1">{title}</div>
+      <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+        {body}
+      </p>
     </div>
   );
 }
@@ -34,9 +36,9 @@ function CardBlock({ title, body }: { title: string; body: string }) {
 function ListBlock({ title, items }: { title: string; items: string[] }) {
   if (!items?.length) return null;
   return (
-    <div className="rounded-xl border p-3">
-      <div className="text-sm font-semibold mb-1">{title}</div>
-      <ul className="list-disc list-inside text-sm opacity-90 space-y-1">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-sm font-semibold text-slate-900 mb-1">{title}</div>
+      <ul className="list-disc list-inside text-sm text-slate-800 space-y-1">
         {items.map((s, i) => (
           <li key={i}>{s}</li>
         ))}
@@ -46,5 +48,9 @@ function ListBlock({ title, items }: { title: string; items: string[] }) {
 }
 
 function Empty({ msg }: { msg: string }) {
-  return <div className="text-sm text-muted-foreground italic">{msg}</div>;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+      {msg}
+    </div>
+  );
 }

@@ -1,602 +1,815 @@
-// components/ai/AIPanel.tsx
-"use client";
+import React from "react";
 
-import { useMemo } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Brain,
-  ExternalLink,
-  Newspaper,
-  Info,
-  AlertTriangle,
-  LineChart,
-  Calendar,
-  Sparkles,
-} from "lucide-react";
-
-/* =========================
-   Types for the NEW schema
-========================= */
-
-type LatestDev = {
-  headline: string;
-  date?: string;
-  source?: string;
-  url?: string;
-  cause?: string;
-  impact?: string;
-  assets_affected?: string[];
+type CompanyProfile = {
+  name: string;
+  sector: string;
+  industry: string;
+  country: string;
+  business_model: string;
+  key_products_services: string[];
+  revenue_drivers: string[];
+  moat_and_competitive_advantages: string;
+  cyclicality: string;
+  capital_intensity: string;
 };
 
-type Catalyst = {
-  date?: string;
-  type?: string;
-  description?: string;
-  expected_direction?: string;
-  magnitude_basis?: string;
-  confidence?: number; // 0..1
+type FinancialAndOperatingSummary = {
+  top_line_trend: string;
+  profitability_trend: string;
+  balance_sheet_health: string;
+  cash_flow_and_capex: string;
+  capital_allocation: string;
+};
+
+type CompetitivePositioning = {
+  peer_set: string[];
+  position_vs_peers: string;
+  structural_tailwinds: string[];
+  structural_headwinds: string[];
+};
+
+type RecentDevelopment = {
+  headline: string;
+  date: string;
+  source: string;
+  url: string;
+  summary: string;
+  impact: string;
+};
+
+type SentimentDriver = {
+  theme: string;
+  tone: string;
+  commentary: string;
+};
+
+type SentimentSnapshot = {
+  overall_sentiment: string;
+  drivers: SentimentDriver[];
+  sources_considered: string[];
+};
+
+type Thesis = {
+  bull_case: string;
+  base_case: string;
+  bear_case: string;
+  key_drivers: string[];
+  typical_time_horizon: string;
 };
 
 type RiskItem = {
   risk: string;
-  why_it_matters?: string;
-  monitor?: string;
+  why_it_matters: string;
+  how_to_monitor: string;
 };
 
-type Valuation = {
-  multiples?: Record<string, number | string | null | undefined>;
-  peer_set?: string[];
+type ValuationContext = {
+  relative_positioning: string;
+  key_multiples_mentioned: string[];
+  valuation_narrative: string;
 };
 
-type Technicals = {
-  trend?: string;
-  levels?: { support?: number; resistance?: number };
-  momentum?: { rsi?: number; comment?: string };
+type ScenarioProbabilities = {
+  bull: number;
+  base: number;
+  bear: number;
 };
 
-type KeyDate = { date?: string; event?: string };
-
-type Scenarios = { bull?: string; base?: string; bear?: string };
-
-type AnalysisShape = {
-  summary?: string;
-  latest_developments?: LatestDev[];
-  catalysts?: Catalyst[];
-  risks?: RiskItem[];
-  valuation?: Valuation;
-  technicals?: Technicals;
-  key_dates?: KeyDate[];
-  scenarios?: Scenarios;
-
-  headline?: string;
-  recommendation?: string;
-  conviction?: number; // 0..1
+type Scenarios = {
+  bull: string;
+  base: string;
+  bear: string;
+  probabilities: ScenarioProbabilities;
 };
 
-/* =========================
-   Helpers
-========================= */
+type FAQItem = {
+  question: string;
+  answer: string;
+};
 
-function isObj(x: unknown): x is Record<string, unknown> {
-  return typeof x === "object" && x !== null;
+type Explainability = {
+  assumptions: string[];
+  limitations: string[];
+  section_confidence: Record<string, number>;
+  confidence_overall: number;
+};
+
+export type StockAnalysis = {
+  symbol: string;
+  company_profile: CompanyProfile;
+  financial_and_operating_summary: FinancialAndOperatingSummary;
+  competitive_positioning: CompetitivePositioning;
+  recent_developments: RecentDevelopment[];
+  sentiment_snapshot: SentimentSnapshot;
+  thesis: Thesis;
+  risks: RiskItem[];
+  valuation_context: ValuationContext;
+  scenarios: Scenarios;
+  faq: FAQItem[];
+  explainability: Explainability;
+  disclaimer: string;
+};
+
+interface StockAnalysisCardProps {
+  stock: StockAnalysis;
 }
 
-function looseParse(input: unknown): AnalysisShape | null {
-  if (isObj(input)) return input as AnalysisShape;
-  if (typeof input === "string") {
-    const s = input.indexOf("{");
-    const e = input.lastIndexOf("}");
-    const maybe = s >= 0 && e > s ? input.slice(s, e + 1) : input;
-    try {
-      const parsed = JSON.parse(maybe);
-      return isObj(parsed) ? (parsed as AnalysisShape) : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
+/**
+ * Helper: extract first percentage (e.g. "+62%") from a string.
+ */
+function extractFirstPercentage(text?: string): string | null {
+  if (!text) return null;
+  const match = text.match(/([-+]?\d+(\.\d+)?)%/);
+  return match ? `${match[1]}%` : null;
 }
 
-function fmtNum(n: unknown) {
-  const v = typeof n === "string" ? Number(n) : (n as number);
-  if (typeof v === "number" && Number.isFinite(v)) {
-    return new Intl.NumberFormat(undefined, {
-      maximumFractionDigits: 2,
-    }).format(v);
-  }
-  return String(n ?? "—");
+/**
+ * Helper: extract a money figure like "$51.2 billion" from a string.
+ */
+function extractFirstMoneyFigure(text?: string): string | null {
+  if (!text) return null;
+  const match = text.match(/\$[\d,.]+\s*\w+/);
+  return match ? match[0] : null;
 }
 
-function shortDate(d?: string) {
-  if (!d) return "";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+/**
+ * Simple badge chip.
+ */
+const Chip: React.FC<
+  React.PropsWithChildren<{ tone?: "default" | "accent" }>
+> = ({ children, tone = "default" }) => {
+  const base =
+    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium shadow-sm";
+  const styles =
+    tone === "accent"
+      ? "bg-blue-50/90 text-blue-700 border border-blue-100"
+      : "bg-slate-100 text-slate-700 border border-slate-200";
 
-type Citation = { title: string; url: string };
-function makeCitations(devs: LatestDev[] | undefined): Citation[] {
-  if (!Array.isArray(devs)) return [];
-  const uniq = new Map<string, Citation>();
-  for (const d of devs) {
-    const key = d.url || d.headline || `${d.source}-${d.date}`;
-    if (!key) continue;
-    if (!uniq.has(key)) {
-      uniq.set(key, {
-        title: d.headline || d.source || "Source",
-        url: d.url || "#",
-      });
-    }
-  }
-  return Array.from(uniq.values());
-}
+  return <span className={`${base} ${styles}`}>{children}</span>;
+};
 
-function SourcePill({ idx, cites }: { idx?: number; cites: Citation[] }) {
-  if (!idx || idx < 1 || idx > cites.length) return null;
-  const c = cites[idx - 1];
+/**
+ * Section shell using native <details> for accessible accordion.
+ */
+const SectionCard: React.FC<
+  React.PropsWithChildren<{
+    title: string;
+    description?: string;
+    defaultOpen?: boolean;
+  }>
+> = ({ title, description, children, defaultOpen }) => {
   return (
-    <a
-      href={c.url}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      title={c.title}
+    <details
+      className="group self-start overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition hover:border-slate-300"
+      open={defaultOpen}
     >
-      <ExternalLink className="h-3 w-3" />
-      <span>[{idx}]</span>
-    </a>
-  );
-}
-
-function Section({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {icon}
-        {title}
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-5 py-4">
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+            {title}
+          </p>
+          {description ? (
+            <p className="text-sm leading-relaxed text-slate-600">
+              {description}
+            </p>
+          ) : null}
+        </div>
+        <span className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition group-open:rotate-45 group-open:border-slate-300 group-open:bg-slate-50">
+          +
+        </span>
+      </summary>
+      <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-5 text-sm text-slate-800">
+        <div className="space-y-4">{children}</div>
       </div>
-      {children}
+    </details>
+  );
+};
+
+const StatTile: React.FC<
+  React.PropsWithChildren<{ label: string; hint?: string }>
+> = ({ label, hint, children }) => (
+  <div className="rounded-xl border border-slate-200/90 bg-white/90 p-4 shadow-sm">
+    <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 font-semibold">
+      {label}
+    </p>
+    <div className="mt-1 flex items-baseline gap-2">
+      <span className="text-xl font-semibold text-slate-900">{children}</span>
+      {hint ? <span className="text-xs text-slate-500">{hint}</span> : null}
+    </div>
+  </div>
+);
+
+const ProbabilityCard: React.FC<{
+  label: string;
+  probability: number;
+  narrative: string;
+  tone: "bull" | "base" | "bear";
+}> = ({ label, probability, narrative, tone }) => {
+  const color =
+    tone === "bull"
+      ? "bg-emerald-500"
+      : tone === "bear"
+      ? "bg-rose-500"
+      : "bg-slate-600";
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+          {label}
+        </div>
+        <span className="text-xs font-semibold text-slate-900">
+          {(probability * 100).toFixed(0)}%
+        </span>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-slate-100">
+        <span
+          className={`block h-full rounded-full ${color}`}
+          style={{ width: `${Math.max(0, Math.min(probability * 100, 100))}%` }}
+        />
+      </div>
+      <p className="mt-2 text-sm text-slate-700 leading-relaxed">{narrative}</p>
     </div>
   );
-}
+};
 
-function recBadgeClasses(rec?: string) {
-  const r = (rec || "").toLowerCase();
-  if (r === "buy")
-    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-  if (r === "sell")
-    return "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400";
-  if (r === "hold" || r === "neutral")
-    return "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400";
-  return "border-border bg-secondary text-secondary-foreground";
-}
+export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
+  stock,
+}) => {
+  const { company_profile, financial_and_operating_summary, thesis } = stock;
 
-/* =========================
-   Main Component
-========================= */
+  const revenueGrowth = extractFirstPercentage(
+    financial_and_operating_summary.top_line_trend
+  );
+  const profitGrowth = extractFirstPercentage(
+    financial_and_operating_summary.profitability_trend
+  );
+  const dataCenterRev = extractFirstMoneyFigure(
+    financial_and_operating_summary.top_line_trend
+  );
+  const horizon = thesis?.typical_time_horizon ?? "—";
+  const sentiment = stock.sentiment_snapshot?.overall_sentiment ?? "—";
 
-export function SymbolAnalysis({
-  symbol,
-  name,
-  analysis,
-}: {
-  symbol: string;
-  name?: string | null;
-  analysis: unknown;
-}) {
-  const data = useMemo(() => looseParse(analysis), [analysis]);
+  const probabilities = stock.scenarios?.probabilities ?? {
+    bull: 0.3,
+    base: 0.5,
+    bear: 0.2,
+  };
 
-  if (!analysis) return null;
-
-  if (!data) {
-    return (
-      <div className="mt-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">AI Analysis</span>
-          </div>
-          <pre className="whitespace-pre-wrap text-sm text-muted-foreground">
-            {typeof analysis === "string"
-              ? analysis
-              : JSON.stringify(analysis, null, 2)}
-          </pre>
-        </Card>
-      </div>
-    );
-  }
-
-  const {
-    headline,
-    recommendation,
-    conviction,
-    summary,
-    latest_developments = [],
-    catalysts = [],
-    risks = [],
-    valuation,
-    technicals,
-    key_dates = [],
-    scenarios,
-  } = data;
-
-  const citations = makeCitations(latest_developments);
-  const convictionPct =
-    typeof conviction === "number" && conviction >= 0 && conviction <= 1
-      ? Math.round(conviction * 100)
-      : null;
+  const formatProb = (val: number | undefined) =>
+    typeof val === "number" ? `${Math.round(val * 100)}%` : "—";
 
   return (
-    <div className="mt-4">
-      <Card className="p-4 space-y-4 bg-card text-card-foreground">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <div className="text-sm font-medium">
-              AI Analysis {name ? `• ${name}` : ""} ({symbol?.toUpperCase?.()})
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
+        <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-6 text-white md:px-8 md:py-7">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-white/60">
+                Symbol analysis
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-3xl font-semibold leading-tight tracking-tight">
+                  {stock.symbol}
+                </span>
+                <span className="text-lg text-white/80">
+                  {company_profile.name}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip tone="accent">{company_profile.sector}</Chip>
+                <Chip>{company_profile.industry}</Chip>
+                <Chip>{company_profile.country}</Chip>
+                <Chip>
+                  Sentiment:{" "}
+                  <span
+                    className={`ml-1 inline-flex items-center gap-1 capitalize ${
+                      sentiment === "bullish"
+                        ? "text-emerald-200"
+                        : sentiment === "bearish"
+                        ? "text-rose-200"
+                        : "text-white"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-1.5 w-1.5 rounded-full ${
+                        sentiment === "bullish"
+                          ? "bg-emerald-300"
+                          : sentiment === "bearish"
+                          ? "bg-rose-300"
+                          : "bg-white"
+                      }`}
+                    />
+                    {sentiment}
+                  </span>
+                </Chip>
+              </div>
+            </div>
+            <div className="grid w-full grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 text-sm text-white shadow-inner md:w-[320px]">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.08em] text-white/70">
+                  Time horizon
+                </p>
+                <p className="mt-1 text-lg font-semibold capitalize">
+                  {horizon}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.08em] text-white/70">
+                  Base probability
+                </p>
+                <p className="mt-1 text-lg font-semibold">
+                  {formatProb(probabilities.base)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 col-span-2">
+                <p className="text-[11px] uppercase tracking-[0.08em] text-white/70">
+                  Quick takeaway
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-white/90">
+                  {financial_and_operating_summary.top_line_trend}
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {recommendation ? (
-              <Badge
-                variant="outline"
-                className={`border ${recBadgeClasses(recommendation)}`}
-              >
-                {recommendation.toUpperCase()}
-              </Badge>
-            ) : null}
-            {convictionPct !== null ? (
-              <div className="flex items-center gap-2 min-w-[180px]">
-                <div className="text-xs text-muted-foreground">Conviction</div>
-                <div className="w-36 h-2 rounded bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary"
-                    style={{ width: `${convictionPct}%` }}
-                    aria-label={`Conviction ${convictionPct}%`}
-                  />
+        </header>
+
+        <div className="space-y-6 bg-slate-50 px-5 py-6 md:px-8">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-600">
+                Quick snapshot
+              </h2>
+              <span className="text-xs text-slate-500">
+                High-level momentum checks
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <StatTile label="Revenue growth">{revenueGrowth ?? "—"}</StatTile>
+              <StatTile label="Profit growth">{profitGrowth ?? "—"}</StatTile>
+              <StatTile label="Data center rev" hint="Last noted">
+                {dataCenterRev ?? "—"}
+              </StatTile>
+              <StatTile label="Time horizon">
+                <span className="capitalize">{horizon}</span>
+              </StatTile>
+            </div>
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <SectionCard
+              title="Company profile"
+              description="What the business does and how it wins"
+              defaultOpen
+            >
+              <p className="text-sm leading-relaxed text-slate-700">
+                {company_profile.business_model}
+              </p>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                    Key products & services
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700">
+                    {company_profile.key_products_services.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                    Revenue drivers
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700">
+                    {company_profile.revenue_drivers.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            ) : null}
-          </div>
-        </div>
 
-        {/* Headline */}
-        {headline ? (
-          <div className="flex items-start gap-2">
-            <Sparkles className="h-4 w-4 mt-0.5 text-muted-foreground" />
-            <p className="text-sm">{headline}</p>
-          </div>
-        ) : null}
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                    Moat
+                  </h3>
+                  <p className="leading-relaxed">
+                    {company_profile.moat_and_competitive_advantages}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                    Cyclicality
+                  </h3>
+                  <p className="leading-relaxed">
+                    {company_profile.cyclicality}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                    Capital intensity
+                  </h3>
+                  <p className="leading-relaxed">
+                    {company_profile.capital_intensity}
+                  </p>
+                </div>
+              </div>
+            </SectionCard>
 
-        {/* Summary */}
-        {summary ? (
-          <Section
-            title="Summary"
-            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="rounded-xl border border-border p-3 bg-card">
-              <p className="text-sm whitespace-pre-wrap">{summary}</p>
-            </div>
-          </Section>
-        ) : null}
+            <SectionCard
+              title="Financial & operating summary"
+              description="Momentum, cash profile, and allocation"
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    Top line trend
+                  </h3>
+                  <p className="leading-relaxed">
+                    {financial_and_operating_summary.top_line_trend}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    Profitability
+                  </h3>
+                  <p className="leading-relaxed">
+                    {financial_and_operating_summary.profitability_trend}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    Balance sheet
+                  </h3>
+                  <p className="leading-relaxed">
+                    {financial_and_operating_summary.balance_sheet_health}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    Cash flow & capex
+                  </h3>
+                  <p className="leading-relaxed">
+                    {financial_and_operating_summary.cash_flow_and_capex}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    Capital allocation
+                  </h3>
+                  <p className="leading-relaxed">
+                    {financial_and_operating_summary.capital_allocation}
+                  </p>
+                </div>
+              </div>
+            </SectionCard>
+          </section>
 
-        {/* Latest developments */}
-        {latest_developments.length > 0 ? (
-          <Section
-            title="Latest developments"
-            icon={<Newspaper className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {latest_developments.map((d, i) => {
-                const citeIdx =
-                  citations.findIndex(
-                    (c) => c.url === d.url || c.title === d.headline
-                  ) + 1 || undefined;
-                return (
-                  <div
-                    key={String(d.url || d.headline || i) + "-" + i}
-                    className="rounded-xl border border-border p-3 bg-card"
+          <section className="grid gap-4 lg:grid-cols-2">
+            <SectionCard
+              title="Competitive positioning"
+              description="How the company stacks up against peers"
+              defaultOpen
+            >
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                  Peer set
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {stock.competitive_positioning.peer_set.map((peer) => (
+                    <Chip key={peer}>{peer}</Chip>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                  Position vs peers
+                </h3>
+                <p className="leading-relaxed">
+                  {stock.competitive_positioning.position_vs_peers}
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                    Structural tailwinds
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700">
+                    {stock.competitive_positioning.structural_tailwinds.map(
+                      (item) => (
+                        <li key={item}>{item}</li>
+                      )
+                    )}
+                  </ul>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                    Structural headwinds
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700">
+                    {stock.competitive_positioning.structural_headwinds.map(
+                      (item) => (
+                        <li key={item}>{item}</li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Recent developments"
+              description="Fresh headlines with impact call-outs"
+            >
+              <div className="space-y-3">
+                {stock.recent_developments.map((news) => (
+                  <article
+                    key={news.headline}
+                    className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-medium">{d.headline}</div>
-                      <div className="text-[10px] text-muted-foreground shrink-0">
-                        {shortDate(d.date)}
-                      </div>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground space-y-1">
-                      {d.cause ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Cause:
-                          </span>{" "}
-                          {d.cause}
-                        </div>
-                      ) : null}
-                      {d.impact ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Impact:
-                          </span>{" "}
-                          {d.impact}
-                        </div>
-                      ) : null}
-                      {d.assets_affected?.length ? (
-                        <div>
-                          <span className="font-medium text-foreground">
-                            Assets:
-                          </span>{" "}
-                          {d.assets_affected.join(", ")}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="text-[10px] text-muted-foreground">
-                        {d.source || ""}
-                      </div>
-                      <SourcePill idx={citeIdx} cites={citations} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Section>
-        ) : null}
-
-        {/* Catalysts */}
-        {catalysts.length > 0 ? (
-          <Section
-            title="Upcoming catalysts"
-            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {catalysts.map((c, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-border p-3 bg-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">
-                      {c.type
-                        ? c.type.charAt(0).toUpperCase() + c.type.slice(1)
-                        : "Catalyst"}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {shortDate(c.date)}
-                    </div>
-                  </div>
-                  {c.description ? (
-                    <div className="text-sm mt-1">{c.description}</div>
-                  ) : null}
-                  <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-                    {c.expected_direction ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Direction:
-                        </span>{" "}
-                        {c.expected_direction}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <a
+                        href={news.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-semibold text-blue-700 hover:underline"
+                      >
+                        {news.headline}
+                      </a>
+                      <span className="text-xs text-slate-500">
+                        {news.source} • {news.date}
                       </span>
-                    ) : null}
-                    {c.magnitude_basis ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Basis:
-                        </span>{" "}
-                        {c.magnitude_basis}
-                      </span>
-                    ) : null}
-                    {typeof c.confidence === "number" ? (
-                      <span>
-                        <span className="font-medium text-foreground">
-                          Confidence:
-                        </span>{" "}
-                        {Math.round(c.confidence * 100)}%
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-        ) : null}
+                    </div>
+                    <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                      {news.summary}
+                    </p>
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                      <span className="h-2 w-2 rounded-full bg-slate-400" />
+                      Impact: {news.impact}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </SectionCard>
+          </section>
 
-        {/* Risks */}
-        {risks.length > 0 ? (
-          <Section
-            title="Key risks"
-            icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
-          >
-            <ul className="space-y-2">
-              {risks.map((r, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div className="text-sm">
-                    <span className="font-medium">{r.risk}:</span>{" "}
-                    <span className="text-muted-foreground">
-                      {[r.why_it_matters, r.monitor]
-                        .filter(Boolean)
-                        .join(" — ")}
-                    </span>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <SectionCard
+              title="Sentiment snapshot"
+              description="Tone, drivers, and sources"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip tone="accent">
+                  {sentiment.charAt(0).toUpperCase()}
+                  {sentiment.slice(1)}
+                </Chip>
+                <span className="text-xs text-slate-600">
+                  Overall sentiment flag
+                </span>
+              </div>
+              <div className="space-y-2">
+                {stock.sentiment_snapshot.drivers.map((driver) => (
+                  <div
+                    key={driver.theme}
+                    className="rounded-xl border border-slate-200 bg-white p-3"
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {driver.theme} ({driver.tone})
+                    </div>
+                    <p className="leading-relaxed">{driver.commentary}</p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
+                ))}
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-800 text-sm mb-1">
+                  Sources considered
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {stock.sentiment_snapshot.sources_considered.map((source) => (
+                    <Chip key={source}>{source}</Chip>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
 
-        {/* Valuation */}
-        {valuation?.multiples || valuation?.peer_set ? (
-          <Section
-            title="Valuation"
-            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {valuation?.multiples ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">
-                    Multiples
+            <SectionCard
+              title="Thesis (bull / base / bear)"
+              description="Core narratives by scenario"
+              defaultOpen
+            >
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-1">
+                    Bull case
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    {Object.entries(valuation.multiples).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          {k.replace(/_/g, " ").toUpperCase()}
-                        </span>
-                        <span className="font-medium">{fmtNum(v)}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-sm text-emerald-900 leading-relaxed">
+                    {stock.thesis.bull_case}
+                  </p>
                 </div>
-              ) : null}
-              {valuation?.peer_set ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">
-                    Peer set
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1">
+                    Base case
                   </div>
-                  <div className="text-sm">{valuation.peer_set.join(", ")}</div>
+                  <p className="text-sm text-slate-900 leading-relaxed">
+                    {stock.thesis.base_case}
+                  </p>
                 </div>
-              ) : null}
-            </div>
-          </Section>
-        ) : null}
+                <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-rose-700 mb-1">
+                    Bear case
+                  </div>
+                  <p className="text-sm text-rose-900 leading-relaxed">
+                    {stock.thesis.bear_case}
+                  </p>
+                </div>
+              </div>
 
-        {/* Technicals */}
-        {technicals ? (
-          <Section
-            title="Technicals"
-            icon={<LineChart className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {technicals.trend ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Trend</div>
-                  <div className="text-sm font-medium">{technicals.trend}</div>
-                </div>
-              ) : null}
-              {technicals.levels ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Levels</div>
-                  <div className="text-sm">
-                    <span className="font-medium">Support:</span>{" "}
-                    {fmtNum(technicals.levels.support)} &nbsp;•&nbsp;
-                    <span className="font-medium">Resistance:</span>{" "}
-                    {fmtNum(technicals.levels.resistance)}
-                  </div>
-                </div>
-              ) : null}
-              {technicals.momentum ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Momentum</div>
-                  <div className="text-sm">
-                    {technicals.momentum.rsi != null ? (
-                      <>
-                        <span className="font-medium">RSI:</span>{" "}
-                        {fmtNum(technicals.momentum.rsi)}
-                        {technicals.momentum.comment ? " — " : ""}
-                      </>
-                    ) : null}
-                    {technicals.momentum.comment || ""}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </Section>
-        ) : null}
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Key drivers
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-slate-700">
+                  {stock.thesis.key_drivers.map((driver) => (
+                    <li key={driver}>{driver}</li>
+                  ))}
+                </ul>
+              </div>
 
-        {/* Key dates */}
-        {key_dates.length > 0 ? (
-          <Section
-            title="Key dates"
-            icon={<Calendar className="h-3.5 w-3.5 text-muted-foreground" />}
-          >
-            <div className="rounded-xl border border-border p-3 bg-card">
-              <ul className="text-sm space-y-1">
-                {key_dates.map((k, i) => (
-                  <li key={i} className="flex items-center justify-between">
-                    <span>{k.event || "Event"}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {shortDate(k.date)}
-                    </span>
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <Chip tone="accent">Typical horizon: {horizon}</Chip>
+              </div>
+            </SectionCard>
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <SectionCard title="Risks" description="Watch-outs and monitoring">
+              <div className="grid gap-3">
+                {stock.risks.map((risk) => (
+                  <div
+                    key={risk.risk}
+                    className="rounded-xl border border-amber-200 bg-amber-50/80 p-3"
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide text-amber-800 mb-1">
+                      {risk.risk}
+                    </div>
+                    <p className="text-sm text-slate-800 mb-1 leading-relaxed">
+                      <span className="font-semibold">Why it matters: </span>
+                      {risk.why_it_matters}
+                    </p>
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      <span className="font-semibold">How to monitor: </span>
+                      {risk.how_to_monitor}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Valuation context"
+              description="Where the market is pricing the story"
+            >
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Relative positioning
+                </h3>
+                <p className="leading-relaxed">
+                  {stock.valuation_context.relative_positioning}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Key multiples mentioned
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {stock.valuation_context.key_multiples_mentioned.map((m) => (
+                    <Chip key={m}>{m}</Chip>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Narrative
+                </h3>
+                <p className="leading-relaxed">
+                  {stock.valuation_context.valuation_narrative}
+                </p>
+              </div>
+            </SectionCard>
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <SectionCard
+              title="Scenarios & probabilities"
+              description="Likelihood-weighted narratives"
+              defaultOpen
+            >
+              <div className="grid gap-3 md:grid-cols-3">
+                <ProbabilityCard
+                  label="Bull"
+                  probability={probabilities.bull}
+                  narrative={stock.scenarios.bull}
+                  tone="bull"
+                />
+                <ProbabilityCard
+                  label="Base"
+                  probability={probabilities.base}
+                  narrative={stock.scenarios.base}
+                  tone="base"
+                />
+                <ProbabilityCard
+                  label="Bear"
+                  probability={probabilities.bear}
+                  narrative={stock.scenarios.bear}
+                  tone="bear"
+                />
+              </div>
+            </SectionCard>
+
+            <SectionCard title="FAQ" description="Investor questions answered">
+              <ul className="space-y-3">
+                {stock.faq.map((faq) => (
+                  <li
+                    key={faq.question}
+                    className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                  >
+                    <div className="font-semibold text-sm text-slate-900">
+                      {faq.question}
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      {faq.answer}
+                    </p>
                   </li>
                 ))}
               </ul>
-            </div>
-          </Section>
-        ) : null}
+            </SectionCard>
+          </section>
 
-        {/* Scenarios */}
-        {scenarios && (scenarios.bull || scenarios.base || scenarios.bear) ? (
-          <Section
-            title="Scenarios"
-            icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
+          <SectionCard
+            title="Explainability & confidence"
+            description="Assumptions, constraints, and confidence levels"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {scenarios.bull ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Bull</div>
-                  <div className="text-sm">{scenarios.bull}</div>
-                </div>
-              ) : null}
-              {scenarios.base ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Base</div>
-                  <div className="text-sm">{scenarios.base}</div>
-                </div>
-              ) : null}
-              {scenarios.bear ? (
-                <div className="rounded-xl border border-border p-3 bg-card">
-                  <div className="text-xs text-muted-foreground">Bear</div>
-                  <div className="text-sm">{scenarios.bear}</div>
-                </div>
-              ) : null}
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Assumptions
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-slate-700">
+                  {stock.explainability.assumptions.map((a) => (
+                    <li key={a}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                  Limitations
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-slate-700">
+                  {stock.explainability.limitations.map((l) => (
+                    <li key={l}>{l}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </Section>
-        ) : null}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                Section confidence
+              </h3>
+              <div className="grid gap-2 md:grid-cols-2">
+                {Object.entries(stock.explainability.section_confidence).map(
+                  ([section, value]) => (
+                    <div
+                      key={section}
+                      className="flex items-center justify-between rounded-md bg-white px-3 py-2 border border-slate-200"
+                    >
+                      <span className="text-xs text-slate-600">
+                        {section.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        {(value * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Overall confidence
+              </h3>
+              <Chip tone="accent">
+                {(stock.explainability.confidence_overall * 100).toFixed(0)}%
+              </Chip>
+            </div>
+          </SectionCard>
 
-        {/* Sources */}
-        {citations.length > 0 ? (
-          <Section
-            title="Sources"
-            icon={
-              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-            }
-          >
-            <ul className="text-sm space-y-1">
-              {citations.map((c, i) => (
-                <li key={i}>
-                  <a
-                    href={c.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 underline underline-offset-4 hover:text-foreground text-muted-foreground"
-                  >
-                    <span className="text-xs text-muted-foreground">
-                      [{i + 1}]
-                    </span>
-                    <span>{c.title}</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ) : null}
-      </Card>
+          <footer className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-[11px] leading-relaxed text-slate-600 shadow-sm">
+            {stock.disclaimer}
+          </footer>
+        </div>
+      </div>
     </div>
   );
-}
-
-export default SymbolAnalysis;
+};

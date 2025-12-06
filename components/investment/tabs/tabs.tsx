@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 type TabsCtx = { value: string; setValue: (v: string) => void };
 const Ctx = createContext<TabsCtx | null>(null);
@@ -15,7 +16,11 @@ export function Tabs({
   return <Ctx.Provider value={{ value, setValue }}>{children}</Ctx.Provider>;
 }
 export function TabList({ children }: { children: React.ReactNode }) {
-  return <div className="flex gap-1 border-b border-slate-200">{children}</div>;
+  return (
+    <div className="inline-flex flex-wrap gap-2 rounded-2xl bg-neutral-100 p-1 ring-1 ring-neutral-200">
+      {children}
+    </div>
+  );
 }
 export function TabTrigger({
   value,
@@ -29,11 +34,12 @@ export function TabTrigger({
   return (
     <button
       onClick={() => ctx.setValue(value)}
-      className={`px-3 py-2 text-sm border-b-2 -mb-px ${
+      className={cn(
+        "rounded-xl px-3.5 py-2 text-sm font-semibold transition shadow-[0_8px_20px_-14px_rgba(15,23,42,0.45)]",
         active
-          ? "border-slate-900 text-primary-900"
-          : "border-transparent text-primary-600 hover:text-primary-900"
-      }`}
+          ? "bg-white text-neutral-900 ring-1 ring-neutral-200"
+          : "text-neutral-600 hover:text-neutral-900"
+      )}
       aria-pressed={active}
     >
       {children}
@@ -41,7 +47,7 @@ export function TabTrigger({
   );
 }
 export function TabPanels({ children }: { children: React.ReactNode }) {
-  return <div className="pt-4">{children}</div>;
+  return <div className="pt-2">{children}</div>;
 }
 export function TabPanel({
   value,

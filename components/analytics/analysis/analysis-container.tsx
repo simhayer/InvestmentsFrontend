@@ -122,11 +122,11 @@ export function AnalysisContainer() {
                 ? `Next automatic refresh in ${nextUpdateIn}`
                 : "Refresh now"
             }
-            className="gap-1"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Refresh
-          </Button>
+              className="gap-1"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Refresh
+            </Button>
 
           {showForce && (
             <Button

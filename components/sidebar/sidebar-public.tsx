@@ -5,16 +5,15 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { X, Home } from "lucide-react";
+import { X } from "lucide-react";
 import darkLogo from "@/public/logo-full-dark-nobg.png";
 import lightLogo from "@/public/logo-full-light-nobg.png";
+import { NAV_ITEMS_PUBLIC } from "../navigation/nav-items";
 
 type Props = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 };
-
-const NAV_PUBLIC = [{ name: "Market Overview", href: "/market", icon: Home }];
 
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
@@ -47,7 +46,7 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
         />
       </button>
 
-      {NAV_PUBLIC.map((item) => {
+      {NAV_ITEMS_PUBLIC.map((item) => {
         const active =
           pathname === item.href || pathname?.startsWith(item.href + "/");
         return (

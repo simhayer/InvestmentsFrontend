@@ -365,7 +365,7 @@ export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
     .join(" • ");
 
   return (
-    <div className="mx-auto w-full max-w-[1260px] space-y-6">
+    <div className="mx-auto w-full max-w-[1260px] space-y-6 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
       {/* Hero */}
       <div className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
         <div className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 px-6 py-7 text-white sm:px-8 sm:py-8">

@@ -89,7 +89,8 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #f9f8f6; /* match navbar page tone */
   }
 }
 

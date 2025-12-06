@@ -31,18 +31,9 @@ function timeAgo(iso?: string | null) {
   return `${days}d ago`;
 }
 
-function domainFrom(url: string) {
-  try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
-
 function SymbolChip({ symbol }: { symbol: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium bg-background">
+    <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-700 ring-1 ring-neutral-200">
       {symbol}
     </span>
   );
@@ -50,11 +41,10 @@ function SymbolChip({ symbol }: { symbol: string }) {
 
 function NewsCard({ item, symbol }: { item: NewsItem; symbol: string }) {
   const when = timeAgo(item.published_at);
-  const host = domainFrom(item.url);
 
   return (
-    <Card className="overflow-hidden hover:shadow-sm transition-shadow">
-      <div className="flex gap-4 p-3 sm:p-4">
+    <Card className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white transition-shadow hover:shadow-md">
+      <div className="flex gap-4 p-4 sm:p-5">
         {/* Text */}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
@@ -134,7 +124,7 @@ export function NewsTab({ symbol }: { symbol: string }) {
       setRefreshing(false);
       setLoading(false);
     }
-  }, []);
+  }, [symbol]);
 
   useEffect(() => {
     fetchNews();
@@ -143,59 +133,50 @@ export function NewsTab({ symbol }: { symbol: string }) {
   // Loading state
   if (loading) {
     return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-background">
-        <div className="mb-4 flex items-center justify-between">
-          <Skeleton className="h-7 w-24" />
-        </div>
-        <div className="grid gap-4">
-          <Skeleton className="h-28 rounded" />
-          <Skeleton className="h-28 rounded" />
-          <Skeleton className="h-28 rounded" />
-        </div>
-      </main>
+      <div className="space-y-3">
+        <Skeleton className="h-7 w-24" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-background">
-        <Card className="max-w-xl border-destructive/20">
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            <p className="mb-4">{error}</p>
-            <Button variant="outline" onClick={fetchNews}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </main>
+      <Card className="max-w-xl border border-rose-100 bg-rose-50/50">
+        <CardContent className="p-6 text-sm text-rose-800">
+          <p className="mb-4">{error}</p>
+          <Button variant="outline" onClick={fetchNews}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   const count = items.length;
 
   return (
-    <main
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-background"
+    <div
+      className={`space-y-3 ${
+        refreshing ? "opacity-60 pointer-events-none" : ""
+      }`}
       aria-busy={refreshing}
       aria-live="polite"
     >
-      {/* Toolbar */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs text-muted-foreground bg-background">
-            {count} article{count === 1 ? "" : "s"}
-          </span>
-        </div>
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200">
+          {count} article{count === 1 ? "" : "s"}
+        </span>
+        <Button variant="ghost" size="sm" onClick={fetchNews} disabled={refreshing}>
+          Refresh
+        </Button>
       </div>
 
-      {/* Feed */}
       {count > 0 ? (
-        <div
-          className={`space-y-3 ${
-            refreshing ? "opacity-60 pointer-events-none" : ""
-          }`}
-        >
+        <div className="space-y-3">
           {items.map((it, idx) => (
             <NewsCard
               key={`${it.symbol}-${idx}-${it.url}`}
@@ -205,12 +186,12 @@ export function NewsTab({ symbol }: { symbol: string }) {
           ))}
         </div>
       ) : (
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-sm text-muted-foreground">
+        <Card className="rounded-2xl border border-dashed border-neutral-200/80 bg-neutral-50/70">
+          <CardContent className="p-6 text-sm text-neutral-600">
             No news available
           </CardContent>
         </Card>
       )}
-    </main>
+    </div>
   );
 }

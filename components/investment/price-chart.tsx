@@ -38,10 +38,10 @@ const LIGHT = {
   grid: "#e5e7eb", // gray-200
   crosshair: "#94a3b8", // slate-400
   // series
-  areaLine: "#2563eb", // blue-600
-  areaTop: "rgba(37, 99, 235, 0.22)",
-  areaBottom: "rgba(37, 99, 235, 0.02)",
-  line: "#0ea5e9", // sky-500
+  areaLine: "#10b981", // emerald-500
+  areaTop: "rgba(16, 185, 129, 0.22)",
+  areaBottom: "rgba(16, 185, 129, 0.04)",
+  line: "#059669", // emerald-600
   up: "#10b981", // emerald-500
   down: "#ef4444", // red-500
 };
@@ -52,10 +52,10 @@ const DARK = {
   grid: "#1f2a44",
   crosshair: "#64748b", // slate-500
   // series
-  areaLine: "#60a5fa", // blue-400
-  areaTop: "rgba(96, 165, 250, 0.30)",
-  areaBottom: "rgba(96, 165, 250, 0.06)",
-  line: "#38bdf8", // sky-400
+  areaLine: "#34d399", // emerald-400
+  areaTop: "rgba(52, 211, 153, 0.30)",
+  areaBottom: "rgba(52, 211, 153, 0.08)",
+  line: "#10b981", // emerald-500
   up: "#34d399", // emerald-400
   down: "#f87171", // red-400
 };

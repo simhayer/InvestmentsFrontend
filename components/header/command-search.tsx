@@ -25,12 +25,14 @@ type Result = {
 
 export function CommandSearch({
   onSelect,
-  placeholder = "Search symbols, companies…",
+  placeholder = "Search name or symbol",
   className = "",
+  autoFocus = false,
 }: {
   onSelect?: (r: Result) => void;
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -91,6 +93,14 @@ export function CommandSearch({
     inputRef.current?.focus();
   };
 
+  // Autofocus when requested (mobile sheet)
+  React.useEffect(() => {
+    if (autoFocus) {
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [autoFocus]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       {/* Inline input as Anchor (no toggle flicker) */}
@@ -98,17 +108,18 @@ export function CommandSearch({
         <div
           ref={anchorRef}
           className={[
-            "w-full max-w-md relative flex items-center",
-            "rounded-full border border-input bg-background",
-            "pl-9 pr-10 py-2",
-            "focus-within:ring-2 focus-within:ring-blue-500",
+            "w-full relative flex items-center",
+            "rounded-full border border-neutral-200 bg-white shadow-sm",
+            "pl-10 pr-14 py-2.5",
+            "transition focus-within:border-neutral-300",
+            "focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.05)]",
             className,
           ].join(" ")}
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
         >
-          <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3.5 h-4 w-4 text-neutral-500" />
           <input
             ref={inputRef}
             type="text"
@@ -124,23 +135,29 @@ export function CommandSearch({
               }
             }}
             placeholder={placeholder}
-            className="w-full bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+            className="w-full bg-transparent outline-none text-sm text-neutral-800 placeholder:text-neutral-500"
             aria-autocomplete="list"
             aria-controls="search-results"
             autoComplete="off"
           />
-          {loading ? (
-            <Loader2 className="absolute right-3 h-4 w-4 animate-spin text-muted-foreground" />
-          ) : query ? (
-            <button
-              type="button"
-              onClick={clear}
-              className="absolute right-2 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-muted"
-              aria-label="Clear search"
-            >
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          ) : null}
+          <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />
+            ) : query ? (
+              <button
+                type="button"
+                onClick={clear}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-neutral-100"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5 text-neutral-500" />
+              </button>
+            ) : (
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
+                /
+              </span>
+            )}
+          </div>
         </div>
       </PopoverAnchor>
 

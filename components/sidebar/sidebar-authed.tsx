@@ -5,24 +5,17 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { X, Home, BarChart3, Link2, BarChart2, LogOut } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-provider";
 import darkLogo from "@/public/logo-full-dark-nobg.png";
 import lightLogo from "@/public/logo-full-light-nobg.png";
+import { NAV_ITEMS_AUTHED } from "../navigation/nav-items";
 
 type Props = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 };
-
-const NAV_ITEMS = [
-  { name: "Market Overview", href: "/dashboard/market", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: Home, exact: true },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Holdings", href: "/holdings", icon: BarChart2 },
-  { name: "Connections", href: "/connections", icon: Link2 },
-];
 
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
@@ -45,7 +38,7 @@ function NavList({
   return (
     <nav className="p-4 space-y-2">
       <div className="pt-4 space-y-1">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS_AUTHED.map((item) => {
           const active = isActive(pathname, item.href, (item as any).exact);
           return (
             <Link

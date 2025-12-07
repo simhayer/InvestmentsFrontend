@@ -2,7 +2,11 @@ import * as React from "react";
 import type { NewsSentimentLayer } from "@/types/portfolio-ai";
 
 export function NewsSentimentTab({ data }: { data: NewsSentimentLayer }) {
-  if (!data) return <Empty msg="No news/sentiment available." />;
+  if (!data || !data.sentiment) return <Empty msg="No news/sentiment available." />;
+
+  const sentiment = data.sentiment;
+  const drivers = sentiment.drivers || [];
+  const sources = sentiment.sources_considered || [];
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -12,11 +16,11 @@ export function NewsSentimentTab({ data }: { data: NewsSentimentLayer }) {
               Overall sentiment
             </p>
             <p className="text-sm text-slate-700">
-              {data.sentiment.summary}
+              {sentiment.summary || "No summary available."}
             </p>
           </div>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-800 capitalize">
-            {data.sentiment.overall_sentiment}
+            {sentiment.overall_sentiment || "neutral"}
           </span>
         </div>
       </div>
@@ -27,7 +31,7 @@ export function NewsSentimentTab({ data }: { data: NewsSentimentLayer }) {
             Drivers
           </div>
           <ul className="space-y-3 text-sm">
-            {data.sentiment.drivers.map((d, i) => (
+            {drivers.map((d, i) => (
               <li
                 key={i}
                 className="rounded-xl border border-slate-100 bg-slate-50/60 p-3"
@@ -52,7 +56,7 @@ export function NewsSentimentTab({ data }: { data: NewsSentimentLayer }) {
             Sources Considered
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
-            {data.sentiment.sources_considered.map((s) => (
+            {sources.map((s) => (
               <span
                 key={s}
                 className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700"

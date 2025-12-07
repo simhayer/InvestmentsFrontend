@@ -1,27 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { News } from "./news";
 import { AnalysisContainer } from "./analysis/analysis-container";
 
 export function Analytics() {
-  const [refreshing, setRefreshing] = useState(false);
-
   return (
-    <main
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-background"
-      aria-busy={refreshing}
-      aria-live="polite"
-    >
-      <div
-        className={`space-y-8 ${
-          refreshing ? "opacity-60 pointer-events-none" : ""
-        }`}
-      >
+    <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
+      <main className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-8 sm:py-10 lg:py-12">
         <AnalysisContainer />
-        {/* <PortfolioNewsSummary symbols={dummySymbols || []} /> */}
-        <News />
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

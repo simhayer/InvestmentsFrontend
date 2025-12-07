@@ -15,6 +15,9 @@ type Props = {
   setSidebarOpen: (open: boolean) => void;
 };
 
+const futuraSignInFontClasses =
+  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
+
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
 }
@@ -71,7 +74,12 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
 
   const LoginBlock = ({ onAction }: { onAction?: () => void }) => (
     <div className="mt-auto p-4 border-t border-border">
-      <div className="rounded-xl border p-3 text-sm bg-muted">
+      <div
+        className={[
+          "rounded-xl border p-3 text-sm bg-muted",
+          futuraSignInFontClasses,
+        ].join(" ")}
+      >
         <div className="font-medium mb-1">Unlock your dashboard</div>
         <p className="text-muted-foreground mb-2">
           Sign in to access portfolio, analytics, and alerts.
@@ -79,7 +87,10 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
         <Link
           href={loginHref}
           onClick={() => onAction?.()}
-          className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm bg-primary text-primary-foreground hover:opacity-90"
+          className={[
+            "inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm bg-primary text-primary-foreground hover:opacity-90",
+            futuraSignInFontClasses,
+          ].join(" ")}
         >
           Sign in
         </Link>

@@ -8,6 +8,10 @@ export async function fetchNewsForUser(): Promise<any> {
     credentials: "include",
     cache: "no-store",
   });
+  if (res.status === 401 || res.status === 403) {
+    console.warn("News request unauthorized; returning empty feed.");
+    return {};
+  }
   if (!res.ok) {
     throw new Error(`Failed to fetch news (${res.status})`);
   }
@@ -25,6 +29,10 @@ export async function fetchNewsForSymbol(symbol: string): Promise<any> {
       cache: "no-store",
     }
   );
+  if (res.status === 401 || res.status === 403) {
+    console.warn("News-by-symbol request unauthorized; returning empty list.");
+    return [];
+  }
   if (!res.ok) {
     throw new Error(
       `Failed to fetch news for symbol ${symbol} (${res.status})`

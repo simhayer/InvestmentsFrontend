@@ -26,6 +26,9 @@ import {
   type NavItem,
 } from "../navigation/nav-items";
 
+const futuraSignInFontClasses =
+  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
+
 function isActive(pathname: string | null, href: string, exact?: boolean) {
   if (!pathname) return false;
   return exact
@@ -144,7 +147,10 @@ export function Header() {
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent
+                align="end"
+                className={["w-48", futuraSignInFontClasses].join(" ")}
+              >
                 {user ? (
                   <>
                     <DropdownMenuItem disabled className="opacity-100">
@@ -168,7 +174,12 @@ export function Header() {
                   </>
                 ) : (
                   <DropdownMenuItem asChild>
-                    <Link href={loginHref} className="cursor-pointer">
+                    <Link
+                      href={loginHref}
+                      className={["cursor-pointer", futuraSignInFontClasses].join(
+                        " "
+                      )}
+                    >
                       Sign in
                     </Link>
                   </DropdownMenuItem>
@@ -253,7 +264,10 @@ export function Header() {
                   ) : (
                     <Link
                       href={loginHref}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-800 hover:shadow-sm transition"
+                      className={[
+                        "w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-800 hover:shadow-sm transition",
+                        futuraSignInFontClasses,
+                      ].join(" ")}
                     >
                       Sign in
                     </Link>

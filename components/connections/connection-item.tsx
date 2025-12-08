@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,7 +46,7 @@ function statusBadge(status: ConnectionStatus) {
       return (
         <Badge
           variant="secondary"
-          className="bg-green-100 text-green-700"
+          className="bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
           title="Connection is active"
         >
           <span className="inline-flex items-center gap-1">
@@ -60,7 +59,7 @@ function statusBadge(status: ConnectionStatus) {
       return (
         <Badge
           variant="secondary"
-          className="bg-blue-100 text-blue-700"
+          className="bg-blue-50 text-blue-700 ring-1 ring-blue-100"
           title="Sync in progress"
         >
           <span className="inline-flex items-center gap-1">
@@ -73,7 +72,7 @@ function statusBadge(status: ConnectionStatus) {
       return (
         <Badge
           variant="secondary"
-          className="bg-red-100 text-red-700"
+          className="bg-rose-50 text-rose-700 ring-1 ring-rose-100"
           title="There was an issue with this connection"
         >
           <span className="inline-flex items-center gap-1">
@@ -87,7 +86,7 @@ function statusBadge(status: ConnectionStatus) {
       return (
         <Badge
           variant="secondary"
-          className="bg-muted text-muted-foreground"
+          className="bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200"
           title="Connection is not active"
         >
           <span className="inline-flex items-center gap-1">
@@ -191,50 +190,37 @@ export function ConnectionItem({
   };
 
   return (
-    <Card
+    <div
       key={connection.id}
-      className="relative overflow-hidden group border border-gray-200/80 hover:border-gray-300 transition-colors duration-200 shadow-sm hover:shadow-md"
+      className="group flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white/80 px-4 py-4 shadow-[0_14px_42px_-30px_rgba(15,23,42,0.45)] transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[0_18px_52px_-30px_rgba(15,23,42,0.45)] sm:flex-row sm:items-center sm:gap-4"
       data-testid={`connection-${connection.id}`}
       aria-busy={connection.status === "syncing" ? "true" : "false"}
     >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <ProviderAvatar name={connection.institutionName} />
-          <div className="min-w-0">
-            <CardTitle className="text-sm truncate font-semibold">
-              {connection.institutionName}
-            </CardTitle>
-          </div>
+      <div className="flex items-center gap-3 min-w-0">
+        <ProviderAvatar name={connection.institutionName} />
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold text-neutral-900 truncate">
+            {connection.institutionName}
+          </p>
+          <p className="text-xs text-neutral-600 flex flex-wrap items-center gap-1">
+            <span className="text-neutral-500">Added</span>
+            <span>{formatWhen(connection.createdAt ?? null)}</span>
+            <span className="text-neutral-300">•</span>
+            <span className="text-neutral-500">Last sync</span>
+            <span title={String(connection.syncedAt ?? "")}>
+              {formatWhen(connection.syncedAt ?? null)}
+            </span>
+          </p>
         </div>
+      </div>
 
-        {/* hardcoding connected for now */}
-        <div aria-live="polite">{statusBadge("connected")}</div>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-xs text-muted-foreground">Last synced</div>
-          <div
-            className="text-sm text-right"
-            title={String(connection.syncedAt ?? "")}
-          >
-            {formatWhen(connection.syncedAt ?? null)}
-          </div>
-
-          <div className="text-xs text-muted-foreground">Connected</div>
-          <div
-            className="text-sm text-right"
-            title={String(connection.createdAt ?? "")}
-          >
-            {formatWhen(connection.createdAt ?? null)}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 pt-2">
+      <div className="flex items-center gap-2 sm:ml-auto">
+        <div aria-live="polite">{statusBadge(connection.status)}</div>
+        {onRemove ? (
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 ml-auto text-red-600 hover:text-red-700"
+            className="gap-1.5 text-rose-600 hover:text-rose-700"
             onClick={handleRemove}
             disabled={removing}
             aria-label={`Remove ${connection.institutionName}`}
@@ -242,8 +228,8 @@ export function ConnectionItem({
             <Trash2 className="h-4 w-4" />
             {removing ? "Removing..." : "Remove"}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        ) : null}
+      </div>
+    </div>
   );
 }

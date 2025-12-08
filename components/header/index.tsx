@@ -42,6 +42,14 @@ export function Header() {
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [mobileSearch, setMobileSearch] = React.useState(false);
+  const handleMobileSearchSelect = React.useCallback(
+    (r: { symbol: string }) => {
+      router.push(`/investment/${encodeURIComponent(r.symbol)}`);
+      setMobileNavOpen(false);
+      setMobileSearch(false);
+    },
+    [router]
+  );
 
   // Close mobile sheet when viewport reaches desktop
   React.useEffect(() => {
@@ -205,73 +213,132 @@ export function Header() {
                 </button>
               </SheetTrigger>
               <SheetContent
-                side="top"
+                side="right"
                 noAnimation
                 hideClose
-                className="w-full max-w-full h-screen overflow-y-auto bg-white px-4 pb-6 pt-4 animate-none data-[state=open]:animate-none data-[state=closed]:animate-none transition-none"
+                className="lg:hidden left-0 w-full max-w-none h-screen overflow-hidden border-l border-neutral-100/80 bg-white/95 px-5 pb-7 pt-5 shadow-[0_18px_60px_rgba(0,0,0,0.12)] backdrop-blur-md data-[state=open]:animate-none data-[state=closed]:animate-none transition-none"
               >
                 <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1">
+                <div className="flex h-full flex-col gap-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className='text-2xl font-bold font-["Libre_Caslon_Text",_serif] text-zinc-900 leading-none'>
+                        W
+                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Menu
+                        </span>
+                        <span className="text-sm text-neutral-800 font-['Futura_PT_Book',_Futura,_sans-serif]">
+                          Navigation
+                        </span>
+                      </div>
+                    </div>
+                    <SheetClose asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
+                        aria-label="Close navigation"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </SheetClose>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                      Search name or symbol
+                    </p>
                     <CommandSearch
                       placeholder="Search name or symbol"
-                      className="w-full"
+                      className="w-full bg-neutral-50/70"
+                      onSelect={handleMobileSearchSelect}
                       autoFocus={mobileSearch}
                     />
                   </div>
-                  <SheetClose asChild>
-                    <button
-                      type="button"
-                      className="header-sheet-close inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-neutral-700 hover:bg-neutral-100 transition"
-                      aria-label="Close navigation"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </SheetClose>
-                </div>
-                <div className="space-y-1">
-                  {navItems.map((item) => {
-                    const active = isActive(pathname, item.href, item.exact);
-                    return (
-                      <SheetClose asChild key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={[
-                            "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition",
-                            active
-                              ? "bg-neutral-100 text-zinc-900"
-                              : "text-neutral-700 hover:bg-neutral-50",
-                          ].join(" ")}
-                        >
-                          <span>{item.name}</span>
-                          {active && (
-                            <span className="h-[2px] w-6 rounded bg-zinc-900" />
-                          )}
-                        </Link>
-                      </SheetClose>
-                    );
-                  })}
-                </div>
-                <div className="mt-6 space-y-3">
-                  {user ? (
-                    <button
-                      onClick={handleLogout}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-800 hover:shadow-sm transition"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </button>
-                  ) : (
-                    <Link
-                      href={loginHref}
-                      className={[
-                        "w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm text-neutral-800 hover:shadow-sm transition",
-                        futuraSignInFontClasses,
-                      ].join(" ")}
-                    >
-                      Sign in
-                    </Link>
-                  )}
+
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                        Navigate
+                      </p>
+                      <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-100 bg-neutral-50/60 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
+                        {navItems.map((item) => {
+                          const active = isActive(pathname, item.href, item.exact);
+                          const Icon = item.icon;
+                          return (
+                            <SheetClose asChild key={item.href}>
+                              <Link
+                                href={item.href}
+                                className={[
+                                  "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                                  active
+                                    ? "bg-white text-neutral-900 shadow-[0_12px_32px_rgba(0,0,0,0.08)] ring-1 ring-neutral-200"
+                                    : "text-neutral-700 hover:bg-white hover:shadow-[0_10px_24px_rgba(0,0,0,0.05)] hover:ring-1 hover:ring-neutral-100",
+                                ].join(" ")}
+                              >
+                                <span
+                                  className={[
+                                    "absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition",
+                                    active ? "bg-neutral-900" : "bg-transparent",
+                                  ].join(" ")}
+                                  aria-hidden
+                                />
+                                <div
+                                  className={[
+                                    "flex h-10 w-10 items-center justify-center rounded-full border transition",
+                                    active
+                                      ? "border-neutral-200 bg-neutral-900/5 text-neutral-900"
+                                      : "border-transparent bg-white text-neutral-600 group-hover:border-neutral-200 group-hover:bg-neutral-50",
+                                  ].join(" ")}
+                                >
+                                  {Icon ? (
+                                    <Icon className="h-4 w-4" />
+                                  ) : (
+                                    <span className="h-2 w-2 rounded-full bg-neutral-300" />
+                                  )}
+                                </div>
+                                <span className="flex-1 text-[15px]">
+                                  {item.name}
+                                </span>
+                                <span
+                                  className={[
+                                    "h-2 w-2 rounded-full transition",
+                                    active
+                                      ? "bg-neutral-900"
+                                      : "bg-neutral-300 group-hover:bg-neutral-400",
+                                  ].join(" ")}
+                                  aria-hidden
+                                />
+                              </Link>
+                            </SheetClose>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-neutral-100 pt-4">
+                    {user ? (
+                      <button
+                        onClick={handleLogout}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    ) : (
+                      <Link
+                        href={loginHref}
+                        className={[
+                          "w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0",
+                          futuraSignInFontClasses,
+                        ].join(" ")}
+                      >
+                        Sign in
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

@@ -11,6 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const futuraSignInFontClasses =
+  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
+
 export default function RegisterPage() {
   const router = useRouter();
 
@@ -27,7 +30,7 @@ export default function RegisterPage() {
             <Button
               variant="link"
               onClick={() => router.push("/login")}
-              className="text-sm"
+              className={["text-sm", futuraSignInFontClasses].join(" ")}
             >
               Already have an account? Sign in
             </Button>

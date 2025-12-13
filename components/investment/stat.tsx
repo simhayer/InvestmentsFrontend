@@ -11,9 +11,11 @@ export function Stat({
   hint?: string;
 }) {
   return (
-    <div>
-      <div className="text-slate-500 text-xs">{label}</div>
-      <div className="font-medium" title={hint}>
+    <div className="space-y-1">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500">
+        {label}
+      </div>
+      <div className="text-lg font-semibold text-neutral-900" title={hint}>
         {value}
       </div>
     </div>

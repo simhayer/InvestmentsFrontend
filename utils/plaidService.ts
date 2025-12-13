@@ -71,9 +71,11 @@ export async function getPlaidInvestments() {
 
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(
+    const err = new Error(
       errorData?.detail || `Failed to get investments: ${res.status}`
-    );
+    ) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
   }
 
   return res.json();

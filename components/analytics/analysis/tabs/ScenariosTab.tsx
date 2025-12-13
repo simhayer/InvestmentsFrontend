@@ -7,14 +7,15 @@ export function ScenariosTab({
     base: string;
     bear: string;
     bull: string;
-    probabilities: { base: number; bear: number; bull: number };
+    probabilities?: { base: number; bear: number; bull: number };
   };
 }) {
   if (!data) return <Empty msg="No scenarios available." />;
+  const probs = data.probabilities || { base: 0, bear: 0, bull: 0 };
   return (
     <div className="grid gap-3 md:grid-cols-3">
       {(["base", "bull", "bear"] as const).map((k) => {
-        const prob = Math.round((data.probabilities as any)[k] * 100);
+        const prob = Math.round((probs as any)[k] * 100);
         const tone =
           k === "bull" ? "bg-emerald-500" : k === "bear" ? "bg-rose-500" : "bg-slate-600";
         return (

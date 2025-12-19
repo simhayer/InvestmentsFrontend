@@ -34,7 +34,10 @@ export function TopHoldings({
   };
 
   return (
-    <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]">
+    <Card
+      className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]"
+      data-tour-id="tour-holdings-card"
+    >
       <CardHeader className="pb-3 sm:pb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

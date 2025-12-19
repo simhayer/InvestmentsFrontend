@@ -30,7 +30,10 @@ export function AnalysisSummaryCard() {
   const showForce = meta?.showForce ?? false;
 
   return (
-    <Card className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
+    <Card
+      className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]"
+      data-tour-id="tour-ai-card"
+    >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(16,185,129,0.08),transparent_34%),radial-gradient(circle_at_88%_0%,rgba(59,130,246,0.08),transparent_28%)]" />
       <CardHeader className="relative space-y-3 pb-3 sm:pb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">

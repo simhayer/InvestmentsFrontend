@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { Header } from "@/components/header";
+import { AppTourProvider } from "@/components/tour/app-tour";
 
 export function ProtectedClientShell({
   children,
@@ -10,14 +11,16 @@ export function ProtectedClientShell({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="min-h-screen bg-background text-foreground
-                    overflow-x-hidden"
-    >
-      <div className="min-h-screen flex flex-col min-w-0">
-        <Header />
-        <main className="flex-1 p-2 min-w-0 overflow-x-hidden">{children}</main>
+    <AppTourProvider>
+      <div
+        className="min-h-screen bg-background text-foreground
+                      overflow-x-hidden"
+      >
+        <div className="min-h-screen flex flex-col min-w-0">
+          <Header />
+          <main className="flex-1 p-2 min-w-0 overflow-x-hidden">{children}</main>
+        </div>
       </div>
-    </div>
+    </AppTourProvider>
   );
 }

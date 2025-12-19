@@ -222,7 +222,10 @@ function PortfolioSummaryHero({
   const dayReturnTone = toneFromNumber(dayReturn);
 
   return (
-    <Card className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]">
+    <Card
+      className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]"
+      data-tour-id="tour-portfolio-hero"
+    >
       <CardContent className="p-0">
         <div className="flex flex-col gap-5 px-5 py-6 sm:px-7 sm:py-7 lg:px-8">
           <div className="grid items-center gap-5 lg:gap-6 lg:grid-cols-[1.05fr_auto_auto]">
@@ -399,7 +402,10 @@ function AllocCard({
 function ConnectionsCard({ connections }: { connections?: any[] }) {
   const hasConnections = connections?.length;
   return (
-    <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]">
+    <Card
+      className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]"
+      data-tour-id="tour-connections-card"
+    >
       <CardHeader className="pb-2 sm:pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

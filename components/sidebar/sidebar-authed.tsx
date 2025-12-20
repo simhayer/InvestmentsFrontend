@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth-provider";
 import darkLogo from "@/public/logo-full-dark-nobg.png";
 import lightLogo from "@/public/logo-full-light-nobg.png";
 import { NAV_ITEMS_AUTHED } from "../navigation/nav-items";
+import { logout } from "@/utils/authService";
 
 type Props = {
   sidebarOpen: boolean;
@@ -70,15 +71,13 @@ function SidebarAuthedImpl({ sidebarOpen, setSidebarOpen }: Props) {
 
   const handleLogout = React.useCallback(async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await logout(); // supabase.auth.signOut()
     } catch {
       // ignore
     }
-    refresh(); // refresh SWR auth cache
-    router.replace("/login"); // navigate away (no router.refresh to avoid extra render)
+
+    refresh(); // optional, keeps your UI in sync
+    router.replace("/login");
   }, [refresh, router]);
 
   return (

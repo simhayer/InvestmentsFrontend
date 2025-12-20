@@ -12,38 +12,7 @@ import type {
   MarketSummaryMeta,
   MarketSummaryResponse,
 } from "@/types/market-summary";
-
-// ENV
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-const BACKEND_URL = `${API_URL}/api/market`;
-
-// Generic typed fetch helper
-async function fetchJSON<T>(
-  input: RequestInfo,
-  init?: RequestInit
-): Promise<T> {
-  const res = await fetch(input, {
-    credentials: "include",
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.headers || {}),
-    },
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
-  }
-  return (await res.json()) as T;
-}
-
-const fetchJSONWithHeaders = async (url: string) => {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  const json = (await res.json()) as SummaryEnvelope;
-  const lastModified = res.headers.get("last-modified") || undefined;
-  return { json, lastModified };
-};
+import { authedFetch } from "@/utils/authService";
 
 // Minimal response types if you don't already have them:
 type OverviewEnvelope = { message: string; data: MarketOverviewData };
@@ -80,12 +49,19 @@ export function useMarketOverview() {
     setOverviewError(null);
 
     try {
-      const json = await fetchJSON<OverviewEnvelope>(
-        `${BACKEND_URL}/overview`,
-        {
-          signal: controller.signal,
-        }
-      );
+      const path = "/api/market/overview";
+      const res = await authedFetch(path, {
+        method: "GET",
+        signal: controller.signal,
+      });
+
+      const isJson = res.headers
+        .get("content-type")
+        ?.includes("application/json");
+      const json = (
+        isJson ? await res.json() : null
+      ) as OverviewEnvelope | null;
+
       if (!json?.data) throw new Error("Malformed overview response");
       setOverview(json.data);
       setOverviewFetchedAt(new Date());
@@ -110,9 +86,17 @@ export function useMarketOverview() {
     setSummaryLoading(true);
     setSummaryError(null);
     try {
-      const { json, lastModified } = await fetchJSONWithHeaders(
-        `${BACKEND_URL}/summary`
-      );
+      const path = "/api/market/summary";
+      const res = await authedFetch(path, {
+        method: "GET",
+        signal: controller.signal,
+      });
+      const isJson = res.headers
+        .get("content-type")
+        ?.includes("application/json");
+      const json = (isJson ? await res.json() : null) as SummaryEnvelope | null;
+      const lastModified = res.headers.get("last-modified") || undefined;
+
       if (!json?.data?.sections || !Array.isArray(json.data.sections)) {
         throw new Error("Malformed summary response");
       }

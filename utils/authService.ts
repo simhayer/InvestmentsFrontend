@@ -1,98 +1,89 @@
 // utils/authService.ts
-export const API_URL = process.env.NEXT_PUBLIC_API_URL!; // e.g. http://localhost:8000
+import { supabase } from "./supabaseClient";
 
-type Me = { id: number; email: string } | null;
+export const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
-function withCreds(init?: RequestInit): RequestInit {
-  return { credentials: "include", ...init };
-}
+export type Me = { id: string; email: string | null } | null; // Supabase user id is UUID string
 
 export async function login(email: string, password: string) {
-  const body = new URLSearchParams();
-  body.set("username", email); // FastAPI OAuth2PasswordRequestForm fields
-  body.set("password", password);
-
-  const res = await fetch(
-    `${API_URL}/token`,
-    withCreds({
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    })
-  );
-  if (!res.ok) throw new Error("Login failed");
-
-  // backend returns { ok: true } and sets httpOnly cookie
-  return res.json() as Promise<{ ok: true }>;
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw new Error(error.message);
+  return { ok: true as const, session: data.session };
 }
 
 export async function register(email: string, password: string) {
-  const res = await fetch(
-    `${API_URL}/register`,
-    withCreds({
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-  );
-  if (!res.ok) throw new Error("Registration failed");
-  return res.json();
-}
-
-export async function getMe(): Promise<Me> {
-  if (!API_URL) return null;
-  const res = await fetch(
-    `${API_URL}/me`,
-    withCreds({ method: "GET", cache: "no-store" })
-  );
-  if (!res.ok) return null;
-  return res.json();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    // optional: email redirect after confirmation
+    // options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+  });
+  if (error) throw new Error(error.message);
+  return { ok: true as const, data };
 }
 
 export async function logout() {
-  const res = await fetch(`${API_URL}/logout`, withCreds({ method: "POST" }));
-  if (!res.ok) throw new Error("Logout failed");
-  return res.json();
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export async function getMe(): Promise<Me> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) return null;
+  if (!data.user || !data.user.email) return null;
+  return { id: data.user.id, email: data.user.email };
 }
 
 /**
- * Convenience wrapper for other authenticated API calls.
- * Example: await authedFetch('/analyze-holding', { method: 'POST', body: JSON.stringify(...) })
+ * For calling your FastAPI endpoints that require auth.
+ * Sends Supabase access token as Bearer token.
  */
 export async function authedFetch(path: string, init?: RequestInit) {
-  const res = await fetch(
-    `${API_URL}${path}`,
-    withCreds({
-      headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-      ...init,
-    })
-  );
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) throw new Error(error.message);
+  if (!session?.access_token) throw new Error("Not authenticated");
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      ...(init?.headers || {}),
+    },
+  });
+
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res;
 }
 
+/** Supabase handles reset emails. */
 export async function requestPasswordReset(email: string) {
-  const res = await fetch(
-    `${API_URL}/password/forgot`,
-    withCreds({
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    })
-  );
-  if (!res.ok) throw new Error("Failed to request password reset");
-  return res.json();
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/reset-password`
+      : undefined;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
 }
 
-export async function resetPassword(token: string, newPassword: string) {
-  const res = await fetch(
-    `${API_URL}/password/reset`,
-    withCreds({
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, new_password: newPassword }),
-    })
-  );
-  if (!res.ok) throw new Error("Failed to reset password");
-  return res.json();
+/**
+ * For "reset password" page after user clicks Supabase email link.
+ * Supabase will set a recovery session in the browser.
+ */
+export async function resetPassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
 }

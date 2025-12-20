@@ -34,6 +34,7 @@ import {
   type NavItem,
 } from "../navigation/nav-items";
 import { useAppTour } from "@/components/tour/app-tour";
+import { logout } from "@/utils/authService";
 
 const futuraSignInFontClasses =
   "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
@@ -82,14 +83,12 @@ export function Header() {
 
   const handleLogout = React.useCallback(async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await logout();
     } catch {
       // ignore
     }
-    refresh();
+
+    refresh(); // optional, keeps your UI in sync
     router.replace("/login");
   }, [refresh, router]);
 
@@ -213,9 +212,10 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link
                       href={loginHref}
-                      className={["cursor-pointer", futuraSignInFontClasses].join(
-                        " "
-                      )}
+                      className={[
+                        "cursor-pointer",
+                        futuraSignInFontClasses,
+                      ].join(" ")}
                     >
                       Sign in
                     </Link>
@@ -293,7 +293,11 @@ export function Header() {
                       </p>
                       <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-100 bg-neutral-50/60 shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
                         {navItems.map((item) => {
-                          const active = isActive(pathname, item.href, item.exact);
+                          const active = isActive(
+                            pathname,
+                            item.href,
+                            item.exact
+                          );
                           const Icon = item.icon;
                           return (
                             <SheetClose asChild key={item.href}>
@@ -315,7 +319,9 @@ export function Header() {
                                 <span
                                   className={[
                                     "absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition",
-                                    active ? "bg-neutral-900" : "bg-transparent",
+                                    active
+                                      ? "bg-neutral-900"
+                                      : "bg-transparent",
                                   ].join(" ")}
                                   aria-hidden
                                 />

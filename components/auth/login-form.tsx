@@ -15,7 +15,6 @@ import { Eye, EyeOff } from "lucide-react";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
-  // Only allow internal paths like “/dashboard”, block protocol/host or protocol-relative
   if (!next.startsWith("/")) return false;
   if (next.startsWith("//")) return false;
   return true;
@@ -35,28 +34,27 @@ export function LoginForm() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isLoading) return; // guard double-submit
+    if (isLoading) return;
     setIsLoading(true);
     setInlineError(null);
 
     try {
-      // 1) Perform login (sets httpOnly cookie if successful)
+      // 1) Supabase login
       const result = await login(email.trim(), password);
-      if (!result?.ok) {
-        // If your login() returns a message, prefer it; otherwise generic
-        const message =
-          (result as any)?.message ||
-          "Invalid email or password. Please try again.";
-        throw new Error(message);
-      }
+      if (!result?.ok)
+        throw new Error("Invalid email or password. Please try again.");
 
-      // 2) Fetch current user once and normalize id to string for the app’s User type
+      // 2) Read supabase user (id is already string UUID)
       const me = (await getMe().catch(() => null)) as
-        | (User & { id: string | number })
+        | (User & { id?: string | number })
         | null;
-      const user: User | null = me ? { ...me, id: String(me.id) } : null;
 
-      // 3) Warm global auth cache so UI flips immediately
+      // Keep your app's User typing stable (string id)
+      const user: User | null = me
+        ? { ...me, id: String((me as any).id ?? "") }
+        : null;
+
+      // 3) Warm SWR auth cache so UI flips instantly
       await mutate("auth:/me", { user }, { revalidate: false });
 
       toast({
@@ -69,7 +67,7 @@ export function LoginForm() {
       const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
 
       router.replace(next);
-      router.refresh(); // ensure RSC re-runs and protected routes see the new cookie
+      // router.refresh(); // optional now; only keep if you rely on server components reading auth state
     } catch (err: any) {
       const msg = err?.message ?? "Login failed. Please try again.";
       setInlineError(msg);
@@ -139,6 +137,7 @@ export function LoginForm() {
             )}
           </button>
         </div>
+
         <div className="flex items-center justify-end text-sm">
           <Link
             href="/forget-password"

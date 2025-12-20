@@ -1,4 +1,5 @@
 import type { Holding } from "@/types/holding";
+import { authedFetch } from "@/utils/authService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const BACKEND_URL = `${API_URL}/api/finnhub`;
@@ -17,12 +18,9 @@ export async function fetchLivePricesForList(
 
   console.log("Fetching live prices for symbols:", filteredSymbols);
 
-  const res = await fetch(`${BACKEND_URL}/prices`, {
+  const path = `/prices`;
+  const res = await authedFetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
     body: JSON.stringify({
       symbols: filteredSymbols,
       types: filteredTypes,
@@ -46,26 +44,27 @@ export async function fetchLivePricesForList(
 export async function searchSymbols(query: string) {
   if (!query) return [];
   // limit to 5 results
-  const res = await fetch(
-    `${BACKEND_URL}/search?query=${encodeURIComponent(query)}&limit=5`,
-    {
-      credentials: "include",
-    }
-  );
+  const path = `/search?query=${encodeURIComponent(query)}&limit=5`;
+  const res = await authedFetch(path, {
+    method: "GET",
+  });
+
   const data = await res.json();
   return data;
 }
 
 export async function fetchQuote(symbol: string) {
-  const res = await fetch(`${BACKEND_URL}/quote?symbol=${symbol}`, {
-    credentials: "include",
+  const path = `/quote?symbol=${encodeURIComponent(symbol)}`;
+  const res = await authedFetch(path, {
+    method: "GET",
   });
   return res.json();
 }
 
 export async function fetchProfile(symbol: string) {
-  const res = await fetch(`${BACKEND_URL}/profile?symbol=${symbol}`, {
-    credentials: "include",
+  const path = `/profile?symbol=${encodeURIComponent(symbol)}`;
+  const res = await authedFetch(path, {
+    method: "GET",
   });
   return res.json();
 }

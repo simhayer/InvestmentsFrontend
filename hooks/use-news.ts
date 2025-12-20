@@ -1,13 +1,11 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-const BACKEND_URL = `${API_URL}/api/news`;
+import { authedFetch } from "@/utils/authService";
 
 export async function fetchNewsForUser(): Promise<any> {
-  const res = await fetch(`${BACKEND_URL}/latest-for-user`, {
+  const path = `/api/news/latest-for-user`;
+  const res = await authedFetch(path, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    cache: "no-store",
   });
+
   if (res.status === 401 || res.status === 403) {
     console.warn("News request unauthorized; returning empty feed.");
     return {};
@@ -20,15 +18,13 @@ export async function fetchNewsForUser(): Promise<any> {
 }
 
 export async function fetchNewsForSymbol(symbol: string): Promise<any> {
-  const res = await fetch(
-    `${BACKEND_URL}/latest-for-symbol?symbol=${encodeURIComponent(symbol)}`,
-    {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      cache: "no-store",
-    }
-  );
+  const path = `/api/news/latest-for-symbol?symbol=${encodeURIComponent(
+    symbol
+  )}`;
+  const res = await authedFetch(path, {
+    method: "GET",
+  });
+
   if (res.status === 401 || res.status === 403) {
     console.warn("News-by-symbol request unauthorized; returning empty list.");
     return [];

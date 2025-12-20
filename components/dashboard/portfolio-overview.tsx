@@ -18,10 +18,7 @@ import {
 import { StackedBar, KeyVal, TimeAgo } from "./_bits";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Building2,
-  Link2,
-} from "lucide-react";
+import { Building2, Link2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +106,8 @@ export function PortfolioOverview({ currency = "USD", sidePanel }: Props) {
               Portfolio home
             </h1>
             <p className="text-sm text-neutral-600 max-w-3xl">
-              Clean overview of your book with allocations, holdings, and live AI analysis.
+              Clean overview of your book with allocations, holdings, and live
+              AI analysis.
             </p>
           </div>
           <PortfolioSummaryHero
@@ -267,9 +265,7 @@ function PortfolioSummaryHero({
             <div className="w-full lg:justify-self-end">
               <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl bg-neutral-50 px-4 py-3 text-sm font-semibold text-neutral-800 ring-1 ring-neutral-200 shadow-[0_12px_34px_-28px_rgba(15,23,42,0.45)] lg:justify-end lg:pl-2">
                 <StatusPill status={status} />
-                <Pill>
-                  {asOf ? `As of ${formatAsOf(asOf)}` : "As of —"}
-                </Pill>
+                <Pill>{asOf ? `As of ${formatAsOf(asOf)}` : "As of —"}</Pill>
                 <Pill>{ccy}</Pill>
               </div>
             </div>
@@ -289,7 +285,9 @@ function StatusPill({ status }: { status?: string }) {
     mixed: { label: "Mixed prices", tone: "warning" },
     unavailable: { label: "Prices unavailable", tone: "neutral" },
   };
-  const meta = status ? map[status] ?? { label: status, tone: "neutral" } : { label: "Live prices", tone: "positive" };
+  const meta = status
+    ? map[status] ?? { label: status, tone: "neutral" }
+    : { label: "Live prices", tone: "positive" };
   const dot =
     meta.tone === "positive"
       ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]"
@@ -317,7 +315,10 @@ function AllocationSection({
   allocations,
   currency,
 }: {
-  allocations?: { byType?: { key: string; weight: number }[]; byAccount?: { key: string; weight: number }[] };
+  allocations?: {
+    byType?: { key: string; weight: number }[];
+    byAccount?: { key: string; weight: number }[];
+  };
   currency: string;
 }) {
   const byType = allocations?.byType ?? [];
@@ -337,7 +338,10 @@ function AllocationSection({
             Where your money sits across accounts and asset types.
           </p>
         </div>
-        <Badge variant="secondary" className="rounded-full bg-neutral-900 text-white hover:bg-neutral-800">
+        <Badge
+          variant="secondary"
+          className="rounded-full bg-neutral-900 text-white hover:bg-neutral-800"
+        >
           Live {currency}
         </Badge>
       </div>
@@ -378,12 +382,17 @@ function AllocCard({
           />
           <div className="mt-3 space-y-2">
             {items.map((i) => (
-              <div key={i.key} className="space-y-1 rounded-2xl border border-neutral-100 bg-neutral-50/60 p-2.5 ring-1 ring-neutral-100">
+              <div
+                key={i.key}
+                className="space-y-1 rounded-2xl border border-neutral-100 bg-neutral-50/60 p-2.5 ring-1 ring-neutral-100"
+              >
                 <KeyVal k={i.key} v={`${i.weight.toFixed(2)}%`} />
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-white ring-1 ring-neutral-200/80">
                   <div
                     className="h-full rounded-full bg-emerald-500/80"
-                    style={{ width: `${Math.max(0, Math.min(100, i.weight))}%` }}
+                    style={{
+                      width: `${Math.max(0, Math.min(100, i.weight))}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -392,7 +401,8 @@ function AllocCard({
         </>
       ) : (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/70 p-4 text-sm text-neutral-600">
-          No allocation data yet. We&apos;ll populate this once accounts are linked.
+          No allocation data yet. We&apos;ll populate this once accounts are
+          linked.
         </div>
       )}
     </div>
@@ -419,7 +429,10 @@ function ConnectionsCard({ connections }: { connections?: any[] }) {
               Keep your accounts connected to power live balances and holdings.
             </CardDescription>
           </div>
-          <Badge variant="secondary" className="rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+          <Badge
+            variant="secondary"
+            className="rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+          >
             Secure sync
           </Badge>
         </div>

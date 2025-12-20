@@ -1,4 +1,5 @@
 // utils/authService.ts
+import { AppUser } from "@/types/user";
 import { supabase } from "./supabaseClient";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL!;
@@ -86,4 +87,14 @@ export async function resetPassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw new Error(error.message);
   return { ok: true as const };
+}
+
+export async function getAppMe(): Promise<AppUser> {
+  const path = `/me`;
+  const res = await authedFetch(path, {
+    method: "GET",
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch /me");
+  return res.json();
 }

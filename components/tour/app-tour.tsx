@@ -90,7 +90,8 @@ export function AppTourProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!user) return;
     try {
-      const done = window.localStorage.getItem(storageKey(user.id)) === "true";
+      const done =
+        window.localStorage.getItem(storageKey(String(user.id))) === "true";
       setHasCompleted(done);
       if (!done) {
         setQueuedStart((prev) => prev ?? { mode: "auto" });
@@ -109,17 +110,20 @@ export function AppTourProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      setIsOpen(true);
-      setCurrentStep(0);
-      setQueuedStart(null);
-    }, queuedStart.mode === "auto" ? 420 : 40);
+    const timer = window.setTimeout(
+      () => {
+        setIsOpen(true);
+        setCurrentStep(0);
+        setQueuedStart(null);
+      },
+      queuedStart.mode === "auto" ? 420 : 40
+    );
 
     return () => window.clearTimeout(timer);
   }, [pathname, queuedStart, router]);
 
   const persistCompletion = React.useCallback(() => {
-    const key = storageKey(user?.id);
+    const key = storageKey(String(user?.id));
     try {
       window.localStorage.setItem(key, "true");
     } catch {
@@ -149,7 +153,9 @@ export function AppTourProvider({ children }: { children: React.ReactNode }) {
 
   const goNext = React.useCallback(() => {
     setCurrentStep((idx) =>
-      idx + 1 >= TOUR_STEPS.length ? idx : Math.min(idx + 1, TOUR_STEPS.length - 1)
+      idx + 1 >= TOUR_STEPS.length
+        ? idx
+        : Math.min(idx + 1, TOUR_STEPS.length - 1)
     );
   }, []);
 
@@ -217,7 +223,10 @@ function AppTourOverlay({
 }) {
   const step = steps[index];
   const [targetRect, setTargetRect] = React.useState<RectLike | null>(null);
-  const [tooltipRect, setTooltipRect] = React.useState<{ width: number; height: number }>({
+  const [tooltipRect, setTooltipRect] = React.useState<{
+    width: number;
+    height: number;
+  }>({
     width: 360,
     height: 0,
   });
@@ -282,7 +291,9 @@ function AppTourOverlay({
     if (!isOpen) return;
     const pickTarget = () => {
       const els = Array.from(
-        document.querySelectorAll<HTMLElement>(`[data-tour-id="${step.targetId}"]`)
+        document.querySelectorAll<HTMLElement>(
+          `[data-tour-id="${step.targetId}"]`
+        )
       );
       return (
         els.find((node) => node.offsetWidth > 0 && node.offsetHeight > 0) ??
@@ -302,7 +313,11 @@ function AppTourOverlay({
 
     updateRect();
     const targetEl = pickTarget();
-    targetEl?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    targetEl?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
 
     let frame = 0;
     const onMove = () => {
@@ -323,7 +338,9 @@ function AppTourOverlay({
   // Focus primary action when step changes
   React.useEffect(() => {
     if (!isOpen) return;
-    const btn = containerRef.current?.querySelector<HTMLButtonElement>("[data-tour-primary]");
+    const btn = containerRef.current?.querySelector<HTMLButtonElement>(
+      "[data-tour-primary]"
+    );
     btn?.focus({ preventScroll: true });
   }, [isOpen, step]);
 
@@ -500,7 +517,10 @@ function AppTourOverlay({
 
 type Placement = "top" | "bottom" | "left" | "right";
 
-function getPlacement(target: RectLike, tooltip: { width: number; height: number }): Placement {
+function getPlacement(
+  target: RectLike,
+  tooltip: { width: number; height: number }
+): Placement {
   const spaceAbove = target.top;
   const spaceBelow = window.innerHeight - (target.top + target.height);
   const spaceLeft = target.left;

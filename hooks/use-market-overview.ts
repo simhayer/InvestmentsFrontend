@@ -2,11 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  MarketOverviewData,
-  // If you have a full response type, import it instead:
-  // MarketOverviewResponse,
-} from "@/types/market-overview";
+import type { MarketOverviewData } from "@/types/market-overview";
 import type {
   MarketSummaryData,
   MarketSummaryMeta,

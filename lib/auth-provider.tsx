@@ -2,96 +2,94 @@
 
 import useSWR from "swr";
 import React, { createContext, useContext } from "react";
-import type { User } from "@/types/user";
-import { getMe, logout } from "@/utils/authService";
+import type { AppUser } from "@/types/user";
+import { getAppMe, logout } from "@/utils/authService";
 import { supabase } from "@/utils/supabaseClient";
 
-export const AUTH_SWR_KEY = "auth:/me";
-
 type AuthContextValue = {
-  user: User | null;
+  user: AppUser | null;
+  sessionReady: boolean; // <-- NEW
+  hasSession: boolean; // <-- NEW
   isLoading: boolean;
   refresh: () => void;
-  onLogin: (user?: User) => Promise<void>;
   onLogout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
+  sessionReady: false,
+  hasSession: false,
   isLoading: true,
   refresh: () => {},
-  onLogin: async () => {},
   onLogout: async () => {},
 });
 
-const fetcher = async (): Promise<{ user: User | null }> => {
-  try {
-    const me = await getMe();
-    return { user: (me as User | null) ?? null };
-  } catch {
-    return { user: null };
-  }
-};
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [sessionReady, setSessionReady] = React.useState(false);
+  const [hasSession, setHasSession] = React.useState(false);
 
-export function AuthProvider({
-  initialUser,
-  children,
-}: {
-  initialUser?: User | null;
-  children: React.ReactNode;
-}) {
-  const { data, isLoading, mutate } = useSWR<{ user: User | null }>(
-    AUTH_SWR_KEY,
-    fetcher,
+  // 1) Track Supabase session reliably
+  React.useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setHasSession(!!data.session);
+      setSessionReady(true);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setHasSession(!!session);
+      setSessionReady(true);
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // 2) Only call /me when session exists
+  const swrKey = sessionReady && hasSession ? "app:/me" : null;
+
+  const { data, isLoading, mutate } = useSWR<{ user: AppUser | null }>(
+    swrKey,
+    async () => {
+      const appMe = await getAppMe();
+      return { user: appMe };
+    },
     {
-      fallbackData: { user: initialUser ?? null },
-      revalidateOnMount: initialUser == null,
       revalidateOnFocus: false,
-      revalidateIfStale: false,
       shouldRetryOnError: false,
       dedupingInterval: 15_000,
     }
   );
 
-  // Keep SWR synced with Supabase session changes (refresh, multi-tab, etc.)
-  React.useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      void mutate();
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [mutate]);
+  // If there is no session, force user = null
+  const user = hasSession ? data?.user ?? null : null;
 
   const refresh = React.useCallback(() => {
     void mutate();
   }, [mutate]);
 
-  const onLogin = React.useCallback(
-    async (user?: User) => {
-      if (user) await mutate({ user }, false);
-      await mutate();
-    },
-    [mutate]
-  );
-
   const onLogout = React.useCallback(async () => {
     try {
-      await logout(); // supabase signOut
-    } catch {
-      // ignore
-    }
+      await logout();
+    } catch {}
     await mutate({ user: null }, false);
-    await mutate();
   }, [mutate]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
-      user: data?.user ?? null,
-      isLoading,
+      user,
+      sessionReady,
+      hasSession,
+      isLoading: !sessionReady || (hasSession && isLoading),
       refresh,
-      onLogin,
       onLogout,
     }),
-    [data?.user, isLoading, refresh, onLogin, onLogout]
+    [user, sessionReady, hasSession, isLoading, refresh, onLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

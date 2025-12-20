@@ -1,9 +1,19 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+// app/page.tsx
+"use client";
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getMe } from "@/utils/authService";
 
-  redirect(token ? "/dashboard" : "/landing");
+export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    (async () => {
+      const me = await getMe();
+      router.replace(me ? "/dashboard" : "/landing");
+    })();
+  }, [router]);
+
+  return null; // or a loading splash
 }

@@ -1,12 +1,12 @@
+import { authedFetch } from "@/utils/authService";
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const addHolding = async (data: any) => {
-  const res = await fetch(`${API_URL}/holdings`, {
+  const path = `/holdings`;
+
+  const res = await authedFetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -18,27 +18,33 @@ export const addHolding = async (data: any) => {
 };
 
 export const getHoldings = async () => {
-  console.log("getting holdings");
-  const currency = "USD"; //Todo: make dynamic
-  const url = new URL(`${API_URL}/holdings`);
-  url.searchParams.set("includePrices", "true");
-  url.searchParams.set("currency", currency);
+  try {
+    console.log("getting holdings");
+    const currency = "USD"; //Todo: make dynamic
+    const query = `/holdings?includePrices=true&currency=${encodeURIComponent(
+      currency
+    )}`;
 
-  const res = await fetch(url.toString(), {
-    credentials: "include",
-  });
+    const res = await authedFetch(query, {
+      method: "GET",
+    });
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch holdings");
+    if (!res.ok) {
+      throw new Error("Failed to fetch holdings");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("Error in getHoldings:", error);
+    throw error;
   }
-
-  return res.json();
 };
 
 export const deleteHolding = async (holdingId: string) => {
-  const res = await fetch(`${API_URL}/holdings/${holdingId}`, {
+  const path = `/holdings/${holdingId}`;
+
+  const res = await authedFetch(path, {
     method: "DELETE",
-    credentials: "include",
   });
 
   if (!res.ok) {
@@ -49,8 +55,9 @@ export const deleteHolding = async (holdingId: string) => {
 };
 
 export async function getInstitutions() {
-  const res = await fetch(`${API_URL}/api/plaid/institutions`, {
-    credentials: "include",
+  const path = `/api/plaid/institutions`;
+  const res = await authedFetch(path, {
+    method: "GET",
   });
 
   if (!res.ok) throw new Error("Failed to fetch institutions");

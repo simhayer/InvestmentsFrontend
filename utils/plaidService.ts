@@ -1,12 +1,12 @@
+import { authedFetch } from "@/utils/authService";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function createLinkToken(userId: string) {
-  const res = await fetch(`${API_URL}/api/plaid/create-link-token`, {
+  const path = "/api/plaid/create-link-token";
+
+  const res = await authedFetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
     body: JSON.stringify({ user_id: userId }),
   });
 
@@ -30,12 +30,9 @@ export async function exchangePublicToken(
   payload: ExchangePayload
 ): Promise<void> {
   // Step 1: Exchange token
-  const res = await fetch(`${API_URL}/api/plaid/exchange-token`, {
+  const path = "/api/plaid/exchange-token";
+  const res = await authedFetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
     body: JSON.stringify(payload),
   });
 
@@ -46,9 +43,9 @@ export async function exchangePublicToken(
   }
 
   // ✅ Step 2: Trigger sync
-  const syncRes = await fetch(`${API_URL}/api/plaid/investments`, {
+  const syncPath = `/api/plaid/investments`;
+  const syncRes = await authedFetch(syncPath, {
     method: "GET",
-    credentials: "include",
   });
 
   if (!syncRes.ok) {
@@ -61,12 +58,9 @@ export async function exchangePublicToken(
 }
 
 export async function getPlaidInvestments() {
-  const res = await fetch(`${API_URL}/api/plaid/investments`, {
+  const path = "/api/plaid/investments";
+  const res = await authedFetch(path, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
   });
 
   if (!res.ok) {

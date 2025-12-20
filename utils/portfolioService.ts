@@ -1,19 +1,19 @@
 // --- Additions for portfolio summary ---
 import { PortfolioSummary } from "@/types/portfolio-summary";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { authedFetch } from "@/utils/authService";
 
 export const getPortfolioSummary = async (opts?: {
   currency?: "USD" | "CAD";
   signal?: AbortSignal;
 }): Promise<PortfolioSummary> => {
   const currency = opts?.currency ?? "USD";
-  const url = new URL(`${API_URL}/api/portfolio/summary`);
-  url.searchParams.set("currency", currency);
 
-  const res = await fetch(url.toString(), {
-    credentials: "include",
-    signal: opts?.signal,
+  const query = `/api/portfolio/summary?currency=${encodeURIComponent(
+    currency
+  )}`;
+
+  const res = await authedFetch(query, {
+    method: "GET",
   });
 
   if (!res.ok) {

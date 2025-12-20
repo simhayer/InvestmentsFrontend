@@ -7,30 +7,24 @@ import type {
   CatalystItem,
   LatestDevelopmentItem,
 } from "@/types/portfolio-ai";
+import { authedFetch } from "@/utils/authService";
 
 export async function getAiInsight(holding: Holding): Promise<string> {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/ai/analyze-holding`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          symbol: holding.symbol,
-          name: holding.name,
-          quantity: holding.quantity,
-          purchase_price: holding.avgPrice,
-          current_price: holding.currentPrice,
-          type: holding.type,
-          institution: holding.institution || "Unknown",
-          currency: holding.currency || "USD",
-        }),
-        credentials: "include",
-      }
-    );
-
+    const path = "/api/ai/analyze-holding";
+    const res = await authedFetch(path, {
+      method: "POST",
+      body: JSON.stringify({
+        symbol: holding.symbol,
+        name: holding.name,
+        quantity: holding.quantity,
+        purchase_price: holding.avgPrice,
+        current_price: holding.currentPrice,
+        type: holding.type,
+        institution: holding.institution || "Unknown",
+        currency: holding.currency || "USD",
+      }),
+    });
     const data = await res.json();
     return data.insight || "No insight returned.";
   } catch (error) {
@@ -41,18 +35,12 @@ export async function getAiInsight(holding: Holding): Promise<string> {
 
 export async function getAiInsightSymbol(symbol: string): Promise<string> {
   console.log("Fetching AI insight for symbol:", symbol);
+  const path = "/api/ai/analyze-symbol";
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/ai/analyze-symbol`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ symbol }),
-        credentials: "include",
-      }
-    );
+    const res = await authedFetch(path, {
+      method: "POST",
+      body: JSON.stringify({ symbol }),
+    });
     const data = await res.json();
     console.log("AI insight response data:", data);
     return data || "No insight returned.";

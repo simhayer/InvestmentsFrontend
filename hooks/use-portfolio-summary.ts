@@ -1,3 +1,4 @@
+import { authedFetch } from "@/utils/authService";
 import { useCallback, useState } from "react";
 
 export type PortfolioSummary = {
@@ -20,15 +21,11 @@ export function usePortfolioSummary() {
   const fetchSummary = useCallback(async (symbols: string[], daysBack = 7) => {
     setLoading(true);
     setError(null);
+    const path = `/news-summary?days_back=${daysBack}`;
     try {
-      const res = await fetch(
-        `${BACKEND_URL}/news-summary?days_back=${daysBack}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
+      const res = await authedFetch(path, {
+        method: "POST",
+      });
 
       console.log("fetchSummary response:", res);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

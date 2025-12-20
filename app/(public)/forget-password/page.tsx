@@ -18,14 +18,16 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     if (isLoading) return;
     setIsLoading(true);
+
     try {
       await requestPasswordReset(email.trim());
+
+      // Same message either way to prevent account enumeration
       toast({
         title: "Check your inbox",
         description: "If an account exists, we sent a reset link.",
       });
     } catch {
-      // Same message to prevent enumeration
       toast({
         title: "Check your inbox",
         description: "If an account exists, we sent a reset link.",
@@ -38,7 +40,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="mx-auto max-w-sm">
       <h1 className="text-xl font-semibold mb-4">Forgot Password</h1>
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input

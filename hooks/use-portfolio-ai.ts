@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PortfolioAnalysisResponse, AiLayers } from "@/types/portfolio-ai";
 import { safeParseAnalysis } from "@/utils/aiService";
+import { authedFetch } from "@/utils/authService";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-const BACKEND_URL = `${API_URL}/api/ai/analyze-portfolio`;
+const ANALYZE_PATH = `/api/ai/analyze-portfolio`;
 const SHOW_FORCE = (process.env.NEXT_PUBLIC_SHOW_FORCE || "0") === "1";
 
 /** ---------- helpers ---------- */
@@ -66,15 +66,15 @@ export function usePortfolioAi() {
         const controller = new AbortController();
         abortRef.current = controller;
 
-        const url = opts?.force ? `${BACKEND_URL}?force=true` : BACKEND_URL;
+        const query = opts?.force
+          ? `/api/ai/analyze-portfolio?force=true`
+          : ANALYZE_PATH;
 
-        const res = await fetch(url, {
+        const res = await authedFetch(query, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
           cache: "no-store",
           signal: controller.signal,
-          // body: JSON.stringify({}) // keep blank; backend derives context
+          // body: JSON.stringify({})
         });
 
         const isJson = res.headers

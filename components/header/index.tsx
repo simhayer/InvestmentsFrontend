@@ -35,6 +35,7 @@ import {
 } from "../navigation/nav-items";
 import { useAppTour } from "@/components/tour/app-tour";
 import { logout } from "@/utils/authService";
+import { updateCurrency } from "@/utils/userService";
 
 const futuraSignInFontClasses =
   "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
@@ -220,6 +221,36 @@ export function Header() {
                       Sign in
                     </Link>
                   </DropdownMenuItem>
+                )}
+                {user && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem disabled className="opacity-100">
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-xs text-neutral-500">
+                          Currency
+                        </span>
+                        <span className="text-sm text-neutral-800">
+                          {user.base_currency || "USD"}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onSelect={async (e) => {
+                        e.preventDefault();
+                        const next = (
+                          user.base_currency === "CAD" ? "USD" : "CAD"
+                        ) as "USD" | "CAD";
+                        await updateCurrency(next);
+                        await refresh();
+                        // optionally: mutate("/holdings?includePrices=true"); mutate("/portfolio/summary");
+                      }}
+                      className="cursor-pointer"
+                    >
+                      Switch to {user.base_currency === "CAD" ? "USD" : "CAD"}
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

@@ -36,7 +36,7 @@ export type ConnectionSummary = {
 
 export type PortfolioSummary = {
   asOf: number;
-  requestedCurrency: string;
+  currency: string;
   priceStatus: "live" | "mixed" | "unavailable" | string;
   positionsCount: number;
   marketValue: number;

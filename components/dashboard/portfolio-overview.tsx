@@ -34,30 +34,28 @@ const currencyFmt = (n: number | null | undefined, ccy?: string) =>
 const pctFmt = (n: number | null | undefined) =>
   n == null ? "—" : `${n.toFixed(2)}%`;
 
-export function PortfolioOverview({ currency = "USD", sidePanel }: Props) {
+export function PortfolioOverview({ sidePanel }: Props) {
   const [data, setData] = React.useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  const load = React.useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const raw = await getPortfolioSummary({ currency, signal });
-        const summary = keysToCamel(raw) as unknown as PortfolioSummary;
-        setData(summary);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        toast({
-          title: "Error",
-          description: "Failed to load portfolio overview.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    },
-    [currency]
-  );
+  const load = React.useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    try {
+      const raw = await getPortfolioSummary({ signal });
+      const summary = keysToCamel(raw) as unknown as PortfolioSummary;
+      console.log("fetched portfolio summary", summary);
+      setData(summary);
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      toast({
+        title: "Error",
+        description: "Failed to load portfolio overview.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     const ac = new AbortController();
@@ -89,10 +87,9 @@ export function PortfolioOverview({ currency = "USD", sidePanel }: Props) {
     );
   }
 
-  const ccy =
-    (data as any).requestedCurrency || (data as any).currency || currency;
   const asOf = (data as any).asOf ? new Date((data as any).asOf * 1000) : null;
   const positionsCount = (data as any).positionsCount ?? 0;
+  const ccy = (data as any).currency || "USD";
 
   return (
     <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">

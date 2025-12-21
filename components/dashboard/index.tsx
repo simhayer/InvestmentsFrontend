@@ -6,7 +6,5 @@ import PortfolioOverview from "@/components/dashboard/portfolio-overview";
 import { AnalysisSummaryCard } from "@/components/dashboard/ai-summary-card";
 
 export default function Dashboard() {
-  return (
-    <PortfolioOverview currency="USD" sidePanel={<AnalysisSummaryCard />} />
-  );
+  return <PortfolioOverview sidePanel={<AnalysisSummaryCard />} />;
 }

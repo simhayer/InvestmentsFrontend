@@ -6,11 +6,7 @@ export const getPortfolioSummary = async (opts?: {
   currency?: "USD" | "CAD";
   signal?: AbortSignal;
 }): Promise<PortfolioSummary> => {
-  const currency = opts?.currency ?? "USD";
-
-  const query = `/api/portfolio/summary?currency=${encodeURIComponent(
-    currency
-  )}`;
+  const query = `/api/portfolio/summary`;
 
   const res = await authedFetch(query, {
     method: "GET",

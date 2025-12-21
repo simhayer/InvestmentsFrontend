@@ -20,10 +20,7 @@ export const addHolding = async (data: any) => {
 export const getHoldings = async () => {
   try {
     console.log("getting holdings");
-    const currency = "USD"; //Todo: make dynamic
-    const query = `/holdings?includePrices=true&currency=${encodeURIComponent(
-      currency
-    )}`;
+    const query = `/holdings?includePrices=true`;
 
     const res = await authedFetch(query, {
       method: "GET",

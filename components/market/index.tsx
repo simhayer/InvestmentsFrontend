@@ -11,7 +11,9 @@ import {
   Clock3,
   Sparkles,
 } from "lucide-react";
-import MarketOverviewGrid, { type MarketIndexItem } from "./market-overview-grid";
+import MarketOverviewGrid, {
+  type MarketIndexItem,
+} from "./market-overview-grid";
 import { useMarketOverview } from "@/hooks/use-market-overview";
 import { MarketSummaryPanel } from "./market-summary";
 import { getPortfolioSummary } from "@/utils/portfolioService";
@@ -30,7 +32,8 @@ const fallbackPortfolioSeries: Record<"7d" | "30d", number[]> = {
 
 const formatAgo = (input?: Date | string | null) => {
   if (!input) return null;
-  const ts = input instanceof Date ? input.getTime() : new Date(input).getTime();
+  const ts =
+    input instanceof Date ? input.getTime() : new Date(input).getTime();
   if (Number.isNaN(ts)) return null;
   const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
   if (mins < 1) return "Just now";
@@ -69,29 +72,27 @@ function PortfolioSnapshotCard({
 }: SnapshotProps) {
   const [range, setRange] = useState<"7d" | "30d">("7d");
 
-  const currency =
-    (summary as any)?.requestedCurrency ||
-    (summary as any)?.currency ||
-    "USD";
+  const currency = (summary as any)?.currency || "USD";
   const portfolioValue = summary?.marketValue ?? 264500;
   const dayPl = summary?.dayPl ?? 1420;
   const dayPlPct = summary?.dayPlPct ?? 0.54;
   const totalReturnPct = summary?.unrealizedPlPct ?? 7.8;
   const asOf =
-    (summary as any)?.asOf || (summary as any)?.as_of
-      ? new Date(((summary as any).asOf ?? summary?.as_of) * 1000)
+    (summary as any)?.asOf || (summary as any)?.asOf
+      ? new Date(((summary as any).asOf ?? summary?.asOf) * 1000)
       : null;
 
   const sparkline = useMemo(() => {
-    const candidate = items?.find((it) => it.sparkline?.length)?.sparkline || [];
+    const candidate =
+      items?.find((it) => it.sparkline?.length)?.sparkline || [];
     const fallback = fallbackPortfolioSeries[range];
     if (!candidate.length) return fallback;
     if (range === "7d") {
-      return candidate.slice(-12).length
-        ? candidate.slice(-12)
-        : fallback;
+      return candidate.slice(-12).length ? candidate.slice(-12) : fallback;
     }
-    const series = candidate.slice(-(candidate.length > 26 ? 26 : candidate.length));
+    const series = candidate.slice(
+      -(candidate.length > 26 ? 26 : candidate.length)
+    );
     return series.length > 10 ? series : fallbackPortfolioSeries["30d"];
   }, [items, range]);
 
@@ -113,7 +114,8 @@ function PortfolioSnapshotCard({
             </Badge>
           </div>
           <p className="text-sm text-neutral-600 max-w-xl">
-            Live value with a quick read on how your book is moving today and over the last month.
+            Live value with a quick read on how your book is moving today and
+            over the last month.
           </p>
           {loading ? (
             <p className="text-xs text-neutral-500">
@@ -206,7 +208,13 @@ function PortfolioSnapshotCard({
               >
                 <YAxis hide domain={["auto", "auto"]} />
                 <defs>
-                  <linearGradient id="portfolioGradient" x1="0" x2="0" y1="0" y2="1">
+                  <linearGradient
+                    id="portfolioGradient"
+                    x1="0"
+                    x2="0"
+                    y1="0"
+                    y2="1"
+                  >
                     <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
                     <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
@@ -239,7 +247,8 @@ export default function MarketOverview() {
     summaryMeta,
   } = useMarketOverview();
   const items = data?.top_items || [];
-  const [portfolioSummary, setPortfolioSummary] = useState<PortfolioSummary | null>(null);
+  const [portfolioSummary, setPortfolioSummary] =
+    useState<PortfolioSummary | null>(null);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
 
   useEffect(() => {
@@ -252,7 +261,9 @@ export default function MarketOverview() {
     const load = async () => {
       setPortfolioLoading(true);
       try {
-        const summary = await getPortfolioSummary({ signal: controller.signal });
+        const summary = await getPortfolioSummary({
+          signal: controller.signal,
+        });
         setPortfolioSummary(summary);
       } catch {
         // Allow the page to continue if portfolio data isn't available
@@ -293,7 +304,8 @@ export default function MarketOverview() {
               </Badge>
             </div>
             <p className="text-base text-neutral-600 leading-relaxed max-w-3xl">
-              Snapshot of your portfolio, top indexes, and an AI read on what&apos;s moving the markets right now.
+              Snapshot of your portfolio, top indexes, and an AI read on
+              what&apos;s moving the markets right now.
             </p>
             <div className="flex flex-wrap gap-2 text-xs text-neutral-600">
               <span className="rounded-full bg-neutral-100 px-3 py-1 ring-1 ring-neutral-200">
@@ -322,7 +334,8 @@ export default function MarketOverview() {
                     AI summary updated {aiUpdatedAgo ?? "just now"}
                   </p>
                   <p className="text-xs text-neutral-600">
-                    Intelligent narrative for today&apos;s session plus live signals on your holdings.
+                    Intelligent narrative for today&apos;s session plus live
+                    signals on your holdings.
                   </p>
                 </div>
               </div>
@@ -353,7 +366,8 @@ export default function MarketOverview() {
                     Index pulse
                   </h2>
                   <p className="text-sm text-neutral-600 max-w-2xl">
-                    Today&apos;s leaders and laggards across major indexes and crypto benchmarks.
+                    Today&apos;s leaders and laggards across major indexes and
+                    crypto benchmarks.
                   </p>
                 </div>
                 {overviewUpdatedAgo ? (

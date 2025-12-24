@@ -23,8 +23,7 @@ const summarySurface =
   "rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]";
 const labelCaps =
   "text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500";
-const summaryMaxHeight =
-  "lg:max-h-[760px] xl:max-h-[820px] 2xl:max-h-[860px]";
+const summaryMinHeight = "lg:min-h-[640px]";
 
 export function MarketSummary({
   data,
@@ -36,7 +35,7 @@ export function MarketSummary({
   if (!data || !data.sections?.length) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-3 ${summaryMaxHeight} lg:overflow-hidden font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-3 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-neutral-900">
@@ -57,7 +56,7 @@ export function MarketSummary({
     <div
       className={[
         summarySurface,
-        `p-5 sm:p-6 lg:p-7 space-y-5 ${summaryMaxHeight} lg:overflow-hidden flex flex-col h-full font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`,
+        `p-5 sm:p-6 lg:p-7 space-y-5 ${summaryMinHeight} flex flex-col h-full font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`,
       ].join(" ")}
     >
       <div className="space-y-3">
@@ -67,7 +66,7 @@ export function MarketSummary({
               AI market summary
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-semibold text-neutral-900">
+              <h2 className="text-2xl sm:text-[22px] font-semibold text-neutral-900 leading-tight">
                 Today&apos;s AI read
               </h2>
               {data.market ? (
@@ -106,9 +105,7 @@ export function MarketSummary({
         </p>
       </div>
 
-      <div
-        className="space-y-3 flex-1 lg:overflow-y-auto lg:pr-3 lg:-mr-3 lg:pb-2 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.6)_transparent] lg:[&::-webkit-scrollbar]:w-2 lg:[&::-webkit-scrollbar-thumb]:rounded-full lg:[&::-webkit-scrollbar-thumb]:bg-neutral-300/70 lg:[&::-webkit-scrollbar-track]:bg-transparent"
-      >
+      <div className="space-y-3">
         {data.sections.map((s, idx) => {
           const key = `${s.headline ?? "section"}-${idx}`;
           return (
@@ -176,7 +173,7 @@ export function MarketSummaryPanel() {
   if (loading) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-4 ${summaryMaxHeight} lg:overflow-hidden font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-4 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-2">
@@ -210,7 +207,7 @@ export function MarketSummaryPanel() {
   if (error) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 ${summaryMaxHeight} lg:overflow-hidden font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
       >
         <Alert variant="destructive" className="rounded-2xl border border-rose-200">
           <AlertTitle>Something went wrong</AlertTitle>
@@ -234,7 +231,7 @@ export function MarketSummaryPanel() {
   if (!summary) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-2 ${summaryMaxHeight} lg:overflow-hidden font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-2 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
       >
         <h2 className="text-xl font-semibold text-neutral-900">
           AI market summary

@@ -11,6 +11,7 @@ import {
   Search,
   X,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { CommandSearch } from "./command-search";
 import { useAuth } from "@/lib/auth-provider";
@@ -35,7 +36,6 @@ import {
 } from "../navigation/nav-items";
 import { useAppTour } from "@/components/tour/app-tour";
 import { logout } from "@/utils/authService";
-import { updateCurrency } from "@/utils/userService";
 
 const futuraSignInFontClasses =
   "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
@@ -223,34 +223,16 @@ export function Header() {
                   </DropdownMenuItem>
                 )}
                 {user && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem disabled className="opacity-100">
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-xs text-neutral-500">
-                          Currency
-                        </span>
-                        <span className="text-sm text-neutral-800">
-                          {user.base_currency || "USD"}
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onSelect={async (e) => {
-                        e.preventDefault();
-                        const next = (
-                          user.base_currency === "CAD" ? "USD" : "CAD"
-                        ) as "USD" | "CAD";
-                        await updateCurrency(next);
-                        await refresh();
-                        // optionally: mutate("/holdings?includePrices=true"); mutate("/portfolio/summary");
-                      }}
-                      className="cursor-pointer"
-                    >
-                      Switch to {user.base_currency === "CAD" ? "USD" : "CAD"}
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      router.push("/settings");
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -402,13 +384,25 @@ export function Header() {
                       Take a tour
                     </button>
                     {user ? (
-                      <button
-                        onClick={handleLogout}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setMobileNavOpen(false);
+                            router.push("/settings");
+                          }}
+                          className="mb-3 w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Settings
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Logout
+                        </button>
+                      </>
                     ) : (
                       <Link
                         href={loginHref}

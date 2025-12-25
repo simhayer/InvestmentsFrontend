@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { News } from "../../news";
 import type { SummaryLayer } from "@/types/portfolio-ai";
 
 type NarrativeBlock = { heading?: string; body: string };
@@ -16,8 +15,7 @@ export function SummaryTab({ data }: { data: SummaryLayer }) {
     () => buildNarrativeBlocks(data.summary),
     [data.summary]
   );
-  const longNarrative =
-    data.summary.length > 900 || narrativeBlocks.length > 4;
+  const longNarrative = data.summary.length > 900 || narrativeBlocks.length > 4;
   const shouldClamp = longNarrative && !expanded;
 
   return (
@@ -34,7 +32,10 @@ export function SummaryTab({ data }: { data: SummaryLayer }) {
                   AI-generated overview across macro, positioning, and drivers.
                 </p>
               </div>
-              <Badge variant="outline" className="border-neutral-200 text-neutral-700">
+              <Badge
+                variant="outline"
+                className="border-neutral-200 text-neutral-700"
+              >
                 AI-generated
               </Badge>
             </div>
@@ -118,8 +119,6 @@ export function SummaryTab({ data }: { data: SummaryLayer }) {
           </div>
         </div>
       </div>
-
-      <News />
     </div>
   );
 }
@@ -127,14 +126,13 @@ export function SummaryTab({ data }: { data: SummaryLayer }) {
 function ConfidenceCell({ label, value }: { label: string; value: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   const isZero = pct === 0;
-  const barTone =
-    isZero
-      ? "bg-rose-300"
-      : pct >= 75
-      ? "bg-emerald-500"
-      : pct >= 50
-      ? "bg-amber-400"
-      : "bg-neutral-300";
+  const barTone = isZero
+    ? "bg-rose-300"
+    : pct >= 75
+    ? "bg-emerald-500"
+    : pct >= 50
+    ? "bg-amber-400"
+    : "bg-neutral-300";
   const textTone =
     pct >= 75
       ? "text-emerald-600"
@@ -161,7 +159,10 @@ function ConfidenceCell({ label, value }: { label: string; value: number }) {
 }
 
 function buildNarrativeBlocks(text: string): NarrativeBlock[] {
-  const parts = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const parts = text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (!parts.length) return [{ body: text }];
   return parts.map((part) => {
     const match = part.match(/^([A-Z][\w\s&%-]{2,60}):\s*(.+)$/i);

@@ -74,7 +74,11 @@ export function AnalysisContainer() {
     const btn = tabRefs.current[key];
     const container = scrollerRef.current;
     if (btn && container) {
-      btn.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+      btn.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
     }
   };
 
@@ -134,7 +138,8 @@ export function AnalysisContainer() {
                 Multi-layer view across summary, metrics, risks, and actions.
               </h1>
               <p className="text-sm text-neutral-600 max-w-2xl">
-                AI-generated narrative, confidence, and news mapped to every layer of your portfolio.
+                AI-generated narrative, confidence, and news mapped to every
+                layer of your portfolio.
               </p>
             </div>
           </div>
@@ -142,12 +147,18 @@ export function AnalysisContainer() {
           <div className="w-full max-w-sm space-y-3">
             <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
               {cached && !refetching ? (
-                <Badge variant="outline" className="border-neutral-300 text-neutral-700">
+                <Badge
+                  variant="outline"
+                  className="border-neutral-300 text-neutral-700"
+                >
                   Cached • next in {nextUpdateIn}
                 </Badge>
               ) : null}
               {refetching && (
-                <Badge variant="secondary" className="gap-1 bg-neutral-900 text-white">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-neutral-900 text-white"
+                >
                   <RefreshCcw className="h-3.5 w-3.5" />
                   Refreshing
                 </Badge>
@@ -281,7 +292,9 @@ export function AnalysisContainer() {
           <RefetchingSkeleton />
         ) : (
           <>
-            {active === "summary" && <SummaryTab data={data.ai_layers.summary} />}
+            {active === "summary" && (
+              <SummaryTab data={data.ai_layers.summary} />
+            )}
             {active === "metrics" && (
               <PortfolioMetricsTab data={data.ai_layers.metrics} />
             )}
@@ -302,7 +315,9 @@ export function AnalysisContainer() {
               <ActionsTab data={data.ai_layers.scenarios_rebalance.actions} />
             )}
             {active === "scenarios" && (
-              <ScenariosTab data={data.ai_layers.scenarios_rebalance.scenarios} />
+              <ScenariosTab
+                data={data.ai_layers.scenarios_rebalance.scenarios}
+              />
             )}
             {active === "outlook" && (
               <MarketOutlookTab

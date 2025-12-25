@@ -3,15 +3,17 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+import { useSWRConfig } from "swr";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { login, getMe } from "@/utils/authService";
-import type { User } from "@/types/user";
-import { useSWRConfig } from "swr";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+
+import { login } from "@/utils/authService";
+import { supabase } from "@/utils/supabaseClient";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -35,27 +37,26 @@ export function LoginForm() {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return;
+
     setIsLoading(true);
     setInlineError(null);
 
     try {
       // 1) Supabase login
       const result = await login(email.trim(), password);
-      if (!result?.ok)
+      if (!result?.ok) {
         throw new Error("Invalid email or password. Please try again.");
+      }
 
-      // 2) Read supabase user (id is already string UUID)
-      const me = (await getMe().catch(() => null)) as
-        | (User & { id?: string | number })
-        | null;
+      // 2) Ensure session exists (avoids redirect races)
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw new Error(error.message);
+      if (!data.session)
+        throw new Error("Session not ready. Please try again.");
 
-      // Keep your app's User typing stable (string id)
-      const user: User | null = me
-        ? { ...me, id: String((me as any).id ?? "") }
-        : null;
-
-      // 3) Warm SWR auth cache so UI flips instantly
-      await mutate("auth:/me", { user }, { revalidate: false });
+      // 3) Trigger AuthProvider's SWR (/me) to refetch right away
+      // AuthProvider uses key like ["app:/me", access_token]
+      await mutate((key) => Array.isArray(key) && key[0] === "app:/me");
 
       toast({
         title: "Welcome back!",
@@ -65,9 +66,7 @@ export function LoginForm() {
       // 4) Safe redirect
       const nextParam = searchParams.get("next");
       const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
-
       router.replace(next);
-      // router.refresh(); // optional now; only keep if you rely on server components reading auth state
     } catch (err: any) {
       const msg = err?.message ?? "Login failed. Please try again.";
       setInlineError(msg);
@@ -111,6 +110,7 @@ export function LoginForm() {
         >
           Password
         </Label>
+
         <div className="relative">
           <Input
             id="password"

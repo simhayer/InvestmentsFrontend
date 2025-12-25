@@ -26,20 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const fmtCurrency = (n: number | null | undefined, currency = "USD") =>
-  n == null
-    ? "—"
-    : n.toLocaleString(undefined, {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-      });
-
-const fmtNumber = (n: number | null | undefined, digits = 8) =>
-  n == null
-    ? "—"
-    : n.toLocaleString(undefined, { maximumFractionDigits: digits });
+import { fmtCurrency, fmtNumber } from "@/utils/format";
 
 const fmtPercent = (n: number | null | undefined) =>
   n == null ? "—" : `${n.toFixed(2)}%`;
@@ -355,9 +342,7 @@ export function Holdings() {
               renderEmptyState()
             ) : (
               <>
-                <div className="hidden md:block px-6">
-                  {renderTable()}
-                </div>
+                <div className="hidden md:block px-6">{renderTable()}</div>
                 <div className="block p-6 md:hidden">{renderMobileList()}</div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100/80 bg-neutral-50/70 px-6 py-4 text-sm text-neutral-700">
                   <span>Portfolio total</span>

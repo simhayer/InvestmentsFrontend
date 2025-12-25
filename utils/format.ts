@@ -14,8 +14,9 @@ export const fmtCurrency = (v?: number | null, ccy = "USD") =>
     : new Intl.NumberFormat(undefined, {
         style: "currency",
         currency: ccy,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 3,
       }).format(v);
+
 export const fmtCompact = (v?: number | null) =>
   v == null
     ? "—"

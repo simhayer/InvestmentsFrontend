@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NProgressProvider } from "@/app/nprogress-provider";
+import { AuthProvider } from "@/lib/auth-provider";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
@@ -36,15 +37,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Suspense fallback={null}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            <NProgressProvider />
-            {children}
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              <NProgressProvider />
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
         </Suspense>
       </body>
     </html>

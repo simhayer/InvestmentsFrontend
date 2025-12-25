@@ -13,6 +13,7 @@ import {
 } from "../ui/card";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { fmtCurrency } from "@/utils/format";
 
 interface Props {
   holdings: Holding[];
@@ -20,11 +21,7 @@ interface Props {
   currency?: string;
 }
 
-export function TopHoldings({
-  holdings,
-  loading,
-  currency = "USD",
-}: Props) {
+export function TopHoldings({ holdings, loading, currency = "USD" }: Props) {
   const router = useRouter();
   const onHoldingsClick = () => {
     router.replace("/holdings");
@@ -103,12 +100,11 @@ export function TopHoldings({
                     holdings.map((holding, idx) => {
                       const totalValue =
                         (holding.currentPrice ?? 0) * (holding.quantity ?? 0);
-                      const pctChange =
-                        holding.purchasePrice
-                          ? ((holding.currentPrice - holding.purchasePrice) /
-                              holding.purchasePrice) *
-                            100
-                          : 0;
+                      const pctChange = holding.purchasePrice
+                        ? ((holding.currentPrice - holding.purchasePrice) /
+                            holding.purchasePrice) *
+                          100
+                        : 0;
                       const priceTone =
                         pctChange > 0
                           ? "text-emerald-600"
@@ -135,18 +131,10 @@ export function TopHoldings({
                             {holding.quantity}
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-neutral-900">
-                            {totalValue.toLocaleString(undefined, {
-                              style: "currency",
-                              currency,
-                              minimumFractionDigits: 2,
-                            })}
+                            {fmtCurrency(totalValue, currency)}
                           </td>
                           <td className="px-4 py-3 text-right text-neutral-800">
-                            {holding.currentPrice.toLocaleString(undefined, {
-                              style: "currency",
-                              currency,
-                              minimumFractionDigits: 2,
-                            })}
+                            {fmtCurrency(holding.currentPrice, currency)}
                           </td>
                           <td
                             className={cn(

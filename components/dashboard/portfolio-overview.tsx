@@ -21,18 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Building2, Link2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { fmtCurrency, fmtPct } from "@/utils/format";
 
 type Props = { currency?: "USD" | "CAD"; sidePanel?: React.ReactNode };
-
-const currencyFmt = (n: number | null | undefined, ccy?: string) =>
-  new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: ccy || "USD",
-    maximumFractionDigits: 2,
-  }).format(Number(n ?? 0));
-
-const pctFmt = (n: number | null | undefined) =>
-  n == null ? "—" : `${n.toFixed(2)}%`;
 
 export function PortfolioOverview({ sidePanel }: Props) {
   const [data, setData] = React.useState<PortfolioSummary | null>(null);
@@ -230,7 +221,7 @@ function PortfolioSummaryHero({
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
-                  {currencyFmt((data as any).marketValue, ccy)}
+                  {fmtCurrency((data as any).marketValue, ccy)}
                 </div>
                 <Pill>{ccy}</Pill>
               </div>
@@ -242,14 +233,14 @@ function PortfolioSummaryHero({
             <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
               <MetricCard
                 label="Total return"
-                value={currencyFmt(totalReturn, ccy)}
-                delta={pctFmt(totalReturnPct)}
+                value={fmtCurrency(totalReturn, ccy)}
+                delta={fmtPct(totalReturnPct)}
                 tone={totalReturnTone}
               />
               <MetricCard
                 label="Today’s return"
-                value={currencyFmt(dayReturn, ccy)}
-                delta={pctFmt(dayReturnPct)}
+                value={fmtCurrency(dayReturn, ccy)}
+                delta={fmtPct(dayReturnPct)}
                 tone={dayReturnTone}
               />
               <MetricCard

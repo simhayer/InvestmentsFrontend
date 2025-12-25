@@ -11,10 +11,11 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading, sessionReady, hasSession } = useAuth();
 
   React.useEffect(() => {
-    if (sessionReady && !hasSession) {
+    if (!sessionReady || isLoading) return;
+    if (!hasSession) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
-  }, [sessionReady, hasSession, router, pathname]);
+  }, [sessionReady, isLoading, hasSession, router, pathname]);
 
   if (!sessionReady || isLoading || !hasSession) {
     // You can return a loading spinner or null while checking auth status

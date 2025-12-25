@@ -1,19 +1,17 @@
-// app/page.tsx
 "use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getMe } from "@/utils/authService";
+import { useAuth } from "@/lib/auth-provider";
 
 export default function Home() {
   const router = useRouter();
+  const { sessionReady, hasSession } = useAuth();
 
   useEffect(() => {
-    (async () => {
-      const me = await getMe();
-      router.replace(me ? "/dashboard" : "/landing");
-    })();
-  }, [router]);
+    if (!sessionReady) return;
+    router.replace(hasSession ? "/dashboard" : "/landing");
+  }, [sessionReady, hasSession, router]);
 
-  return null; // or a loading splash
+  return null;
 }

@@ -1,5 +1,4 @@
 // utils/aiService.ts
-import { Holding } from "@/types/holding";
 
 import type {
   PortfolioAnalysisResponse,
@@ -8,30 +7,6 @@ import type {
   LatestDevelopmentItem,
 } from "@/types/portfolio-ai";
 import { authedFetch } from "@/utils/authService";
-
-export async function getAiInsight(holding: Holding): Promise<string> {
-  try {
-    const path = "/api/ai/analyze-holding";
-    const res = await authedFetch(path, {
-      method: "POST",
-      body: JSON.stringify({
-        symbol: holding.symbol,
-        name: holding.name,
-        quantity: holding.quantity,
-        purchase_price: holding.avgPrice,
-        current_price: holding.currentPrice,
-        type: holding.type,
-        institution: holding.institution || "Unknown",
-        currency: holding.currency || "USD",
-      }),
-    });
-    const data = await res.json();
-    return data.insight || "No insight returned.";
-  } catch (error) {
-    console.error("AI insight fetch error:", error);
-    return "Something went wrong while fetching AI insight.";
-  }
-}
 
 export async function getAiInsightSymbol(symbol: string): Promise<string> {
   console.log("Fetching AI insight for symbol:", symbol);

@@ -8,38 +8,71 @@ export type SymbolKey = string;
 export interface PortfolioMetrics {
   cash_value: number;
   total_value: number;
-  vol_30D_pct: number;
   num_positions: number;
-  core_weight_pct: number;
-  hedge_weight_pct: number;
-  region_weights_pct: Record<string, number>;
-  sector_weights_pct: Record<string, number>;
-  max_drawdown_1Y_pct: number;
-  speculative_weight_pct: number;
-  asset_class_weights_pct: Record<string, number>;
   concentration_top_5_pct: number;
+
+  asset_class_weights_pct: Record<string, number>;
+
+  // optional breakdowns (may be absent depending on backend)
+  region_weights_pct?: Record<string, number>;
+  sector_weights_pct?: Record<string, number>;
+
+  // optional risk (often null)
+  vol_30D_pct?: number | null;
+  max_drawdown_1Y_pct?: number | null;
+
+  // optional classification buckets (you might not always compute)
+  core_weight_pct?: number | null;
+  speculative_weight_pct?: number | null;
+  hedge_weight_pct?: number | null;
+
+  // your extra fields
+  base_currency?: string;
+  usd_to_cad?: number | null;
 }
 
 export interface PerSymbolMetrics {
-  name: string;
-  region: string;
-  sector: string;
   symbol: string;
-  beta_1Y: number | null;
-  cost_basis: number;
-  weight_pct: number;
+  name: string;
   asset_class: string;
-  vol_30D_pct: number;
-  is_leveraged: boolean;
+
+  sector?: string;
+  region?: string;
+
+  weight_pct: number;
   market_value: number;
-  return_1D_pct: number;
-  return_1M_pct: number;
-  return_1W_pct: number;
-  return_1Y_pct: number;
-  return_3M_pct: number;
-  unrealized_pnl_abs: number;
-  unrealized_pnl_pct: number;
-  max_drawdown_1Y_pct: number;
+  cost_basis: number;
+
+  unrealized_pnl_abs: number | null;
+  unrealized_pnl_pct: number | null;
+
+  // quote/fundamentals you currently return
+  quote_currency?: string | null;
+  price_status?: string | null;
+
+  pe_ratio?: number | null;
+  forward_pe?: number | null;
+  market_cap?: number | null;
+  dividend_yield?: number | null;
+  price_to_book?: number | null;
+
+  beta_1Y?: number | null;
+
+  // optional perf/risk (often null if you don’t compute history)
+  return_1D_pct?: number | null;
+  return_1W_pct?: number | null;
+  return_1M_pct?: number | null;
+  return_3M_pct?: number | null;
+  return_1Y_pct?: number | null;
+  vol_30D_pct?: number | null;
+  max_drawdown_1Y_pct?: number | null;
+
+  is_leveraged?: boolean | null;
+
+  // if you decide to merge holdings into UI rows later (recommended)
+  current_price?: number | null;
+  purchase_unit_price?: number | null;
+  day_pl?: number | null;
 }
 
 export interface MetricsLayer {

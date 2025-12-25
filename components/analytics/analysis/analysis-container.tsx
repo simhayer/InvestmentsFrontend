@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { SummaryTab } from "./tabs/SummaryTab";
-import { PortfolioMetricsTab } from "./tabs/PortfolioMetricsTab";
+import { PortfolioMetricsTab } from "./tabs/MetricsTab";
 import { PositionsTab } from "./tabs/PositionsTab";
 import { PredictionsTab } from "./tabs/PredictionsTab";
 import { NewsSentimentTab } from "./tabs/NewsSentimentTab";
@@ -163,11 +163,11 @@ export function AnalysisContainer() {
                   Refreshing
                 </Badge>
               )}
-              {meta?.updatedAt ? (
+              {/* {meta?.updatedAt ? (
                 <span className="text-xs text-neutral-500">
                   Updated {meta.updatedAt}
                 </span>
-              ) : null}
+              ) : null} */}
             </div>
             <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
               <Button
@@ -217,9 +217,9 @@ export function AnalysisContainer() {
                   Switch between portfolio AI layers.
                 </p>
               </div>
-              <div className="hidden text-xs text-neutral-500 sm:inline">
+              {/* <div className="hidden text-xs text-neutral-500 sm:inline">
                 {meta?.updatedAt ? `Updated ${meta.updatedAt}` : ""}
-              </div>
+              </div> */}
             </div>
             <div className="relative">
               <div
@@ -233,7 +233,9 @@ export function AnalysisContainer() {
                   {TAB_LIST.map((t) => (
                     <button
                       key={t.key}
-                      ref={(el) => (tabRefs.current[t.key] = el)}
+                      ref={(el) => {
+                        tabRefs.current[t.key] = el;
+                      }}
                       data-tab-key={t.key}
                       role="tab"
                       aria-selected={active === t.key}

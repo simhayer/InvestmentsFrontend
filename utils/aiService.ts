@@ -39,8 +39,8 @@ export function safeParseAnalysis(
 export function listPositions(
   ai: PortfolioAnalysisResponse["ai_layers"]
 ): PerSymbolMetrics[] {
-  return Object.values(ai.metrics.per_symbol).sort(
-    (a, b) => b.weight_pct - a.weight_pct
+  return Object.values(ai.metrics.per_symbol || {}).sort(
+    (a, b) => (b.weight_pct ?? 0) - (a.weight_pct ?? 0)
   );
 }
 

@@ -78,23 +78,15 @@ export function PortfolioOverview({ sidePanel }: Props) {
     );
   }
 
-  const asOf = (data as any).asOf ? new Date((data as any).asOf * 1000) : null;
   const positionsCount = (data as any).positionsCount ?? 0;
   const ccy = (data as any).currency || "USD";
-
   return (
     <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
       <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12 space-y-6 sm:space-y-7">
         <section className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-[32px] font-semibold text-neutral-900">
-              Dashboard
-            </h1>
-          </div>
           <PortfolioSummaryHero
             data={data}
             ccy={ccy}
-            asOf={asOf}
             positionsCount={positionsCount}
           />
         </section>
@@ -153,8 +145,8 @@ function MetricCard({
   tone?: "positive" | "negative" | "neutral";
 }) {
   return (
-    <div className="flex h-full min-h-[104px] flex-col justify-center gap-1.5 rounded-2xl border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)]">
-      <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500 leading-tight">
+    <div className="flex h-full min-h-[88px] flex-col justify-center gap-1.5 rounded-2xl border border-neutral-200/80 bg-white px-3 py-3 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.25)]">
+      <p className="text-[10px] uppercase tracking-[0.12em] text-neutral-500 leading-tight">
         {label}
       </p>
       <div className="text-lg font-semibold text-neutral-900 leading-tight">
@@ -181,19 +173,16 @@ function MetricCard({
 function PortfolioSummaryHero({
   data,
   ccy,
-  asOf,
   positionsCount,
 }: {
   data: PortfolioSummary;
   ccy: string;
-  asOf: Date | null;
   positionsCount: number;
 }) {
   const totalReturn = (data as any).unrealizedPl ?? 0;
   const totalReturnPct = (data as any).unrealizedPlPct;
   const dayReturn = (data as any).dayPl ?? 0;
   const dayReturnPct = (data as any).dayPlPct;
-  const status = (data as any).priceStatus as string | undefined;
 
   const totalReturnTone = toneFromNumber(totalReturn);
   const dayReturnTone = toneFromNumber(dayReturn);
@@ -203,57 +192,44 @@ function PortfolioSummaryHero({
       className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]"
       data-tour-id="tour-portfolio-hero"
     >
-      <CardHeader className="pb-0 pt-6 px-5 sm:px-7 lg:px-8">
-        <CardTitle className="text-lg font-semibold text-neutral-900">
-          Portfolio value
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-5 pb-6 pt-2 sm:px-7 sm:pb-7 lg:px-8">
-        <div className="flex flex-col gap-5">
-          <div className="grid items-center gap-5 lg:gap-6 lg:grid-cols-[1.05fr_auto_auto]">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
-                  {fmtCurrency((data as any).marketValue, ccy)}
-                </div>
-              </div>
-              <p className="text-xs text-neutral-500">
-                Total across all linked accounts.
-              </p>
+      <CardContent className="p-6 sm:p-7 lg:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1.1fr_auto] lg:items-center">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
+              Portfolio value
+            </p>
+            <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
+              {fmtCurrency((data as any).marketValue, ccy)}
             </div>
-
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
-              <MetricCard
-                label="Total return"
-                value={fmtCurrency(totalReturn, ccy)}
-                delta={fmtPct(totalReturnPct)}
-                tone={totalReturnTone}
-              />
-              <MetricCard
-                label="Today’s return"
-                value={fmtCurrency(dayReturn, ccy)}
-                delta={fmtPct(dayReturnPct)}
-                tone={dayReturnTone}
-              />
-              <MetricCard
-                label="Positions"
-                value={String(positionsCount)}
-                tone="neutral"
-              />
-            </div>
-
+            <p className="text-xs text-neutral-500">
+              Total across all linked accounts.
+            </p>
           </div>
+
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+            <MetricCard
+              label="Total return"
+              value={fmtCurrency(totalReturn, ccy)}
+              delta={fmtPct(totalReturnPct)}
+              tone={totalReturnTone}
+            />
+            <MetricCard
+              label="Today’s return"
+              value={fmtCurrency(dayReturn, ccy)}
+              delta={fmtPct(dayReturnPct)}
+              tone={dayReturnTone}
+            />
+            <MetricCard
+              label="Positions"
+              value={String(positionsCount)}
+              tone="neutral"
+            />
+          </div>
+
+          <div className="w-full lg:justify-self-end" />
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200/70">
-      {children}
-    </span>
   );
 }
 
@@ -421,15 +397,4 @@ function toneFromNumber(
   if (v > 0) return "positive";
   if (v < 0) return "negative";
   return "neutral";
-}
-
-function formatAsOf(date: Date | null) {
-  if (!date) return null;
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }

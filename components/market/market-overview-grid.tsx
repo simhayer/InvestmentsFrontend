@@ -1,12 +1,13 @@
 "use client";
 
-import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
+import { Line, LineChart, ResponsiveContainer, YAxis } from "recharts";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, ArrowRight } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { fmtCurrency, fmtNumber } from "@/utils/format";
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 export type MarketIndexItem = {
   key: string;
@@ -22,10 +23,11 @@ export type MarketIndexItem = {
 export type MarketOverviewGridProps = {
   className?: string;
   compact?: boolean;
+  variant?: "grid" | "strip";
   items?: MarketIndexItem[];
-  isLoading?: boolean; // <— NEW
-  error?: string | null; // <— NEW
-  onItemClick?: (symbol: string) => void; // optional override
+  isLoading?: boolean;
+  error?: string | null;
+  onItemClick?: (symbol: string) => void;
 };
 
 const badgeColor = (pct: number | null | undefined) =>
@@ -35,7 +37,74 @@ const badgeColor = (pct: number | null | undefined) =>
     ? "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
     : "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200";
 
+const deltaTone = (pct: number | null | undefined) => {
+  if (pct == null) return "text-neutral-500";
+  if (pct > 0) return "text-emerald-600";
+  if (pct < 0) return "text-rose-600";
+  return "text-neutral-600";
+};
+
+const sparklineStroke = (pct: number | null | undefined) => {
+  if (pct == null) return "#94a3b8";
+  if (pct > 0) return "#10b981";
+  if (pct < 0) return "#f43f5e";
+  return "#94a3b8";
+};
+
 const toSeries = (arr: number[]) => arr.map((y, i) => ({ i, y }));
+
+function Sparkline({
+  data,
+  pct,
+  compact,
+  heightClass,
+  surface = "default",
+}: {
+  data: number[];
+  pct: number | null | undefined;
+  compact?: boolean;
+  heightClass?: string;
+  surface?: "default" | "none";
+}) {
+  const stroke = sparklineStroke(pct);
+  const resolvedHeight = heightClass ?? (compact ? "h-14" : "h-32 sm:h-36");
+  const containerClass =
+    surface === "none"
+      ? ""
+      : compact
+      ? "rounded-lg bg-neutral-50/80"
+      : "rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100";
+
+  return (
+    <div
+      className={cn(
+        "w-full",
+        resolvedHeight,
+        containerClass,
+        compact ? "flex items-center justify-center px-1" : ""
+      )}
+    >
+      <div className={cn("w-full", compact ? "h-10" : "h-full")}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={toSeries(data || [])}
+            margin={{ top: compact ? 6 : 8, right: 0, left: 0, bottom: 0 }}
+          >
+            <YAxis domain={["auto", "auto"]} hide />
+            <Line
+              type="monotone"
+              dataKey="y"
+              dot={false}
+              strokeWidth={compact ? 1.8 : 2}
+              stroke={stroke}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------
 // Skeletons
@@ -77,6 +146,16 @@ function CardSkeleton() {
   );
 }
 
+function StripTileSkeleton() {
+  return (
+    <div className="min-w-[220px] rounded-2xl border border-neutral-200/70 bg-white px-4 py-3 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.35)] flex flex-col gap-3">
+      <div className="h-3 w-32 rounded-full bg-muted animate-pulse" />
+      <div className="h-5 w-36 rounded-full bg-muted animate-pulse" />
+      <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
+    </div>
+  );
+}
+
 // ---------------------------
 // Component
 // ---------------------------
@@ -84,6 +163,7 @@ export default function MarketOverviewGrid({
   items,
   className,
   compact,
+  variant = "grid",
   isLoading,
   error,
   onItemClick,
@@ -101,8 +181,22 @@ export default function MarketOverviewGrid({
     ? "min-h-[240px] sm:min-h-[252px]"
     : "min-h-[248px] sm:min-h-[268px]";
 
-  // Loading state
   if (isLoading) {
+    if (variant === "strip") {
+      return (
+        <div
+          className={[
+            "flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-4",
+            className ?? "",
+          ].join(" ")}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StripTileSkeleton key={i} />
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div
         className={[
@@ -118,7 +212,6 @@ export default function MarketOverviewGrid({
     );
   }
 
-  // Error / empty
   if (error) {
     return (
       <div className="rounded-xl border p-4 text-sm text-rose-600 bg-rose-50/40 dark:bg-rose-950/20 font-['Futura_PT_Book',_Futura,_sans-serif]">
@@ -130,6 +223,94 @@ export default function MarketOverviewGrid({
     return (
       <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-muted-foreground shadow-sm font-['Futura_PT_Book',_Futura,_sans-serif]">
         No market data available right now.
+      </div>
+    );
+  }
+
+  if (variant === "strip") {
+    return (
+      <div
+        className={[
+          "flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-4 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]",
+          className ?? "",
+        ].join(" ")}
+      >
+        {items.map((it) => {
+          const price =
+            typeof it.price !== "number"
+              ? "—"
+              : it.currency
+              ? fmtCurrency(it.price, it.currency)
+              : fmtNumber(it.price);
+          const changeAbs =
+            typeof it.changeAbs !== "number"
+              ? null
+              : it.currency
+              ? fmtCurrency(Math.abs(it.changeAbs), it.currency)
+              : fmtNumber(Math.abs(it.changeAbs));
+          const changeAbsText =
+            changeAbs == null
+              ? null
+              : `${it.changeAbs >= 0 ? "+" : "-"}${changeAbs}`;
+          const changePctText =
+            typeof it.changePct === "number"
+              ? `${it.changePct >= 0 ? "+" : ""}${it.changePct.toFixed(2)}%`
+              : null;
+
+          return (
+            <motion.button
+              key={it.key}
+              type="button"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="group min-w-[200px] text-left rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_-30px_rgba(15,23,42,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
+              onClick={() => handleClick(it.symbol)}
+              aria-label={`Open ${it.label}`}
+            >
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <p
+                  className="text-[11px] uppercase tracking-[0.12em] text-neutral-500 truncate"
+                  title={`${it.label} - ${it.symbol}`}
+                >
+                  {it.label} - {it.symbol}
+                </p>
+              </div>
+              <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-base font-semibold text-neutral-900">
+                  {price}
+                </span>
+                <span className="flex flex-wrap items-center gap-1 text-[11px] font-semibold sm:text-xs">
+                  <span
+                    className={cn("whitespace-nowrap", deltaTone(it.changePct))}
+                  >
+                    {changePctText ?? "—"}
+                  </span>
+                  {changeAbsText ? (
+                    <span className="hidden text-neutral-400 sm:inline">/</span>
+                  ) : null}
+                  {changeAbsText ? (
+                    <span
+                      className={cn(
+                        "hidden whitespace-nowrap sm:inline",
+                        deltaTone(it.changePct)
+                      )}
+                    >
+                      {changeAbsText}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <div className="mt-3">
+                <Sparkline
+                  data={it.sparkline || []}
+                  pct={it.changePct}
+                  compact
+                />
+              </div>
+            </motion.button>
+          );
+        })}
       </div>
     );
   }
@@ -253,27 +434,12 @@ export default function MarketOverviewGrid({
                   }
                 }}
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={toSeries(it.sparkline || [])}
-                    margin={{ top: 6, right: 0, left: 0, bottom: 0 }}
-                    onClick={() => handleClick(it.symbol)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <YAxis domain={["auto", "auto"]} hide />
-                    <Line
-                      type="monotone"
-                      dataKey="y"
-                      dot={false}
-                      strokeWidth={2}
-                      className={
-                        it.changePct !== null && (it.changePct ?? 0) >= 0
-                          ? "stroke-emerald-500"
-                          : "stroke-rose-500"
-                      }
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <Sparkline
+                  data={it.sparkline || []}
+                  pct={it.changePct}
+                  heightClass="h-full"
+                  surface="none"
+                />
               </div>
               <div className="mt-auto pt-2 flex items-center justify-between text-xs text-neutral-600">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-neutral-800">

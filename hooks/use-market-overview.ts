@@ -8,11 +8,44 @@ import type {
   MarketSummaryMeta,
   MarketSummaryResponse,
 } from "@/types/market-summary";
-import { authedFetch } from "@/utils/authService";
+import { API_URL, authedFetch } from "@/utils/authService";
 
 // Minimal response types if you don't already have them:
 type OverviewEnvelope = { message: string; data: MarketOverviewData };
 type SummaryEnvelope = MarketSummaryResponse; // already defined in your types
+
+const isAuthError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("not authenticated") ||
+    message.includes("401") ||
+    message.includes("403")
+  );
+};
+
+const publicFetch = async (path: string, init?: RequestInit) => {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res;
+};
+
+const authedOrPublicFetch = async (path: string, init?: RequestInit) => {
+  try {
+    return await authedFetch(path, init);
+  } catch (error) {
+    if (isAuthError(error)) {
+      return await publicFetch(path, init);
+    }
+    throw error;
+  }
+};
 
 export function useMarketOverview() {
   // ---- OVERVIEW STATE ----
@@ -46,7 +79,7 @@ export function useMarketOverview() {
 
     try {
       const path = "/api/market/overview";
-      const res = await authedFetch(path, {
+      const res = await authedOrPublicFetch(path, {
         method: "GET",
         signal: controller.signal,
       });
@@ -83,7 +116,7 @@ export function useMarketOverview() {
     setSummaryError(null);
     try {
       const path = "/api/market/summary";
-      const res = await authedFetch(path, {
+      const res = await authedOrPublicFetch(path, {
         method: "GET",
         signal: controller.signal,
       });

@@ -302,7 +302,7 @@ export function Holdings() {
             {!loading && filteredHoldings.length ? (
               <div className="w-full text-left sm:w-auto sm:text-right sm:ml-auto sm:self-start flex-shrink-0 space-y-1 rounded-2xl bg-neutral-50/70 px-4 py-3 sm:bg-transparent sm:px-0 sm:py-0">
                 <p className="text-xs uppercase tracking-[0.08em] text-neutral-500 leading-none">
-                  Total value (filtered)
+                  Total value
                 </p>
                 <p className="text-lg font-semibold text-neutral-900 leading-tight">
                   {fmtCurrency(totalValue, currency)}

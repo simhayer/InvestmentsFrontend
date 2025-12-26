@@ -112,29 +112,6 @@ export function Connections({ onRemove }: ConnectionsProps) {
                 {connections.length} connected
               </span>
             </div>
-            <p className="text-sm text-neutral-600 max-w-2xl">
-              Your linked brokerages, banks, or exchanges. Keep them connected to sync balances and holdings automatically.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-11 gap-1.5 rounded-xl border-neutral-200 bg-white px-4 text-neutral-800 shadow-sm"
-              onClick={onSyncNow}
-              disabled={!hasConnections || refreshing || loading}
-              title={
-                hasConnections
-                  ? "Refresh your linked institutions"
-                  : "Link an account to enable sync"
-              }
-            >
-              <RefreshCcw
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              {refreshing ? "Syncing…" : "Sync now"}
-            </Button>
           </div>
         </header>
 
@@ -179,17 +156,6 @@ export function Connections({ onRemove }: ConnectionsProps) {
         ) : (
           <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
             <CardHeader className="flex flex-col gap-3 border-b border-neutral-100/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-                  Connected accounts
-                </p>
-                <CardTitle className="text-xl font-semibold text-neutral-900">
-                  {hasConnections ? "Your linked institutions" : "Ready to connect"}
-                </CardTitle>
-                <CardDescription className="text-sm text-neutral-600">
-                  Link brokerages, banks, or exchanges to keep your portfolio in sync.
-                </CardDescription>
-              </div>
               <div className="flex flex-wrap items-center gap-2 sm:self-start">
                 <Button
                   variant="outline"

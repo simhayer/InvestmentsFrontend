@@ -62,9 +62,6 @@ export function MarketSummary({
       <div className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500 leading-none">
-              AI market summary
-            </p>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-2xl sm:text-[22px] font-semibold text-neutral-900 leading-tight">
                 Today&apos;s AI read
@@ -85,12 +82,6 @@ export function MarketSummary({
             ) : null}
           </div>
           <div className="space-y-2 text-right">
-            {updatedAgo ? (
-              <div className="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
-                Updated {updatedAgo}
-              </div>
-            ) : null}
             {refreshing ? (
               <span className="text-[11px] uppercase tracking-[0.08em] text-neutral-500">
                 Refreshing...
@@ -98,11 +89,6 @@ export function MarketSummary({
             ) : null}
           </div>
         </div>
-
-        <p className="text-sm text-neutral-600 max-w-xl">
-          AI-generated perspective on what&apos;s driving risk-on/risk-off,
-          macro narratives, and sector rotations today.
-        </p>
       </div>
 
       <div className="space-y-3">
@@ -116,14 +102,10 @@ export function MarketSummary({
               <CardHeader className="px-4 sm:px-5 pt-4 pb-1 space-y-1">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <span className={labelCaps}>Story {idx + 1}</span>
                     <CardTitle className="text-base leading-6 text-neutral-900">
                       {s.headline}
                     </CardTitle>
                   </div>
-                  <Badge variant="outline" className="rounded-full px-3 py-1 text-[11px]">
-                    AI insight
-                  </Badge>
                 </div>
               </CardHeader>
 

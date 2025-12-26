@@ -6,16 +6,15 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  ChevronRight,
   Clock3,
   RefreshCw,
   Sparkles,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import MarketOverviewGrid, {
   type MarketIndexItem,
 } from "./market-overview-grid";
 import { useMarketOverview } from "@/hooks/use-market-overview";
+import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 import { MarketSummary } from "./market-summary";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,6 +23,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { MarketSummaryData } from "@/types/market-summary";
+import type { ActionItem, PredictionAsset } from "@/types/portfolio-ai";
 
 const summarySurface =
   "rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]";
@@ -41,82 +41,38 @@ const formatAgo = (input?: Date | string | null) => {
   return `${hours}h ago`;
 };
 
-const pctTone = (v?: number | null) => {
-  if (v == null) return "text-neutral-500";
-  if (v > 0) return "text-emerald-600";
-  if (v < 0) return "text-rose-600";
-  return "text-neutral-600";
+const truncateText = (value: string | undefined, max = 110) => {
+  if (!value) return "";
+  if (value.length <= max) return value;
+  return `${value.slice(0, max).trimEnd()}...`;
 };
 
-type SnapshotSignalTone = "positive" | "negative" | "neutral" | "warning";
-
-type SnapshotSignal = {
-  label: string;
-  tone: SnapshotSignalTone;
-};
-
-type TopStockSnapshot = {
-  symbol: string;
-  name: string;
-  signals: SnapshotSignal[];
-  movePct: number;
-  moveLabel: string;
-};
-
-const TOP_STOCKS_SNAPSHOT: TopStockSnapshot[] = [
-  {
-    symbol: "AAPL",
-    name: "Apple",
-    signals: [
-      { label: "Bullish", tone: "positive" },
-      { label: "Momentum", tone: "positive" },
-    ],
-    movePct: 1.4,
-    moveLabel: "1D",
-  },
-  {
-    symbol: "NVDA",
-    name: "Nvidia",
-    signals: [
-      { label: "Overweight", tone: "neutral" },
-      { label: "High risk", tone: "warning" },
-    ],
-    movePct: -0.8,
-    moveLabel: "1D",
-  },
-  {
-    symbol: "MSFT",
-    name: "Microsoft",
-    signals: [
-      { label: "Steady", tone: "neutral" },
-      { label: "Quality", tone: "positive" },
-    ],
-    movePct: 12.2,
-    moveLabel: "YTD",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla",
-    signals: [
-      { label: "Volatile", tone: "warning" },
-      { label: "Speculative", tone: "negative" },
-    ],
-    movePct: -9.6,
-    moveLabel: "YTD",
-  },
-];
-
-const signalToneClass = (tone: SnapshotSignalTone) => {
-  switch (tone) {
-    case "positive":
-      return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
-    case "negative":
-      return "bg-rose-50 text-rose-700 ring-1 ring-rose-100";
-    case "warning":
-      return "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
-    default:
-      return "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200";
+const directionToneClass = (direction?: string | null) => {
+  const normalized = direction?.toLowerCase();
+  if (normalized === "up") {
+    return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
   }
+  if (normalized === "down") {
+    return "bg-rose-50 text-rose-700 ring-1 ring-rose-100";
+  }
+  return "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200";
+};
+
+const directionIcon = (direction?: string | null) => {
+  const normalized = direction?.toLowerCase();
+  if (normalized === "up") return ArrowUpRight;
+  if (normalized === "down") return ArrowDownRight;
+  return null;
+};
+
+const formatDirectionLabel = (direction?: string | null) => {
+  if (!direction) return "Neutral";
+  return `${direction.charAt(0).toUpperCase()}${direction.slice(1)}`;
+};
+
+const formatExpectedChange = (value?: number | null) => {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${Math.abs(value).toFixed(1)}%`;
 };
 
 type TodayAiReadCardProps = {
@@ -221,9 +177,6 @@ function AiStatusCard({ updatedAgo }: AiStatusCardProps) {
           <Sparkles className="h-5 w-5 text-emerald-600" />
         </div>
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-            AI status
-          </p>
           <p className="text-sm font-semibold text-neutral-900">
             AI read updated {updatedAgo ?? "just now"}
           </p>
@@ -241,92 +194,177 @@ function AiStatusCard({ updatedAgo }: AiStatusCardProps) {
   );
 }
 
-type AiTopStocksSnapshotProps = {
-  items?: TopStockSnapshot[];
+type AiPredictionsActionsCardProps = {
+  predictions: PredictionAsset[];
+  actions: ActionItem[];
+  forecastWindow?: string | null;
+  loading: boolean;
+  error: string | null;
 };
 
-function AiTopStocksSnapshot({ items = TOP_STOCKS_SNAPSHOT }: AiTopStocksSnapshotProps) {
-  const pathname = usePathname();
-  const symbolBase = pathname?.startsWith("/dashboard")
-    ? "/dashboard/symbol"
-    : "/investment";
+function AiPredictionsActionsCard({
+  predictions,
+  actions,
+  forecastWindow,
+  loading,
+  error,
+}: AiPredictionsActionsCardProps) {
+  const topPredictions = predictions.slice(0, 3);
+  const topActions = actions.slice(0, 2);
+  const hasContent = topPredictions.length > 0 || topActions.length > 0;
+  const authError =
+    error?.toLowerCase().includes("not authenticated") || error?.includes("401");
 
   return (
     <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] px-5 sm:px-6 lg:px-7 py-5 sm:py-6 lg:py-7 space-y-4 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
       <div className="space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-          AI snapshot
-        </p>
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-neutral-900">
-            Today&apos;s top stocks
+            Predictions
           </h3>
-          <p className="text-xs text-neutral-600">
-            Quick highlights from our AI analytics to keep you in the loop.
-          </p>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {items.length === 0 ? (
-          <p className="text-sm text-neutral-600">
-            No AI stock snapshots available right now.
-          </p>
-        ) : (
-          items.map((stock) => (
-            <Link
-              key={stock.symbol}
-              href={`${symbolBase}/${encodeURIComponent(stock.symbol)}`}
-              className="group flex items-center justify-between gap-3 rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3 transition hover:border-neutral-200 hover:bg-white"
-            >
-              <div className="min-w-0 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-neutral-900">
-                    {stock.symbol}
-                  </span>
-                  <span className="text-xs text-neutral-500 truncate">
-                    {stock.name}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {stock.signals.map((signal) => (
-                    <Badge
-                      key={`${stock.symbol}-${signal.label}`}
-                      variant="secondary"
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
-                        signalToneClass(signal.tone)
-                      )}
+      {loading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-2/3 rounded-full" />
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          <Skeleton className="h-12 w-full rounded-2xl" />
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50 px-3 py-3 text-xs text-neutral-600">
+          {authError
+            ? "Sign in to view AI predictions and actions."
+            : "Unable to load AI predictions and actions right now."}
+        </div>
+      ) : !hasContent ? (
+        <p className="text-sm text-neutral-600">
+          No AI predictions or actions available yet.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-[11px] text-neutral-500">
+              {forecastWindow ? (
+                <span className="text-[10px] text-neutral-400">
+                  Forecast window: {forecastWindow}
+                </span>
+              ) : null}
+            </div>
+            <div className="space-y-3">
+              {topPredictions.length === 0 ? (
+                <p className="text-xs text-neutral-500">
+                  No predictions available yet.
+                </p>
+              ) : (
+                topPredictions.map((prediction) => {
+                  const Icon = directionIcon(prediction.expected_direction);
+                  const directionLabel = formatDirectionLabel(
+                    prediction.expected_direction
+                  );
+                  return (
+                    <div
+                      key={prediction.symbol}
+                      className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
                     >
-                      {signal.label}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 text-right">
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1">
-                    {stock.movePct >= 0 ? (
-                      <ArrowUpRight className="h-3.5 w-3.5 text-emerald-600" />
-                    ) : (
-                      <ArrowDownRight className="h-3.5 w-3.5 text-rose-600" />
-                    )}
-                    <span
-                      className={cn("text-sm font-semibold", pctTone(stock.movePct))}
-                    >
-                      {stock.movePct >= 0 ? "+" : ""}
-                      {stock.movePct.toFixed(2)}%
-                    </span>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <div className="text-sm font-semibold text-neutral-900">
+                            {prediction.symbol}
+                          </div>
+                          <p className="text-xs text-neutral-600 leading-relaxed">
+                            {truncateText(prediction.rationale, 96)}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap",
+                              directionToneClass(prediction.expected_direction)
+                            )}
+                          >
+                            {Icon ? (
+                              <Icon className="mr-1 h-3.5 w-3.5 shrink-0" />
+                            ) : null}
+                            {directionLabel}{" "}
+                            {formatExpectedChange(
+                              prediction.expected_change_pct
+                            )}
+                          </Badge>
+                          <span className="text-[11px] text-neutral-500">
+                            Confidence{" "}
+                            {Math.round((prediction.confidence || 0) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="h-px bg-neutral-200/70" />
+
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-neutral-900">
+                Actions
+              </h3>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-3">
+              {topActions.length === 0 ? (
+                <p className="text-xs text-neutral-500">
+                  No actions suggested yet.
+                </p>
+              ) : (
+                topActions.map((action, idx) => (
+                  <div
+                    key={`${action.title}-${idx}`}
+                    className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-neutral-900">
+                        {action.title}
+                      </span>
+                      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600 ring-1 ring-neutral-200">
+                        {action.category.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-600 leading-relaxed">
+                      {truncateText(action.rationale, 90)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-neutral-600">
+                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                        Effort {action.effort}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                        Impact {action.impact}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                        Urgency {action.urgency}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-                    {stock.moveLabel}
-                  </span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-neutral-400 transition group-hover:text-neutral-600" />
-              </div>
-            </Link>
-          ))
-        )}
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <Link
+          href="/analytics"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 transition hover:text-neutral-900"
+        >
+          View full analytics
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
   );
@@ -342,43 +380,12 @@ type IndexPulseProps = {
 function IndexPulse({ items, loading, error, updatedAgo }: IndexPulseProps) {
   return (
     <section className="rounded-3xl border border-neutral-200/70 bg-white shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)] px-5 sm:px-6 lg:px-7 py-4 sm:py-5 space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-            Global movers
-          </p>
-          <h2 className="text-lg sm:text-xl font-semibold text-neutral-900">
-            Index pulse
-          </h2>
-          <p className="text-sm text-neutral-600 max-w-2xl">
-            Today&apos;s leaders and laggards across major indexes and crypto
-            benchmarks.
-          </p>
-        </div>
-        {updatedAgo ? (
-          <div className="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
-            <Clock3 className="h-4 w-4" />
-            Synced {updatedAgo}
-          </div>
-        ) : null}
-      </div>
-
       <MarketOverviewGrid
         variant="strip"
         items={items}
         isLoading={loading}
         error={error}
       />
-
-      <div className="flex justify-end">
-        <Link
-          href="/analytics"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 transition hover:text-neutral-900"
-        >
-          View full market details
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
     </section>
   );
 }
@@ -396,6 +403,11 @@ export default function MarketOverviewPage() {
     summaryError,
     summaryMeta,
   } = useMarketOverview();
+  const {
+    layers,
+    loading: aiLoading,
+    error: aiError,
+  } = usePortfolioAi();
 
   useEffect(() => {
     fetchOverview();
@@ -412,21 +424,18 @@ export default function MarketOverviewPage() {
     [overviewFetchedAt]
   );
   const headerUpdated = aiUpdatedAgo ?? overviewUpdatedAgo;
+  const predictions = layers?.performance?.predictions?.assets ?? [];
+  const forecastWindow = layers?.performance?.predictions?.forecast_window;
+  const actions = layers?.scenarios_rebalance?.actions ?? [];
 
   return (
     <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10 lg:py-14 space-y-10">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-              Today in markets
-            </p>
             <h1 className="text-3xl sm:text-[32px] font-semibold text-neutral-900">
-              AI market overview
+              Market overview
             </h1>
-            <p className="text-base text-neutral-600 leading-relaxed max-w-2xl">
-              AI-generated read on what&apos;s moving the markets right now.
-            </p>
           </div>
 
           <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200 shadow-sm">
@@ -458,7 +467,13 @@ export default function MarketOverviewPage() {
               <AiStatusCard updatedAgo={aiUpdatedAgo} />
             </div>
             <div className="col-span-12 order-3 lg:order-2">
-              <AiTopStocksSnapshot />
+              <AiPredictionsActionsCard
+                predictions={predictions}
+                actions={actions}
+                forecastWindow={forecastWindow}
+                loading={aiLoading}
+                error={aiError}
+              />
             </div>
           </div>
         </div>

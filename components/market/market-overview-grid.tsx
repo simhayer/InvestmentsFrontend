@@ -67,7 +67,7 @@ function Sparkline({
   surface?: "default" | "none";
 }) {
   const stroke = sparklineStroke(pct);
-  const resolvedHeight = heightClass ?? (compact ? "h-10" : "h-32 sm:h-36");
+  const resolvedHeight = heightClass ?? (compact ? "h-14" : "h-32 sm:h-36");
   const containerClass =
     surface === "none"
       ? ""
@@ -76,23 +76,32 @@ function Sparkline({
       : "rounded-xl bg-gradient-to-b from-white via-neutral-50 to-neutral-100";
 
   return (
-    <div className={cn("w-full", resolvedHeight, containerClass)}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={toSeries(data || [])}
-          margin={{ top: compact ? 6 : 8, right: 0, left: 0, bottom: 0 }}
-        >
-          <YAxis domain={["auto", "auto"]} hide />
-          <Line
-            type="monotone"
-            dataKey="y"
-            dot={false}
-            strokeWidth={compact ? 1.5 : 2}
-            stroke={stroke}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div
+      className={cn(
+        "w-full",
+        resolvedHeight,
+        containerClass,
+        compact ? "flex items-center justify-center px-1" : ""
+      )}
+    >
+      <div className={cn("w-full", compact ? "h-10" : "h-full")}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={toSeries(data || [])}
+            margin={{ top: compact ? 6 : 8, right: 0, left: 0, bottom: 0 }}
+          >
+            <YAxis domain={["auto", "auto"]} hide />
+            <Line
+              type="monotone"
+              dataKey="y"
+              dot={false}
+              strokeWidth={compact ? 1.8 : 2}
+              stroke={stroke}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -247,10 +256,6 @@ export default function MarketOverviewGrid({
             typeof it.changePct === "number"
               ? `${it.changePct >= 0 ? "+" : ""}${it.changePct.toFixed(2)}%`
               : null;
-          const changeText =
-            changePctText && changeAbsText
-              ? `${changePctText} / ${changeAbsText}`
-              : "—";
 
           return (
             <motion.button
@@ -259,26 +264,41 @@ export default function MarketOverviewGrid({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="group min-w-[220px] text-left rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_-30px_rgba(15,23,42,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
+              className="group min-w-[200px] text-left rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_-30px_rgba(15,23,42,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
               onClick={() => handleClick(it.symbol)}
               aria-label={`Open ${it.label}`}
             >
               <div className="flex min-w-0 items-center justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500 truncate">
+                <p
+                  className="text-[11px] uppercase tracking-[0.12em] text-neutral-500 truncate"
+                  title={`${it.label} - ${it.symbol}`}
+                >
                   {it.label} - {it.symbol}
                 </p>
               </div>
-              <div className="mt-2 flex items-center justify-between gap-3">
+              <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-base font-semibold text-neutral-900">
                   {price}
                 </span>
-                <span
-                  className={cn(
-                    "text-xs font-semibold whitespace-nowrap",
-                    deltaTone(it.changePct)
-                  )}
-                >
-                  {changeText}
+                <span className="flex flex-wrap items-center gap-1 text-[11px] font-semibold sm:text-xs">
+                  <span
+                    className={cn("whitespace-nowrap", deltaTone(it.changePct))}
+                  >
+                    {changePctText ?? "—"}
+                  </span>
+                  {changeAbsText ? (
+                    <span className="hidden text-neutral-400 sm:inline">/</span>
+                  ) : null}
+                  {changeAbsText ? (
+                    <span
+                      className={cn(
+                        "hidden whitespace-nowrap sm:inline",
+                        deltaTone(it.changePct)
+                      )}
+                    >
+                      {changeAbsText}
+                    </span>
+                  ) : null}
                 </span>
               </div>
               <div className="mt-3">

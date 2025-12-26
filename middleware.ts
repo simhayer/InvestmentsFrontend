@@ -7,18 +7,7 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
-  // Keep your convenience redirects (no auth dependency)
-  if (pathname === "/market") {
-    const url = req.nextUrl.clone();
-    url.pathname = "/dashboard/market";
-    return NextResponse.redirect(url);
-  }
-
-  if (pathname.startsWith("/investment/")) {
-    const url = req.nextUrl.clone();
-    url.pathname = pathname.replace("/investment/", "/dashboard/symbol/");
-    return NextResponse.redirect(url);
-  }
+  // Avoid redirecting public routes into protected ones for logged-out users.
 
   return NextResponse.next();
 }

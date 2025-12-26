@@ -78,50 +78,33 @@ export function PortfolioOverview({ sidePanel }: Props) {
     );
   }
 
-  const asOf = (data as any).asOf ? new Date((data as any).asOf * 1000) : null;
   const positionsCount = (data as any).positionsCount ?? 0;
   const ccy = (data as any).currency || "USD";
-
   return (
     <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
-      <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12 space-y-7 sm:space-y-8">
-        <section className="space-y-5">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-              Portfolio
-            </p>
-            <h1 className="text-3xl sm:text-[32px] font-semibold text-neutral-900">
-              Portfolio home
-            </h1>
-            <p className="text-sm text-neutral-600 max-w-3xl">
-              Clean overview of your book with allocations, holdings, and live
-              AI analysis.
-            </p>
-          </div>
+      <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12 space-y-6 sm:space-y-7">
+        <section className="space-y-4">
           <PortfolioSummaryHero
             data={data}
             ccy={ccy}
-            asOf={asOf}
             positionsCount={positionsCount}
           />
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-6 sm:gap-7 xl:grid-cols-[1.65fr_1fr]">
-          <div className="order-2 xl:order-1 space-y-6 sm:space-y-7">
-            <AllocationSection
-              allocations={(data as any).allocations}
-              currency={ccy}
-            />
-            <TopHoldings
-              holdings={(data as any).topPositions}
-              loading={loading}
-              currency={ccy}
-            />
-            <ConnectionsCard connections={(data as any).connections} />
-          </div>
-
-          <div className="order-1 xl:order-2 space-y-6 sm:space-y-7">
+        <div className="grid grid-cols-1 items-start gap-5 sm:gap-6 xl:grid-cols-[2.1fr_0.7fr]">
+          <div className="order-1 min-w-0 space-y-5 sm:space-y-6">
             {sidePanel}
+          </div>
+          <div className="order-2 xl:order-2 xl:max-w-[420px] xl:justify-self-end">
+            <div className="space-y-5 sm:space-y-6">
+              <TopHoldings
+                holdings={(data as any).topPositions}
+                loading={loading}
+                currency={ccy}
+              />
+              <AllocationSection allocations={(data as any).allocations} />
+              <ConnectionsCard connections={(data as any).connections} />
+            </div>
           </div>
         </div>
       </div>
@@ -137,7 +120,7 @@ function LoadingShell() {
       <div className="mx-auto max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10 space-y-6">
         <Skeleton className="h-7 w-36" />
         <Skeleton className="h-48 w-full rounded-3xl" />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.65fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.1fr_0.7fr]">
           <div className="space-y-4">
             <Skeleton className="h-60 w-full rounded-3xl" />
             <Skeleton className="h-80 w-full rounded-3xl" />
@@ -162,8 +145,8 @@ function MetricCard({
   tone?: "positive" | "negative" | "neutral";
 }) {
   return (
-    <div className="flex h-full min-h-[104px] flex-col justify-center gap-1.5 rounded-2xl border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)]">
-      <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500 leading-tight">
+    <div className="flex h-full min-h-[88px] flex-col justify-center gap-1.5 rounded-2xl border border-neutral-200/80 bg-white px-3 py-3 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.25)]">
+      <p className="text-[10px] uppercase tracking-[0.12em] text-neutral-500 leading-tight">
         {label}
       </p>
       <div className="text-lg font-semibold text-neutral-900 leading-tight">
@@ -190,19 +173,16 @@ function MetricCard({
 function PortfolioSummaryHero({
   data,
   ccy,
-  asOf,
   positionsCount,
 }: {
   data: PortfolioSummary;
   ccy: string;
-  asOf: Date | null;
   positionsCount: number;
 }) {
   const totalReturn = (data as any).unrealizedPl ?? 0;
   const totalReturnPct = (data as any).unrealizedPlPct;
   const dayReturn = (data as any).dayPl ?? 0;
   const dayReturnPct = (data as any).dayPlPct;
-  const status = (data as any).priceStatus as string | undefined;
 
   const totalReturnTone = toneFromNumber(totalReturn);
   const dayReturnTone = toneFromNumber(dayReturn);
@@ -212,128 +192,60 @@ function PortfolioSummaryHero({
       className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]"
       data-tour-id="tour-portfolio-hero"
     >
-      <CardContent className="p-0">
-        <div className="flex flex-col gap-5 px-5 py-6 sm:px-7 sm:py-7 lg:px-8">
-          <div className="grid items-center gap-5 lg:gap-6 lg:grid-cols-[1.05fr_auto_auto]">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-                Portfolio value
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
-                  {fmtCurrency((data as any).marketValue, ccy)}
-                </div>
-                <Pill>{ccy}</Pill>
-              </div>
-              <p className="text-sm text-neutral-600">
-                Total across all linked accounts.
-              </p>
+      <CardContent className="p-6 sm:p-7 lg:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1.1fr_auto] lg:items-center">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
+              Portfolio value
+            </p>
+            <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
+              {fmtCurrency((data as any).marketValue, ccy)}
             </div>
-
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
-              <MetricCard
-                label="Total return"
-                value={fmtCurrency(totalReturn, ccy)}
-                delta={fmtPct(totalReturnPct)}
-                tone={totalReturnTone}
-              />
-              <MetricCard
-                label="Today’s return"
-                value={fmtCurrency(dayReturn, ccy)}
-                delta={fmtPct(dayReturnPct)}
-                tone={dayReturnTone}
-              />
-              <MetricCard
-                label="Positions"
-                value={String(positionsCount)}
-                tone="neutral"
-              />
-            </div>
-
-            <div className="w-full lg:justify-self-end">
-              <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl bg-neutral-50 px-4 py-3 text-sm font-semibold text-neutral-800 ring-1 ring-neutral-200 shadow-[0_12px_34px_-28px_rgba(15,23,42,0.45)] lg:justify-end lg:pl-2">
-                <StatusPill status={status} />
-                <Pill>{asOf ? `As of ${formatAsOf(asOf)}` : "As of —"}</Pill>
-                <Pill>{ccy}</Pill>
-              </div>
-            </div>
+            <p className="text-xs text-neutral-500">
+              Total across all linked accounts.
+            </p>
           </div>
+
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+            <MetricCard
+              label="Total return"
+              value={fmtCurrency(totalReturn, ccy)}
+              delta={fmtPct(totalReturnPct)}
+              tone={totalReturnTone}
+            />
+            <MetricCard
+              label="Today’s return"
+              value={fmtCurrency(dayReturn, ccy)}
+              delta={fmtPct(dayReturnPct)}
+              tone={dayReturnTone}
+            />
+            <MetricCard
+              label="Positions"
+              value={String(positionsCount)}
+              tone="neutral"
+            />
+          </div>
+
+          <div className="w-full lg:justify-self-end" />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function StatusPill({ status }: { status?: string }) {
-  const map: Record<
-    string,
-    { label: string; tone: "positive" | "warning" | "neutral" }
-  > = {
-    live: { label: "Live prices", tone: "positive" },
-    mixed: { label: "Mixed prices", tone: "warning" },
-    unavailable: { label: "Prices unavailable", tone: "neutral" },
-  };
-  const meta = status
-    ? map[status] ?? { label: status, tone: "neutral" }
-    : { label: "Live prices", tone: "positive" };
-  const dot =
-    meta.tone === "positive"
-      ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]"
-      : meta.tone === "warning"
-      ? "bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.16)]"
-      : "bg-neutral-400 shadow-[0_0_0_4px_rgba(148,163,184,0.18)]";
-
-  return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 ring-1 ring-neutral-200">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
-      {meta.label}
-    </span>
-  );
-}
-
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 ring-1 ring-neutral-200">
-      {children}
-    </span>
-  );
-}
-
 function AllocationSection({
   allocations,
-  currency,
 }: {
   allocations?: {
     byType?: { key: string; weight: number }[];
     byAccount?: { key: string; weight: number }[];
   };
-  currency: string;
 }) {
   const byType = allocations?.byType ?? [];
   const byAccount = allocations?.byAccount ?? [];
 
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-            Diversification
-          </p>
-          <h2 className="text-xl font-semibold text-neutral-900">
-            Allocations
-          </h2>
-          <p className="text-sm text-neutral-600">
-            Where your money sits across accounts and asset types.
-          </p>
-        </div>
-        <Badge
-          variant="secondary"
-          className="rounded-full bg-neutral-900 text-white hover:bg-neutral-800"
-        >
-          Live {currency}
-        </Badge>
-      </div>
-
+    <section className="space-y-2">
       <div className="grid gap-4 lg:grid-cols-2">
         <AllocCard title="By type" items={byType} />
         <AllocCard title="By account" items={byAccount} />
@@ -350,14 +262,15 @@ function AllocCard({
   items: { key: string; value?: number; weight: number }[];
 }) {
   const hasData = (items?.length ?? 0) > 0;
+  const showCount = items.length > 1;
 
   return (
     <div className="rounded-3xl border border-neutral-200/80 bg-white p-4 sm:p-5 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)]">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-neutral-900">{title}</p>
-        {hasData ? (
-          <span className="text-xs text-neutral-500">
-            {items.length} {items.length === 1 ? "item" : "items"}
+        {hasData && showCount ? (
+          <span className="text-[11px] text-neutral-400">
+            {items.length} items
           </span>
         ) : null}
       </div>
@@ -372,7 +285,7 @@ function AllocCard({
             {items.map((i) => (
               <div
                 key={i.key}
-                className="space-y-1 rounded-2xl border border-neutral-100 bg-neutral-50/60 p-2.5 ring-1 ring-neutral-100"
+                className="space-y-1 rounded-xl bg-neutral-50/60 p-2.5"
               >
                 <KeyVal k={i.key} v={`${i.weight.toFixed(2)}%`} />
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-white ring-1 ring-neutral-200/80">
@@ -389,8 +302,7 @@ function AllocCard({
         </>
       ) : (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/70 p-4 text-sm text-neutral-600">
-          No allocation data yet. We&apos;ll populate this once accounts are
-          linked.
+          No allocation data yet.
         </div>
       )}
     </div>
@@ -407,22 +319,13 @@ function ConnectionsCard({ connections }: { connections?: any[] }) {
       <CardHeader className="pb-2 sm:pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+            <CardTitle className="text-lg font-semibold text-neutral-900">
               Connections
-            </p>
-            <CardTitle className="text-xl font-semibold text-neutral-900">
-              Your linked institutions
             </CardTitle>
             <CardDescription className="text-sm text-neutral-600">
-              Keep your accounts connected to power live balances and holdings.
+              Link accounts to see live balances.
             </CardDescription>
           </div>
-          <Badge
-            variant="secondary"
-            className="rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-          >
-            Secure sync
-          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -435,9 +338,6 @@ function ConnectionsCard({ connections }: { connections?: any[] }) {
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold text-neutral-900">
                   No connections yet
-                </p>
-                <p className="text-sm text-neutral-600">
-                  Connect an account to see live data across all holdings.
                 </p>
               </div>
             </div>
@@ -497,15 +397,4 @@ function toneFromNumber(
   if (v > 0) return "positive";
   if (v < 0) return "negative";
   return "neutral";
-}
-
-function formatAsOf(date: Date | null) {
-  if (!date) return null;
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }

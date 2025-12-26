@@ -431,19 +431,6 @@ export default function MarketOverviewPage() {
   return (
     <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10 lg:py-14 space-y-10">
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <h1 className="text-3xl sm:text-[32px] font-semibold text-neutral-900">
-              Market overview
-            </h1>
-          </div>
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200 shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.16)]" />
-            {headerUpdated ? `Updated ${headerUpdated}` : "Live AI"}
-          </div>
-        </header>
-
         <IndexPulse
           items={items}
           loading={overviewLoading}

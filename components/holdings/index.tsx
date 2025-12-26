@@ -252,9 +252,6 @@ export function Holdings() {
       <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12 space-y-6 sm:space-y-7">
         <header className="flex flex-wrap items-start justify-between gap-4 sm:gap-5">
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-              Portfolio
-            </p>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl sm:text-[32px] font-semibold text-neutral-900">
                 Holdings
@@ -265,9 +262,6 @@ export function Holdings() {
                   : `${positionsCount} positions`}
               </Badge>
             </div>
-            <p className="text-sm text-neutral-600 max-w-2xl">
-              All positions across your linked accounts.
-            </p>
           </div>
 
           <div className="w-full max-w-xl space-y-2 sm:w-auto sm:space-y-3">
@@ -305,17 +299,6 @@ export function Holdings() {
 
         <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
           <CardHeader className="flex flex-col gap-4 border-b border-neutral-100/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex-1 min-w-[240px]">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                Positions
-              </p>
-              <CardTitle className="text-xl font-semibold text-neutral-900">
-                Current holdings
-              </CardTitle>
-              <CardDescription className="text-sm text-neutral-600">
-                Live prices, cost basis, and unrealized moves.
-              </CardDescription>
-            </div>
             {!loading && filteredHoldings.length ? (
               <div className="w-full text-left sm:w-auto sm:text-right sm:ml-auto sm:self-start flex-shrink-0 space-y-1 rounded-2xl bg-neutral-50/70 px-4 py-3 sm:bg-transparent sm:px-0 sm:py-0">
                 <p className="text-xs uppercase tracking-[0.08em] text-neutral-500 leading-none">
@@ -342,21 +325,8 @@ export function Holdings() {
               renderEmptyState()
             ) : (
               <>
-                <div className="hidden md:block px-6">{renderTable()}</div>
-                <div className="block p-6 md:hidden">{renderMobileList()}</div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100/80 bg-neutral-50/70 px-6 py-4 text-sm text-neutral-700">
-                  <span>Portfolio total</span>
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="text-base font-semibold text-neutral-900">
-                      {fmtCurrency(totalValue, currency)}
-                    </span>
-                    <span className="text-neutral-500">
-                      {filteredHoldings.length === 1
-                        ? "1 position"
-                        : `${filteredHoldings.length} positions`}
-                    </span>
-                  </div>
-                </div>
+                <div className="hidden md:block px-6 py-6">{renderTable()}</div>
+                <div className="block p-6 py-6 md:hidden">{renderMobileList()}</div>
               </>
             )}
           </CardContent>

@@ -7,7 +7,6 @@ import { Skeleton } from "../ui/skeleton";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../ui/card";
@@ -35,18 +34,12 @@ export function TopHoldings({ holdings, loading, currency = "USD" }: Props) {
       className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]"
       data-tour-id="tour-holdings-card"
     >
-      <CardHeader className="pb-3 sm:pb-4">
+      <CardHeader className="pb-2 sm:pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-              Top holdings
-            </p>
-            <CardTitle className="text-xl font-semibold text-neutral-900">
+            <CardTitle className="text-lg font-semibold text-neutral-900">
               Largest positions
             </CardTitle>
-            <CardDescription className="text-sm text-neutral-600">
-              Quick read on value, price, and move for your biggest holdings.
-            </CardDescription>
           </div>
           <Button
             variant="ghost"
@@ -81,7 +74,7 @@ export function TopHoldings({ holdings, loading, currency = "USD" }: Props) {
                       Current Price
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em]">
-                      Price %
+                      P&L %
                     </th>
                   </tr>
                 </thead>

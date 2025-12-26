@@ -44,7 +44,7 @@ export async function fetchLivePricesForList(
 export async function searchSymbols(query: string) {
   if (!query) return [];
   // limit to 5 results
-  const path = `/search?query=${encodeURIComponent(query)}&limit=5`;
+  const path = `/api/finnhub/search?query=${encodeURIComponent(query)}&limit=5`;
   const res = await authedFetch(path, {
     method: "GET",
   });

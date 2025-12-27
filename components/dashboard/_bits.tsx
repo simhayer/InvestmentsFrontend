@@ -59,10 +59,16 @@ export function StackedBar({
 }
 
 export function KeyVal({ k, v }: { k: React.ReactNode; v: React.ReactNode }) {
+  const keyTitle = typeof k === "string" ? k : undefined;
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{k}</span>
-      <span className="font-medium">{v}</span>
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span
+        className="min-w-0 flex-1 truncate text-muted-foreground"
+        title={keyTitle}
+      >
+        {k}
+      </span>
+      <span className="shrink-0 font-medium">{v}</span>
     </div>
   );
 }

@@ -23,9 +23,6 @@ type Result = {
   [key: string]: any;
 };
 
-const futuraFontClasses =
-  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
-
 export function CommandSearch({
   onSelect,
   placeholder = "Search name or symbol",
@@ -116,7 +113,6 @@ export function CommandSearch({
             "pl-10 pr-14 py-2.5",
             "transition focus-within:border-neutral-300",
             "focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.05)]",
-            futuraFontClasses,
             className,
           ].join(" ")}
           role="combobox"
@@ -171,7 +167,7 @@ export function CommandSearch({
         onInteractOutside={() => setOpen(false)}
         align="start"
         sideOffset={6}
-        className={["p-0 z-[60] max-w-md", futuraFontClasses].join(" ")}
+        className="p-0 z-[60] max-w-md"
         style={{ width }}
       >
         {query.trim().length > 0 && (

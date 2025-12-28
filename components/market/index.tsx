@@ -6,16 +6,17 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  Clock3,
   RefreshCw,
   Sparkles,
 } from "lucide-react";
+
 import MarketOverviewGrid, {
   type MarketIndexItem,
 } from "./market-overview-grid";
 import { useMarketOverview } from "@/hooks/use-market-overview";
 import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 import { MarketSummary } from "./market-summary";
+
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { MarketSummaryData } from "@/types/market-summary";
 import type { ActionItem, PredictionAsset } from "@/types/portfolio-ai";
+import { Page } from "@/components/layout/Page";
 
 const summarySurface =
   "rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]";
@@ -93,7 +95,11 @@ function TodayAiReadCard({
   if (loading) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-4 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={cn(
+          summarySurface,
+          summaryMinHeight,
+          "p-5 sm:p-6 lg:p-7 space-y-4"
+        )}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-2">
@@ -102,6 +108,7 @@ function TodayAiReadCard({
           </div>
           <Skeleton className="h-8 w-24 rounded-full" />
         </div>
+
         <div className="grid gap-3">
           {[...Array(3)].map((_, i) => (
             <Card
@@ -126,7 +133,7 @@ function TodayAiReadCard({
   if (error) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={cn(summarySurface, summaryMinHeight, "p-5 sm:p-6 lg:p-7")}
       >
         <Alert variant="destructive" className="rounded-2xl border-rose-200">
           <AlertTitle>Something went wrong</AlertTitle>
@@ -150,9 +157,13 @@ function TodayAiReadCard({
   if (!summary) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-2 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={cn(
+          summarySurface,
+          summaryMinHeight,
+          "p-5 sm:p-6 lg:p-7 space-y-2"
+        )}
       >
-        <h2 className="text-2xl sm:text-[22px] font-semibold text-neutral-900 leading-tight">
+        <h2 className="text-2xl font-semibold leading-tight text-neutral-900 sm:text-[22px]">
           Today&apos;s AI read
         </h2>
         <p className="text-sm text-neutral-600">No summary available.</p>
@@ -161,7 +172,11 @@ function TodayAiReadCard({
   }
 
   return (
-    <MarketSummary data={summary} refreshing={loading} updatedAgo={updatedAgo} />
+    <MarketSummary
+      data={summary}
+      refreshing={loading}
+      updatedAgo={updatedAgo}
+    />
   );
 }
 
@@ -171,9 +186,9 @@ type AiStatusCardProps = {
 
 function AiStatusCard({ updatedAgo }: AiStatusCardProps) {
   return (
-    <section className="rounded-3xl border border-emerald-100 bg-emerald-50/70 shadow-[0_18px_44px_-32px_rgba(16,185,129,0.5)] px-5 py-5 space-y-4 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
+    <section className="space-y-4 rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5 shadow-[0_18px_44px_-32px_rgba(16,185,129,0.5)]">
       <div className="flex items-start gap-3">
-        <div className="h-11 w-11 rounded-2xl bg-white flex items-center justify-center ring-1 ring-emerald-100">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white ring-1 ring-emerald-100">
           <Sparkles className="h-5 w-5 text-emerald-600" />
         </div>
         <div className="space-y-1">
@@ -181,11 +196,12 @@ function AiStatusCard({ updatedAgo }: AiStatusCardProps) {
             AI read updated {updatedAgo ?? "just now"}
           </p>
           <p className="text-xs text-neutral-600">
-            Monitoring macro shifts, liquidity, and sector breadth for today&apos;s
-            session.
+            Monitoring macro shifts, liquidity, and sector breadth for
+            today&apos;s session.
           </p>
         </div>
       </div>
+
       <div className="flex items-center gap-2 text-xs text-emerald-800">
         <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
         Live signals running across top sectors and AI momentum.
@@ -213,16 +229,13 @@ function AiPredictionsActionsCard({
   const topActions = actions.slice(0, 2);
   const hasContent = topPredictions.length > 0 || topActions.length > 0;
   const authError =
-    error?.toLowerCase().includes("not authenticated") || error?.includes("401");
+    error?.toLowerCase().includes("not authenticated") ||
+    error?.includes("401");
 
   return (
-    <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] px-5 sm:px-6 lg:px-7 py-5 sm:py-6 lg:py-7 space-y-4 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
+    <section className="space-y-4 rounded-3xl border border-neutral-200/80 bg-white px-5 py-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] sm:px-6 sm:py-6 lg:px-7 lg:py-7">
       <div className="space-y-2">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Predictions
-          </h3>
-        </div>
+        <h3 className="text-lg font-semibold text-neutral-900">Predictions</h3>
       </div>
 
       {loading ? (
@@ -251,6 +264,7 @@ function AiPredictionsActionsCard({
                 </span>
               ) : null}
             </div>
+
             <div className="space-y-3">
               {topPredictions.length === 0 ? (
                 <p className="text-xs text-neutral-500">
@@ -262,6 +276,7 @@ function AiPredictionsActionsCard({
                   const directionLabel = formatDirectionLabel(
                     prediction.expected_direction
                   );
+
                   return (
                     <div
                       key={prediction.symbol}
@@ -272,15 +287,16 @@ function AiPredictionsActionsCard({
                           <div className="text-sm font-semibold text-neutral-900">
                             {prediction.symbol}
                           </div>
-                          <p className="text-xs text-neutral-600 leading-relaxed">
+                          <p className="text-xs leading-relaxed text-neutral-600">
                             {truncateText(prediction.rationale, 96)}
                           </p>
                         </div>
+
                         <div className="flex shrink-0 flex-col items-end gap-1 text-right">
                           <Badge
                             variant="secondary"
                             className={cn(
-                              "rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap",
+                              "whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium",
                               directionToneClass(prediction.expected_direction)
                             )}
                           >
@@ -292,6 +308,7 @@ function AiPredictionsActionsCard({
                               prediction.expected_change_pct
                             )}
                           </Badge>
+
                           <span className="text-[11px] text-neutral-500">
                             Confidence{" "}
                             {Math.round((prediction.confidence || 0) * 100)}%
@@ -308,51 +325,47 @@ function AiPredictionsActionsCard({
           <div className="h-px bg-neutral-200/70" />
 
           <div className="space-y-2">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-neutral-900">
-                Actions
-              </h3>
-            </div>
+            <h3 className="text-lg font-semibold text-neutral-900">Actions</h3>
           </div>
 
           <div className="space-y-3">
-            <div className="space-y-3">
-              {topActions.length === 0 ? (
-                <p className="text-xs text-neutral-500">
-                  No actions suggested yet.
-                </p>
-              ) : (
-                topActions.map((action, idx) => (
-                  <div
-                    key={`${action.title}-${idx}`}
-                    className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold text-neutral-900">
-                        {action.title}
-                      </span>
-                      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600 ring-1 ring-neutral-200">
-                        {action.category.replaceAll("_", " ")}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-neutral-600 leading-relaxed">
-                      {truncateText(action.rationale, 90)}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-neutral-600">
-                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                        Effort {action.effort}
-                      </span>
-                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                        Impact {action.impact}
-                      </span>
-                      <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                        Urgency {action.urgency}
-                      </span>
-                    </div>
+            {topActions.length === 0 ? (
+              <p className="text-xs text-neutral-500">
+                No actions suggested yet.
+              </p>
+            ) : (
+              topActions.map((action, idx) => (
+                <div
+                  key={`${action.title}-${idx}`}
+                  className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-neutral-900">
+                      {action.title}
+                    </span>
+                    <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600 ring-1 ring-neutral-200">
+                      {action.category.replaceAll("_", " ")}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">
+                    {truncateText(action.rationale, 90)}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-neutral-600">
+                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                      Effort {action.effort}
+                    </span>
+                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                      Impact {action.impact}
+                    </span>
+                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
+                      Urgency {action.urgency}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -377,9 +390,9 @@ type IndexPulseProps = {
   updatedAgo?: string | null;
 };
 
-function IndexPulse({ items, loading, error, updatedAgo }: IndexPulseProps) {
+function IndexPulse({ items, loading, error }: IndexPulseProps) {
   return (
-    <section className="rounded-3xl border border-neutral-200/70 bg-white shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)] px-5 sm:px-6 lg:px-7 py-4 sm:py-5 space-y-4">
+    <section className="space-y-4 rounded-3xl border border-neutral-200/70 bg-white px-5 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)] sm:px-6 sm:py-5 lg:px-7">
       <MarketOverviewGrid
         variant="strip"
         items={items}
@@ -403,11 +416,8 @@ export default function MarketOverviewPage() {
     summaryError,
     summaryMeta,
   } = useMarketOverview();
-  const {
-    layers,
-    loading: aiLoading,
-    error: aiError,
-  } = usePortfolioAi();
+
+  const { layers, loading: aiLoading, error: aiError } = usePortfolioAi();
 
   useEffect(() => {
     fetchOverview();
@@ -415,56 +425,57 @@ export default function MarketOverviewPage() {
   }, [fetchOverview, fetchMarketSummary]);
 
   const items = data?.top_items || [];
+
   const aiUpdatedAgo = useMemo(
     () => formatAgo(summaryMeta?.updated_at),
     [summaryMeta?.updated_at]
   );
+
   const overviewUpdatedAgo = useMemo(
     () => formatAgo(overviewFetchedAt),
     [overviewFetchedAt]
   );
-  const headerUpdated = aiUpdatedAgo ?? overviewUpdatedAgo;
+
   const predictions = layers?.performance?.predictions?.assets ?? [];
   const forecastWindow = layers?.performance?.predictions?.forecast_window;
   const actions = layers?.scenarios_rebalance?.actions ?? [];
 
   return (
-    <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10 lg:py-14 space-y-10">
-        <IndexPulse
-          items={items}
-          loading={overviewLoading}
-          error={overviewError}
-          updatedAgo={overviewUpdatedAgo}
-        />
+    <Page className="space-y-10">
+      <IndexPulse
+        items={items}
+        loading={overviewLoading}
+        error={overviewError}
+        updatedAgo={overviewUpdatedAgo}
+      />
 
-        <div className="grid grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
-          <div className="col-span-12 lg:col-span-8 order-2 lg:order-1">
-            <TodayAiReadCard
-              summary={summary}
-              loading={summaryLoading}
-              error={summaryError}
-              updatedAgo={aiUpdatedAgo}
-              onRetry={fetchMarketSummary}
-            />
+      <div className="grid grid-cols-12 items-start gap-6 lg:gap-8 xl:gap-10">
+        <div className="order-2 col-span-12 lg:order-1 lg:col-span-8">
+          <TodayAiReadCard
+            summary={summary}
+            loading={summaryLoading}
+            error={summaryError}
+            updatedAgo={aiUpdatedAgo}
+            onRetry={fetchMarketSummary}
+          />
+        </div>
+
+        <div className="contents lg:order-2 lg:col-span-4 lg:flex lg:flex-col lg:gap-6">
+          <div className="order-1 col-span-12 lg:order-1">
+            <AiStatusCard updatedAgo={aiUpdatedAgo} />
           </div>
 
-          <div className="contents lg:col-span-4 lg:order-2 lg:flex lg:flex-col lg:gap-6">
-            <div className="col-span-12 order-1 lg:order-1">
-              <AiStatusCard updatedAgo={aiUpdatedAgo} />
-            </div>
-            <div className="col-span-12 order-3 lg:order-2">
-              <AiPredictionsActionsCard
-                predictions={predictions}
-                actions={actions}
-                forecastWindow={forecastWindow}
-                loading={aiLoading}
-                error={aiError}
-              />
-            </div>
+          <div className="order-3 col-span-12 lg:order-2">
+            <AiPredictionsActionsCard
+              predictions={predictions}
+              actions={actions}
+              forecastWindow={forecastWindow}
+              loading={aiLoading}
+              error={aiError}
+            />
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

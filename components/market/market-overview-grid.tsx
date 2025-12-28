@@ -199,11 +199,9 @@ export default function MarketOverviewGrid({
 
     return (
       <div
-        className={[
-          "grid gap-6 sm:gap-6 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]",
-          gridColumns,
-          className ?? "",
-        ].join(" ")}
+        className={["grid gap-6 sm:gap-6", gridColumns, className ?? ""].join(
+          " "
+        )}
       >
         {Array.from({ length: 4 }).map((_, i) => (
           <CardSkeleton key={i} />
@@ -214,14 +212,14 @@ export default function MarketOverviewGrid({
 
   if (error) {
     return (
-      <div className="rounded-xl border p-4 text-sm text-rose-600 bg-rose-50/40 dark:bg-rose-950/20 font-['Futura_PT_Book',_Futura,_sans-serif]">
+      <div className="rounded-xl border p-4 text-sm text-rose-600 bg-rose-50/40 dark:bg-rose-950/20">
         Failed to load market overview: {error}
       </div>
     );
   }
   if (!items || items.length === 0) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-muted-foreground shadow-sm font-['Futura_PT_Book',_Futura,_sans-serif]">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-muted-foreground shadow-sm">
         No market data available right now.
       </div>
     );
@@ -231,7 +229,7 @@ export default function MarketOverviewGrid({
     return (
       <div
         className={[
-          "flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-4 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]",
+          "flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-4",
           className ?? "",
         ].join(" ")}
       >
@@ -317,11 +315,9 @@ export default function MarketOverviewGrid({
 
   return (
     <div
-      className={[
-        "grid gap-6 sm:gap-6 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]",
-        gridColumns,
-        className ?? "",
-      ].join(" ")}
+      className={["grid gap-6 sm:gap-6", gridColumns, className ?? ""].join(
+        " "
+      )}
     >
       {items.map((it) => (
         <motion.div
@@ -360,9 +356,7 @@ export default function MarketOverviewGrid({
                   </div>
                   <p className="text-xs text-neutral-500">
                     Last price •{" "}
-                    {typeof it.price === "number"
-                      ? "Today"
-                      : "Awaiting data"}
+                    {typeof it.price === "number" ? "Today" : "Awaiting data"}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1 self-start shrink-0 text-right">
@@ -399,10 +393,9 @@ export default function MarketOverviewGrid({
             </CardHeader>
 
             <CardContent
-              className={[
-                bodyPadding,
-                "pt-1 flex flex-col gap-4 flex-1",
-              ].join(" ")}
+              className={[bodyPadding, "pt-1 flex flex-col gap-4 flex-1"].join(
+                " "
+              )}
             >
               <div className="flex items-end justify-between">
                 <div className="flex items-center gap-2 text-sm text-neutral-600">

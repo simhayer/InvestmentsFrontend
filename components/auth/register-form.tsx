@@ -2,14 +2,14 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { register as apiRegister } from "@/utils/authService";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -19,13 +19,13 @@ function isSafeRedirect(next: string | null) {
 }
 
 export function RegisterForm() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [inlineError, setInlineError] = React.useState<string | null>(null);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -34,31 +34,11 @@ export function RegisterForm() {
   const validate = () => {
     if (!name.trim()) return "Please enter your full name.";
     if (!email.trim()) return "Please enter your email.";
-    // simple email check; rely on server for authoritative validation
     if (!/^\S+@\S+\.\S+$/.test(email.trim()))
       return "Please enter a valid email.";
     if (password.length < 8) return "Password must be at least 8 characters.";
     if (password !== confirmPassword) return "Passwords do not match.";
     return null;
-  };
-
-  const handleRegisterSuccess = (autoLoggedIn: boolean) => {
-    toast({
-      title: autoLoggedIn ? "Welcome!" : "Registration successful!",
-      description: autoLoggedIn
-        ? "Your account has been created."
-        : "Please sign in to continue.",
-    });
-
-    const nextParam = searchParams.get("next");
-    const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
-
-    if (autoLoggedIn) {
-      router.replace(next);
-      router.refresh();
-    } else {
-      router.replace("/login");
-    }
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,24 +60,37 @@ export function RegisterForm() {
     setInlineError(null);
 
     try {
-      let response: any;
-      try {
-        //response = await apiRegister({ name: name.trim(), email: email.trim(), password });
-        response = await apiRegister(email.trim(), password);
-      } catch {
-        // Handle error
+      const res = await apiRegister(email.trim(), password);
+
+      // Supabase signUp:
+      // - If email confirmation is ON: res.data.session is often null.
+      // - If confirmation is OFF: res.data.session exists and user is signed in.
+      const session = res?.data?.session ?? null;
+
+      const nextParam = searchParams.get("next");
+      const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
+
+      if (session) {
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created.",
+        });
+
+        router.replace(next);
+        router.refresh();
+        return;
       }
 
-      const ok = response?.ok !== undefined ? Boolean(response.ok) : true; // assume 2xx if no explicit ok
-      const token: string | undefined =
-        response?.access_token || response?.token || undefined;
+      // Email confirm flow
+      toast({
+        title: "Check your email",
+        description:
+          "We sent you a verification link. Verify your email, then sign in.",
+      });
 
-      handleRegisterSuccess(Boolean(token) || ok);
+      router.replace("/login");
     } catch (err: any) {
-      const msg =
-        err?.message ||
-        err?.response?.data?.message ||
-        "Failed to create account. Please try again.";
+      const msg = err?.message ?? "Failed to create account. Please try again.";
       setInlineError(msg);
       toast({
         title: "Registration Failed",
@@ -122,7 +115,7 @@ export function RegisterForm() {
           onChange={(e) => setName(e.target.value)}
           required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          aria-invalid={inlineError ? true : false}
         />
       </div>
 
@@ -138,12 +131,13 @@ export function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          aria-invalid={inlineError ? true : false}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
+
         <div className="relative">
           <Input
             id="password"
@@ -154,15 +148,14 @@ export function RegisterForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            aria-invalid={!!inlineError}
+            aria-invalid={inlineError ? true : false}
             className="pr-10"
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="absolute inset-y-0 right-0 px-3 grid place-items-center text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 grid place-items-center px-3 text-muted-foreground transition hover:text-foreground"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={-1}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -171,6 +164,7 @@ export function RegisterForm() {
             )}
           </button>
         </div>
+
         <p className="text-xs text-muted-foreground">
           Use at least 8 characters. Consider mixing letters, numbers, and
           symbols.
@@ -188,7 +182,7 @@ export function RegisterForm() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          aria-invalid={inlineError ? true : false}
         />
       </div>
 

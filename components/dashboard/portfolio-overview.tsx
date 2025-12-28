@@ -22,6 +22,7 @@ import { Building2, Link2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fmtCurrency, fmtPct } from "@/utils/format";
+import { Page } from "@/components/layout/Page";
 
 type Props = { currency?: "USD" | "CAD"; sidePanel?: React.ReactNode };
 
@@ -58,57 +59,51 @@ export function PortfolioOverview({ sidePanel }: Props) {
 
   if (!data) {
     return (
-      <section className="min-h-screen w-full bg-[#f6f7f8]">
-        <div className="mx-auto max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10">
-          <Card className="rounded-3xl border-neutral-200/80 shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
-            <CardHeader>
-              <CardTitle>Portfolio Overview</CardTitle>
-              <CardDescription className="text-sm text-neutral-600">
-                We couldn&apos;t load your portfolio right now.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-neutral-600">
-                — Please retry in a moment.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      <Card className="rounded-3xl border-neutral-200/80 shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
+        <CardHeader>
+          <CardTitle>Portfolio Overview</CardTitle>
+          <CardDescription className="text-sm text-neutral-600">
+            We couldn&apos;t load your portfolio right now.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-neutral-600">
+            — Please retry in a moment.
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   const positionsCount = (data as any).positionsCount ?? 0;
   const ccy = (data as any).currency || "USD";
   return (
-    <div className="min-h-screen w-full bg-[#f6f7f8] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
-      <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12 space-y-6 sm:space-y-7">
-        <section className="space-y-4">
-          <PortfolioSummaryHero
-            data={data}
-            ccy={ccy}
-            positionsCount={positionsCount}
-          />
-        </section>
+    <Page>
+      <section className="space-y-4">
+        <PortfolioSummaryHero
+          data={data}
+          ccy={ccy}
+          positionsCount={positionsCount}
+        />
+      </section>
 
-        <div className="grid grid-cols-1 items-start gap-5 sm:gap-6 xl:grid-cols-[2.1fr_0.7fr]">
-          <div className="order-1 min-w-0 space-y-5 sm:space-y-6">
-            {sidePanel}
-          </div>
-          <div className="order-2 xl:order-2 xl:max-w-[420px] xl:justify-self-end">
-            <div className="space-y-5 sm:space-y-6">
-              <TopHoldings
-                holdings={(data as any).topPositions}
-                loading={loading}
-                currency={ccy}
-              />
-              <AllocationSection allocations={(data as any).allocations} />
-              <ConnectionsCard connections={(data as any).connections} />
-            </div>
+      <div className="grid grid-cols-1 items-start gap-5 sm:gap-6 xl:grid-cols-[2.1fr_0.7fr]">
+        <div className="order-1 min-w-0 space-y-5 sm:space-y-6">
+          {sidePanel}
+        </div>
+        <div className="order-2 xl:order-2 xl:max-w-[420px] xl:justify-self-end">
+          <div className="space-y-5 sm:space-y-6">
+            <TopHoldings
+              holdings={(data as any).topPositions}
+              loading={loading}
+              currency={ccy}
+            />
+            <AllocationSection allocations={(data as any).allocations} />
+            <ConnectionsCard connections={(data as any).connections} />
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -116,20 +111,18 @@ export default PortfolioOverview;
 
 function LoadingShell() {
   return (
-    <div className="min-h-screen w-full bg-[#f6f7f8]">
-      <div className="mx-auto max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-10 space-y-6">
-        <Skeleton className="h-7 w-36" />
-        <Skeleton className="h-48 w-full rounded-3xl" />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.1fr_0.7fr]">
-          <div className="space-y-4">
-            <Skeleton className="h-60 w-full rounded-3xl" />
-            <Skeleton className="h-80 w-full rounded-3xl" />
-            <Skeleton className="h-48 w-full rounded-3xl" />
-          </div>
-          <Skeleton className="h-96 w-full rounded-3xl" />
+    <Page className="space-y-6">
+      <Skeleton className="h-7 w-36" />
+      <Skeleton className="h-48 w-full rounded-3xl" />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.1fr_0.7fr]">
+        <div className="space-y-4">
+          <Skeleton className="h-60 w-full rounded-3xl" />
+          <Skeleton className="h-80 w-full rounded-3xl" />
+          <Skeleton className="h-48 w-full rounded-3xl" />
         </div>
+        <Skeleton className="h-96 w-full rounded-3xl" />
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -201,9 +194,6 @@ function PortfolioSummaryHero({
             <div className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-[38px]">
               {fmtCurrency((data as any).marketValue, ccy)}
             </div>
-            <p className="text-xs text-neutral-500">
-              Total across all linked accounts.
-            </p>
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">

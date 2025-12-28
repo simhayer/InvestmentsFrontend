@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,13 +22,15 @@ const featureCards = [
   },
   {
     title: "Portfolio health",
-    description: "Diversification, risk, and concentration checks across your holdings.",
+    description:
+      "Diversification, risk, and concentration checks across your holdings.",
     href: "/analytics",
     icon: Activity,
   },
   {
     title: "Signals & news",
-    description: "Contextual updates and AI summaries for what actually matters.",
+    description:
+      "Contextual updates and AI summaries for what actually matters.",
     href: "/market",
     icon: Bell,
   },
@@ -41,7 +44,8 @@ const howItWorks = [
   },
   {
     title: "AI analyzes your portfolio",
-    description: "We scan positions, risk, diversification, and scenarios using AI.",
+    description:
+      "We scan positions, risk, diversification, and scenarios using AI.",
     icon: Sparkles,
   },
   {
@@ -54,17 +58,20 @@ const howItWorks = [
 const trustPoints = [
   {
     title: "Secure by design",
-    description: "Bank-level encryption, read-only access, and strict privacy controls.",
+    description:
+      "Bank-level encryption, read-only access, and strict privacy controls.",
     icon: ShieldCheck,
   },
   {
     title: "AI you can understand",
-    description: "Every insight comes with context, confidence, and next steps.",
+    description:
+      "Every insight comes with context, confidence, and next steps.",
     icon: Sparkles,
   },
   {
     title: "Keep your broker",
-    description: "Stay with your existing brokerage while we handle the analysis.",
+    description:
+      "Stay with your existing brokerage while we handle the analysis.",
     icon: Link2,
   },
 ];
@@ -75,15 +82,16 @@ export default function LandingPage() {
   const year = new Date().getFullYear();
 
   return (
-    <main className="flex-1 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
-      <div className="mx-auto max-w-[1280px] px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-14 lg:py-16 space-y-14 lg:space-y-20">
+    <>
+      <div className="space-y-14 lg:space-y-20">
         <HeroSection />
         <FeatureSection />
         <HowItWorksSection />
         <TrustSection />
       </div>
+
       <Footer year={year} />
-    </main>
+    </>
   );
 }
 
@@ -97,14 +105,17 @@ function HeroSection() {
             AI portfolio copilot
             <Sparkles className="h-4 w-4" />
           </div>
+
           <div className="space-y-3">
-            <h1 className="text-4xl leading-tight text-neutral-900 sm:text-5xl font-semibold">
+            <h1 className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-5xl">
               AI for smarter investing.
             </h1>
             <p className="max-w-xl text-lg text-neutral-600">
-              Personalized insights on your holdings, risk, diversification, and news—powered by AI.
+              Personalized insights on your holdings, risk, diversification, and
+              news—powered by AI.
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-3">
             <Button asChild size="lg">
               <Link href="/register">Get started</Link>
@@ -113,6 +124,7 @@ function HeroSection() {
               <Link href="/login">Log in</Link>
             </Button>
           </div>
+
           <p className="text-sm text-neutral-500">
             No credit card required • Connect your existing brokerages
           </p>
@@ -126,13 +138,15 @@ function HeroSection() {
 
 function ProductPreview() {
   return (
-    <div className="rounded-3xl border border-neutral-200/80 bg-white/90 px-5 py-5 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.50)] backdrop-blur sm:px-6 sm:py-6 space-y-5">
+    <div className="space-y-5 rounded-3xl border border-neutral-200/80 bg-white/90 px-5 py-5 shadow-[0_24px_70px_-45px_rgba(15,23,42,0.50)] backdrop-blur sm:px-6 sm:py-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">
             Market overview
           </p>
-          <p className="text-xl font-semibold text-neutral-900">Portfolio snapshot</p>
+          <p className="text-xl font-semibold text-neutral-900">
+            Portfolio snapshot
+          </p>
           <p className="text-sm text-neutral-600">
             Built from your linked accounts in minutes.
           </p>
@@ -145,12 +159,15 @@ function ProductPreview() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-3">
           <p className="text-sm text-neutral-500">Total value</p>
-          <div className="text-3xl font-semibold text-neutral-900">$264,500</div>
+          <div className="text-3xl font-semibold text-neutral-900">
+            $264,500
+          </div>
+
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
             <ArrowUpRight className="h-4 w-4" />
-            +$1,420 today
-            <span className="text-emerald-600">(+0.54%)</span>
+            +$1,420 today <span className="text-emerald-600">(+0.54%)</span>
           </div>
+
           <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
             <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 ring-1 ring-neutral-200">
               <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)]" />
@@ -159,6 +176,7 @@ function ProductPreview() {
             <span>USD • Moderate risk</span>
           </div>
         </div>
+
         <div className="space-y-2">
           <div className="h-28 rounded-2xl bg-gradient-to-b from-neutral-50 via-white to-neutral-100 px-3 pt-2 ring-1 ring-neutral-200/80">
             <div className="flex h-full items-end gap-1">
@@ -171,6 +189,7 @@ function ProductPreview() {
               ))}
             </div>
           </div>
+
           <div className="flex items-center justify-between text-xs text-neutral-600">
             <span>7d move</span>
             <span className="font-semibold text-emerald-600">+3.1%</span>
@@ -189,9 +208,11 @@ function ProductPreview() {
             </Badge>
           </div>
           <p className="mt-2 text-sm text-neutral-600">
-            Plain-English readouts on every ticker with risk, upside, and conviction notes.
+            Plain-English readouts on every ticker with risk, upside, and
+            conviction notes.
           </p>
         </div>
+
         <div className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-[0_12px_40px_-38px_rgba(15,23,42,0.55)]">
           <div className="flex items-center justify-between text-sm font-semibold text-neutral-900">
             <span>Portfolio health</span>
@@ -204,13 +225,18 @@ function ProductPreview() {
             Diversified across sectors with minimal concentration risk.
           </p>
         </div>
+
         <div className="rounded-2xl border border-neutral-200/80 bg-white p-4">
           <div className="flex items-center justify-between text-sm font-semibold text-neutral-900">
             <span>Signals & news</span>
-            <Badge variant="outline" className="rounded-full border-neutral-300">
+            <Badge
+              variant="outline"
+              className="rounded-full border-neutral-300"
+            >
               2 new
             </Badge>
           </div>
+
           <div className="mt-3 space-y-2 text-sm text-neutral-700">
             <div className="flex items-start gap-2">
               <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
@@ -230,15 +256,16 @@ function ProductPreview() {
 function FeatureSection() {
   return (
     <section className="space-y-6">
-      <div className="text-center space-y-2">
+      <div className="space-y-2 text-center">
         <p className="text-xs uppercase tracking-[0.14em] text-neutral-500">
           Product
         </p>
         <h2 className="text-3xl font-semibold text-neutral-900">
           What you get with AI insights.
         </h2>
-        <p className="max-w-2xl mx-auto text-neutral-600">
-          See your book the way an analyst would: clear, contextual, and updated as markets move.
+        <p className="mx-auto max-w-2xl text-neutral-600">
+          See your book the way an analyst would: clear, contextual, and updated
+          as markets move.
         </p>
       </div>
 
@@ -262,7 +289,11 @@ function FeatureSection() {
                 </div>
                 <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-1 group-hover:text-neutral-900" />
               </div>
-              <p className="mt-3 text-sm text-neutral-600">{feature.description}</p>
+
+              <p className="mt-3 text-sm text-neutral-600">
+                {feature.description}
+              </p>
+
               <div className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-900">
                 Explore
                 <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
@@ -282,8 +313,10 @@ function HowItWorksSection() {
         <p className="text-xs uppercase tracking-[0.14em] text-neutral-500">
           Workflow
         </p>
-        <h2 className="text-3xl font-semibold text-neutral-900">How it works.</h2>
-        <p className="max-w-2xl mx-auto text-neutral-600">
+        <h2 className="text-3xl font-semibold text-neutral-900">
+          How it works.
+        </h2>
+        <p className="mx-auto max-w-2xl text-neutral-600">
           Connect, analyze, and get guidance in three clear steps.
         </p>
       </div>
@@ -304,8 +337,13 @@ function HowItWorksSection() {
                   <Icon className="h-5 w-5 text-neutral-800" />
                 </div>
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-neutral-900">{step.title}</h3>
-              <p className="mt-2 text-sm text-neutral-600">{step.description}</p>
+
+              <h3 className="mt-4 text-lg font-semibold text-neutral-900">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm text-neutral-600">
+                {step.description}
+              </p>
             </div>
           );
         })}
@@ -324,8 +362,9 @@ function TrustSection() {
         <h2 className="text-3xl font-semibold text-neutral-900">
           Built for long-term investors.
         </h2>
-        <p className="max-w-2xl mx-auto text-neutral-600">
-          Security, clarity, and a product that works alongside your existing brokerage.
+        <p className="mx-auto max-w-2xl text-neutral-600">
+          Security, clarity, and a product that works alongside your existing
+          brokerage.
         </p>
       </div>
 
@@ -341,8 +380,12 @@ function TrustSection() {
                 <Icon className="h-5 w-5 text-neutral-800" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-neutral-900">{point.title}</h3>
-                <p className="mt-1 text-sm text-neutral-600">{point.description}</p>
+                <h3 className="text-base font-semibold text-neutral-900">
+                  {point.title}
+                </h3>
+                <p className="mt-1 text-sm text-neutral-600">
+                  {point.description}
+                </p>
               </div>
             </div>
           );
@@ -354,12 +397,15 @@ function TrustSection() {
 
 function Footer({ year }: { year: number }) {
   return (
-    <footer className="border-t border-neutral-200/80 bg-white/70">
-      <div className="mx-auto flex flex-col gap-3 px-3 py-6 text-sm text-neutral-600 sm:px-4 md:px-6 lg:px-8 sm:flex-row sm:items-center sm:justify-between max-w-[1280px]">
+    <footer className="mt-14 border-t border-neutral-200/80 bg-white/70">
+      <div className="mx-auto flex max-w-[1260px] flex-col gap-3 px-4 py-6 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-10 xl:px-14">
         <div className="flex items-center gap-2 text-neutral-900 font-semibold">
-          <span className='text-2xl font-bold font-["Libre_Caslon_Text",_serif] leading-none'>W</span>
+          <span className='text-2xl font-bold font-["Libre_Caslon_Text",_serif] leading-none'>
+            W
+          </span>
           <span>AI for Investments</span>
         </div>
+
         <div className="flex flex-wrap items-center gap-4">
           <Link href="/privacy" className="hover:text-neutral-900">
             Privacy
@@ -374,6 +420,7 @@ function Footer({ year }: { year: number }) {
             Docs
           </Link>
         </div>
+
         <div className="text-xs text-neutral-500">
           © {year} AI for Investments. All rights reserved.
         </div>

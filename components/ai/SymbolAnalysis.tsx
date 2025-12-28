@@ -188,7 +188,9 @@ const CollapsibleCard: React.FC<
 > = ({ title, preview, children, defaultOpen, className }) => (
   <details
     open={defaultOpen}
-    className={`group overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm ${className ?? ""}`}
+    className={`group overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm ${
+      className ?? ""
+    }`}
   >
     <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4 sm:px-5">
       <div className="space-y-1">
@@ -365,7 +367,7 @@ export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
     .join(" • ");
 
   return (
-    <div className="mx-auto w-full max-w-[1260px] space-y-6 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
+    <div className="mx-auto w-full max-w-[1260px] space-y-6">
       {/* Hero */}
       <div className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
         <div className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 px-6 py-7 text-white sm:px-8 sm:py-8">
@@ -442,8 +444,15 @@ export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard label="Revenue growth" value={revenueGrowth ?? "—"} />
           <MetricCard label="Profit growth" value={profitGrowth ?? "—"} />
-          <MetricCard label="Data center key metric" value={dataCenterRev ?? "—"} hint="Last noted" />
-          <MetricCard label="Time horizon" value={<span className="capitalize">{horizon}</span>} />
+          <MetricCard
+            label="Data center key metric"
+            value={dataCenterRev ?? "—"}
+            hint="Last noted"
+          />
+          <MetricCard
+            label="Time horizon"
+            value={<span className="capitalize">{horizon}</span>}
+          />
         </div>
       </section>
 
@@ -905,7 +914,8 @@ export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
           )}
         </div>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm">
-          Overall confidence {formatProb(stock.explainability.confidence_overall)}
+          Overall confidence{" "}
+          {formatProb(stock.explainability.confidence_overall)}
         </div>
       </section>
 

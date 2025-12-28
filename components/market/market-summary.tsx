@@ -35,14 +35,17 @@ export function MarketSummary({
   if (!data || !data.sections?.length) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-3 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-3 ${summaryMinHeight}`}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-neutral-900">
             AI market summary
           </h2>
           {data?.market ? (
-            <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs">
+            <Badge
+              variant="secondary"
+              className="rounded-full px-3 py-1 text-xs"
+            >
               {data.market}
             </Badge>
           ) : null}
@@ -56,7 +59,7 @@ export function MarketSummary({
     <div
       className={[
         summarySurface,
-        `p-5 sm:p-6 lg:p-7 space-y-5 ${summaryMinHeight} flex flex-col h-full font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`,
+        `p-5 sm:p-6 lg:p-7 space-y-5 ${summaryMinHeight} flex flex-col h-full`,
       ].join(" ")}
     >
       <div className="space-y-3">
@@ -155,7 +158,7 @@ export function MarketSummaryPanel() {
   if (loading) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-4 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 space-y-4 ${summaryMinHeight}`}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-2">
@@ -189,9 +192,12 @@ export function MarketSummaryPanel() {
   if (error) {
     return (
       <div
-        className={`${summarySurface} p-5 sm:p-6 lg:p-7 ${summaryMinHeight} font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]`}
+        className={`${summarySurface} p-5 sm:p-6 lg:p-7 ${summaryMinHeight}`}
       >
-        <Alert variant="destructive" className="rounded-2xl border border-rose-200">
+        <Alert
+          variant="destructive"
+          className="rounded-2xl border border-rose-200"
+        >
           <AlertTitle>Something went wrong</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
             {error}

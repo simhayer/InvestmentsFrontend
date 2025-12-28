@@ -37,9 +37,6 @@ import {
 import { useAppTour } from "@/components/tour/app-tour";
 import { logout } from "@/utils/authService";
 
-const futuraSignInFontClasses =
-  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
-
 function isActive(pathname: string | null, href: string, exact?: boolean) {
   if (!pathname) return false;
   return exact
@@ -106,7 +103,7 @@ export function Header() {
           </span>
 
           {/* Desktop nav */}
-          <nav className='hidden lg:flex flex-1 items-center justify-start gap-1 text-sm text-neutral-700 font-["Futura_PT_Book",_Futura,_sans-serif]'>
+          <nav className="hidden lg:flex flex-1 items-center justify-start gap-1 text-sm text-neutral-700">
             {navItems.map((item) => {
               const active = isActive(pathname, item.href, item.exact);
               return (
@@ -173,10 +170,7 @@ export function Header() {
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className={["w-48", futuraSignInFontClasses].join(" ")}
-              >
+              <DropdownMenuContent align="end" className="w-48">
                 {user ? (
                   <>
                     <DropdownMenuItem disabled className="opacity-100">
@@ -211,13 +205,7 @@ export function Header() {
                   </>
                 ) : (
                   <DropdownMenuItem asChild>
-                    <Link
-                      href={loginHref}
-                      className={[
-                        "cursor-pointer",
-                        futuraSignInFontClasses,
-                      ].join(" ")}
-                    >
+                    <Link href={loginHref} className="cursor-pointer">
                       Sign in
                     </Link>
                   </DropdownMenuItem>
@@ -271,7 +259,7 @@ export function Header() {
                         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                           Menu
                         </span>
-                        <span className="text-sm text-neutral-800 font-['Futura_PT_Book',_Futura,_sans-serif]">
+                        <span className="text-sm text-neutral-800">
                           Navigation
                         </span>
                       </div>
@@ -406,10 +394,7 @@ export function Header() {
                     ) : (
                       <Link
                         href={loginHref}
-                        className={[
-                          "w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0",
-                          futuraSignInFontClasses,
-                        ].join(" ")}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)] active:translate-y-0"
                       >
                         Sign in
                       </Link>

@@ -98,7 +98,7 @@ export function LoginForm() {
           required
           disabled={isLoading}
           aria-invalid={inlineError ? true : false}
-          className="h-11 rounded-lg border-neutral-200 bg-white/90 text-base focus-visible:ring-neutral-900/70"
+          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
@@ -120,7 +120,7 @@ export function LoginForm() {
             required
             disabled={isLoading}
             aria-invalid={inlineError ? true : false}
-            className="h-11 rounded-lg border-neutral-200 bg-white/90 pr-10 text-base focus-visible:ring-neutral-900/70"
+            className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             type="button"
@@ -155,10 +155,17 @@ export function LoginForm() {
       <Button
         type="submit"
         size="lg"
-        className="w-full rounded-lg text-base"
+        className="h-12 w-full rounded-xl bg-neutral-900 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg active:scale-[0.98]"
         disabled={isLoading}
       >
-        {isLoading ? "Signing in..." : "Sign In"}
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Signing in...
+          </div>
+        ) : (
+          "Sign In"
+        )}
       </Button>
     </form>
   );

@@ -1,14 +1,25 @@
+"use client";
+
 import * as React from "react";
+import { motion } from "framer-motion";
+import {
+  TrendingUp,
+  TrendingDown,
+  PieChart,
+  BarChart3,
+  Globe2,
+} from "lucide-react";
 import type { MetricsLayer } from "@/types/portfolio-ai";
-import { fmtPct } from "@/utils/format";
+import { fmtCurrency, fmtPct } from "@/utils/format";
+import { cn } from "@/lib/utils";
 
 export function PortfolioMetricsTab({ data }: { data: MetricsLayer }) {
   if (!data) return <Empty msg="No metrics available." />;
 
   const p = data.portfolio;
-
-  // Biggest winner/loser by unrealized P/L %
   const symbols = Object.values(data.per_symbol || {});
+
+  // Logical sorting for Winner/Loser
   const withPL = symbols.filter(
     (s: any) => typeof s?.unrealized_pnl_pct === "number"
   );
@@ -23,137 +34,185 @@ export function PortfolioMetricsTab({ data }: { data: MetricsLayer }) {
       )[0]
     : null;
 
-  // Top position weight
   const topWeight = symbols.length
     ? Math.max(
         ...symbols.map((s: any) =>
           typeof s?.weight_pct === "number" ? s.weight_pct : 0
         )
       )
-    : null;
+    : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500">
-              Portfolio overview
-            </p>
-            <p className="text-sm text-slate-600">
-              Value, concentration, and mix
-            </p>
-          </div>
-          <span className="hidden text-xs text-slate-500 md:inline">
-            Based on live positions
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-          <Metric label="Total Value" value={p.total_value} type="currency" />
-          <Metric label="Cash" value={p.cash_value} type="currency" />
-          <Metric label="Positions" value={p.num_positions} type="int" />
-          <Metric label="Top Position Weight" value={topWeight} type="pct" />
-          <Metric
-            label="Top 5 Concentration"
-            value={p.concentration_top_5_pct}
-            type="pct"
-          />
-          <Metric
-            label="Biggest Winner"
-            valueText={
-              biggestWinner
-                ? `${biggestWinner.symbol} (${fmtPct(
-                    biggestWinner.unrealized_pnl_pct
-                  )})`
-                : "—"
-            }
-          />
-          <Metric
-            label="Biggest Loser"
-            valueText={
-              biggestLoser
-                ? `${biggestLoser.symbol} (${fmtPct(
-                    biggestLoser.unrealized_pnl_pct
-                  )})`
-                : "—"
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <KVCard
-          title="Asset Class Weights"
-          kv={p.asset_class_weights_pct ?? {}}
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* 1. TOP LEVEL "POWER METRICS" */}
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Portfolio Value"
+          value={p.total_value}
+          type="currency"
+          highlight
         />
-        <KVCard title="Sector Weights" kv={p.sector_weights_pct ?? {}} />
-        <KVCard title="Region Weights" kv={p.region_weights_pct ?? {}} />
-      </div>
+        <MetricCard label="Cash Reserve" value={p.cash_value} type="currency" />
+        <MetricCard
+          label="Top 5 Concentration"
+          value={p.concentration_top_5_pct}
+          type="pct"
+          subtitle="Overall Exposure"
+        />
+        <MetricCard
+          label="Active Positions"
+          value={p.num_positions}
+          type="int"
+          subtitle="Unique Symbols"
+        />
+      </section>
+
+      {/* 2. EXTREMES (WINNERS/LOSERS) */}
+      <section className="grid gap-4 md:grid-cols-2">
+        <ExtremeCard
+          type="winner"
+          symbol={biggestWinner?.symbol}
+          value={biggestWinner?.unrealized_pnl_pct}
+        />
+        <ExtremeCard
+          type="loser"
+          symbol={biggestLoser?.symbol}
+          value={biggestLoser?.unrealized_pnl_pct}
+        />
+      </section>
+
+      {/* 3. WEIGHT DISTRIBUTION GRIDS */}
+      <section className="grid gap-6 md:grid-cols-3">
+        <WeightCard
+          title="Asset Allocation"
+          icon={<PieChart className="h-4 w-4" />}
+          kv={p.asset_class_weights_pct ?? {}}
+          barColor="bg-blue-500"
+        />
+        <WeightCard
+          title="Sector Exposure"
+          icon={<BarChart3 className="h-4 w-4" />}
+          kv={p.sector_weights_pct ?? {}}
+          barColor="bg-indigo-500"
+        />
+        <WeightCard
+          title="Geographic Mix"
+          icon={<Globe2 className="h-4 w-4" />}
+          kv={p.region_weights_pct ?? {}}
+          barColor="bg-emerald-500"
+        />
+      </section>
     </div>
   );
 }
 
-function Metric({
-  label,
-  value,
-  valueText,
-  type,
-}: {
-  label: string;
-  value?: number | null;
-  valueText?: string;
-  type?: "pct" | "currency" | "int";
-}) {
-  const fmt =
-    valueText ??
-    (value == null || !Number.isFinite(value)
+// SUB-COMPONENTS
+
+function MetricCard({ label, value, type, highlight, subtitle }: any) {
+  const formattedValue =
+    value == null
       ? "—"
+      : type === "currency"
+      ? fmtCurrency(value)
       : type === "pct"
       ? `${value.toFixed(2)}%`
-      : type === "currency"
-      ? `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-      : `${value}`);
+      : value;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div className="text-[11px] uppercase tracking-[0.06em] text-slate-500">
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-[24px] border border-neutral-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md",
+        highlight && "border-neutral-900 bg-neutral-900 text-white"
+      )}
+    >
+      <p
+        className={cn(
+          "text-[10px] font-bold uppercase tracking-widest",
+          highlight ? "text-neutral-400" : "text-neutral-500"
+        )}
+      >
         {label}
+      </p>
+      <div className="mt-1 flex items-baseline gap-2">
+        <h4 className="text-2xl font-bold tracking-tight">{formattedValue}</h4>
       </div>
-      <div className="text-lg font-semibold text-slate-900">{fmt}</div>
+      {subtitle && (
+        <p className="mt-1 text-[10px] font-medium opacity-60">{subtitle}</p>
+      )}
     </div>
   );
 }
 
-function KVCard({ title, kv }: { title: string; kv: Record<string, number> }) {
-  const entries = Object.entries(kv || {}).sort(
-    (a, b) => (b[1] ?? 0) - (a[1] ?? 0)
-  );
-  if (!entries.length) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-900 mb-3">{title}</div>
-        <div className="text-sm text-slate-600">—</div>
-      </div>
-    );
-  }
+function ExtremeCard({ type, symbol, value }: any) {
+  const isWinner = type === "winner";
+  const Icon = isWinner ? TrendingUp : TrendingDown;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="text-sm font-semibold text-slate-900 mb-3">{title}</div>
-      <div className="space-y-2">
-        {entries.map(([k, v]) => (
-          <div key={k} className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-700">{k}</span>
-              <span className="font-semibold text-slate-900">
-                {v.toFixed(2)}%
-              </span>
+    <div
+      className={cn(
+        "flex items-center justify-between rounded-[24px] border p-5 shadow-sm",
+        isWinner
+          ? "border-emerald-100 bg-emerald-50/30"
+          : "border-rose-100 bg-rose-50/30"
+      )}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-full",
+            isWinner
+              ? "bg-emerald-100 text-emerald-600"
+              : "bg-rose-100 text-rose-600"
+          )}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+            Biggest {type}
+          </p>
+          <h4 className="text-lg font-bold text-neutral-900">
+            {symbol ?? "N/A"}
+          </h4>
+        </div>
+      </div>
+      <div
+        className={cn(
+          "text-right font-bold text-lg",
+          isWinner ? "text-emerald-600" : "text-rose-600"
+        )}
+      >
+        {value ? `${value > 0 ? "+" : ""}${value.toFixed(2)}%` : "—"}
+      </div>
+    </div>
+  );
+}
+
+function WeightCard({ title, icon, kv, barColor }: any) {
+  const entries = Object.entries(kv).sort((a: any, b: any) => b[1] - a[1]);
+
+  return (
+    <div className="rounded-[28px] border border-neutral-200/60 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600">
+          {icon}
+        </div>
+        <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-tight">
+          {title}
+        </h3>
+      </div>
+      <div className="space-y-4">
+        {entries.slice(0, 6).map(([k, v]: any) => (
+          <div key={k} className="space-y-1.5">
+            <div className="flex justify-between text-xs font-bold">
+              <span className="text-neutral-600">{k}</span>
+              <span className="text-neutral-900">{v.toFixed(1)}%</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-100">
-              <div
-                className="h-2 rounded-full bg-slate-900"
-                style={{ width: `${Math.min(100, Math.max(0, v))}%` }}
+            <div className="h-1.5 w-full rounded-full bg-neutral-50">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${v}%` }}
+                className={cn("h-full rounded-full", barColor)}
               />
             </div>
           </div>
@@ -165,7 +224,7 @@ function KVCard({ title, kv }: { title: string; kv: Record<string, number> }) {
 
 function Empty({ msg }: { msg: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+    <div className="flex h-32 items-center justify-center rounded-[24px] border border-dashed border-neutral-200 text-sm text-neutral-500">
       {msg}
     </div>
   );

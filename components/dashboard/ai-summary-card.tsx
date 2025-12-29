@@ -1,18 +1,23 @@
 "use client";
 
 import * as React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Brain, ArrowRight, Loader2, Clock3, Sparkles } from "lucide-react";
-import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 import Link from "next/link";
-import { catalystsSorted, latestSorted } from "@/utils/aiService";
+import {
+  Brain,
+  ArrowRight,
+  Loader2,
+  Clock3,
+  Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  Zap,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 
 export function AnalysisSummaryCard() {
   const { layers, meta, loading, refetching, error, refetch } =
@@ -21,178 +26,178 @@ export function AnalysisSummaryCard() {
   const cached = !!meta?.cached;
   const nextIn = meta?.nextUpdateIn ?? "now";
   const canRefreshNow = meta?.canRefreshNow ?? true;
-  const showForce = meta?.showForce ?? false;
-  const summaryText = layers?.summary?.summary
-    ? layers.summary.summary.split(/\n\s*\n/)[0]
-    : "";
+
+  const summaryText = layers?.summary?.summary?.split(/\n\s*\n/)[0] ?? "";
   const risks = layers?.news_sentiment?.risks_list ?? [];
   const actions = layers?.scenarios_rebalance?.actions ?? [];
-  const catalysts = layers?.news_sentiment?.catalysts ?? [];
-  const developments = layers?.news_sentiment?.latest_developments ?? [];
-  const topCatalyst = catalystsSorted(catalysts)[0];
-  const topDevelopment = latestSorted(developments)[0];
 
   const insightItems = [
     risks[0]
       ? {
-          label: "Top risk",
+          label: "Top Risk",
           value: risks[0].risk,
-          meta: risks[0].assets_affected?.slice(0, 2).join(", "),
+          icon: AlertTriangle,
+          color: "text-rose-600",
+          border: "border-rose-100",
+          bg: "bg-rose-50/30",
         }
       : null,
     actions[0]
       ? {
-          label: "Suggested action",
+          label: "Next Action",
           value: actions[0].title,
-          meta: `Impact: ${actions[0].impact}, Urgency: ${actions[0].urgency}`,
+          icon: Zap,
+          color: "text-blue-600",
+          border: "border-blue-100",
+          bg: "bg-blue-50/30",
         }
       : null,
-    topCatalyst
-      ? {
-          label: "Catalyst",
-          value: `${topCatalyst.type.toUpperCase()} - ${topCatalyst.date}`,
-          meta: topCatalyst.description,
-        }
-      : null,
-    topDevelopment
-      ? {
-          label: "Latest",
-          value: topDevelopment.headline,
-          meta: `${topDevelopment.source} - ${topDevelopment.date}`,
-        }
-      : null,
-  ].filter(Boolean) as Array<{ label: string; value: string; meta?: string }>;
-  const hasInsights = Boolean(summaryText) || insightItems.length > 0;
+  ].filter(Boolean);
+
+  const hasData = Boolean(summaryText) || insightItems.length > 0;
 
   return (
-    <Card
-      className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)] font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]"
-      data-tour-id="tour-ai-card"
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(16,185,129,0.08),transparent_34%),radial-gradient(circle_at_88%_0%,rgba(59,130,246,0.08),transparent_28%)]" />
-      <CardHeader className="relative space-y-2 pb-3 sm:pb-4">
-        <div className="space-y-1">
-          <CardTitle className="text-lg font-semibold text-neutral-900">
-            AI portfolio analysis
-          </CardTitle>
-        </div>
+    <Card className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-md">
+      {/* Decorative AI Background Element */}
+      <div className="absolute right-0 top-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-emerald-50/50 blur-3xl" />
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600">
-          <span className="inline-flex items-center gap-2 rounded-full bg-neutral-100/80 px-3 py-1 ring-1 ring-neutral-200/70">
-            {refetching ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-500" />
-            ) : (
-              <Clock3 className="h-4 w-4 text-neutral-500" />
-            )}
-            {refetching
-              ? "Updating…"
-              : cached
-              ? `Cached • next in ${nextIn}`
-              : "Live"}
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 ring-1 ring-emerald-100">
-            <Sparkles className="h-4 w-4" />
-            AI active
-          </span>
+      <CardHeader className="relative z-10 border-b border-neutral-100 bg-white/50 backdrop-blur-md">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 shadow-lg shadow-neutral-200">
+              <Brain
+                className={cn(
+                  "h-5 w-5 text-white",
+                  refetching && "animate-pulse"
+                )}
+              />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-bold text-neutral-900">
+                Portfolio Intelligence
+              </CardTitle>
+              <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-tighter">
+                Powered by Gemini 1.5
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-colors",
+                refetching
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                  : "bg-neutral-50 text-neutral-500 border-neutral-100"
+              )}
+            >
+              {refetching ? (
+                <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+              ) : (
+                <Clock3 className="mr-1.5 h-3 w-3" />
+              )}
+              {refetching
+                ? "Analyzing..."
+                : cached
+                ? `Update: ${nextIn}`
+                : "Live Analysis"}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="relative space-y-4">
-        {error ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-            <div className="font-semibold">Something went wrong</div>
-            <div className="text-rose-600">{error}</div>
+      <CardContent className="relative z-10 p-6">
+        {loading && !hasData ? (
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Skeleton className="h-28 w-full rounded-2xl" />
+              <Skeleton className="h-28 w-full rounded-2xl" />
+            </div>
+          </div>
+        ) : !hasData ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-4 rounded-full bg-neutral-50 p-4">
+              <Sparkles className="h-8 w-8 text-neutral-300" />
+            </div>
+            <h3 className="text-sm font-semibold text-neutral-900">
+              No Analysis Available
+            </h3>
+            <p className="mt-1 text-xs text-neutral-500 max-w-[240px]">
+              Connect your accounts to generate AI-driven portfolio insights.
+            </p>
             <Button
-              onClick={() => refetch(false)}
-              disabled={loading || refetching}
+              onClick={() => refetch()}
               variant="outline"
-              className="w-full sm:w-auto"
+              size="sm"
+              className="mt-4 rounded-xl"
             >
-              Retry
+              Generate Now
             </Button>
           </div>
-        ) : !hasInsights && !loading ? (
-          <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/70 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-neutral-800 ring-1 ring-neutral-200">
-                <Brain className="h-5 w-5" />
-              </div>
-              <p className="text-sm text-neutral-700">
-                No insights yet. Run an analysis to generate AI guidance.
+        ) : (
+          <div className="space-y-6">
+            {/* Primary Summary */}
+            <div className="group relative rounded-2xl border border-emerald-100 bg-emerald-50/20 p-5 transition-colors hover:bg-emerald-50/40">
+              <Sparkles className="absolute right-4 top-4 h-4 w-4 text-emerald-500/30 transition-transform group-hover:scale-110" />
+              <p className="text-sm leading-relaxed font-medium text-neutral-800">
+                {summaryText}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                onClick={() => refetch(false)}
-                disabled={loading || refetching || !canRefreshNow}
-                className="gap-1"
-              >
-                Analyze my portfolio <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-              {showForce && (
-                <Button
-                  onClick={() => refetch(true)}
-                  disabled={loading || refetching}
-                  variant="ghost"
-                  className="text-neutral-800 hover:bg-neutral-100"
-                >
-                  Force run
-                </Button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-3 text-sm text-neutral-800 shadow-inner">
-              {summaryText ||
-                "Your portfolio has been analyzed. View the full report for details."}
-            </div>
-            {insightItems.length ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {insightItems.map((item) => (
+
+            {/* Quick Insights Grid */}
+            {insightItems.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {insightItems.map((item: any) => (
                   <div
                     key={item.label}
-                    className="min-w-0 rounded-2xl border border-neutral-200/80 bg-white/80 p-3"
+                    className={cn(
+                      "group flex flex-col justify-between rounded-2xl border p-4 transition-all hover:shadow-sm",
+                      item.border,
+                      item.bg
+                    )}
                   >
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
-                      {item.label}
+                    <div className="flex items-center gap-2 mb-2">
+                      <item.icon className={cn("h-3.5 w-3.5", item.color)} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                        {item.label}
+                      </span>
                     </div>
-                    <div className="mt-1 truncate text-sm font-semibold text-neutral-900">
+                    <div className="text-sm font-bold text-neutral-900 line-clamp-2 leading-snug">
                       {item.value}
                     </div>
-                    {item.meta ? (
-                      <div className="mt-1 truncate text-xs text-neutral-600">
-                        {item.meta}
-                      </div>
-                    ) : null}
                   </div>
                 ))}
               </div>
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href="/analytics" className="mr-auto">
-                <Button className="gap-1">
-                  Analyze my portfolio <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
+            )}
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between border-t border-neutral-100 pt-5">
+              <Button
+                asChild
+                className="rounded-xl px-5 shadow-sm transition-transform active:scale-95"
+              >
+                <Link href="/analytics" className="flex items-center gap-2">
+                  View Full Report <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => refetch(false)}
-                disabled={loading || refetching || !canRefreshNow}
-                className="text-neutral-800 hover:bg-neutral-100"
+                disabled={refetching || !canRefreshNow}
+                className="text-neutral-400 hover:text-neutral-900 hover:bg-transparent"
               >
-                Refresh
+                <RefreshCw
+                  className={cn(
+                    "mr-2 h-3.5 w-3.5 transition-transform",
+                    refetching && "animate-spin"
+                  )}
+                />
+                <span className="text-xs font-semibold">Refresh Insights</span>
               </Button>
-              {showForce && (
-                <Button
-                  onClick={() => refetch(true)}
-                  disabled={loading || refetching}
-                  variant="ghost"
-                  className="text-neutral-800 hover:bg-neutral-100"
-                >
-                  Force run
-                </Button>
-              )}
             </div>
           </div>
         )}

@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Link2, RefreshCcw, ShieldCheck } from "lucide-react";
+import {
+  Link2,
+  RefreshCcw,
+  ShieldCheck,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
 import {
   Card,
@@ -13,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import { ConnectionItem } from "./connection-item";
@@ -23,8 +31,7 @@ import { keysToCamel } from "@/utils/format";
 import { useAuth } from "@/lib/auth-provider";
 import type { Connection } from "@/types/connection";
 import { Page } from "@/components/layout/Page";
-
-/* ---------- component ---------- */
+import { cn } from "@/lib/utils";
 
 type ConnectionsProps = {
   onRemove?: (id: string) => void;
@@ -64,39 +71,29 @@ export function Connections({ onRemove }: ConnectionsProps) {
 
   const handlePlaidSuccess = useCallback(async () => {
     await loadConnections();
+    toast({
+      title: "Account connected",
+      description: "Your holdings are being synced now.",
+    });
   }, [loadConnections]);
 
   const onSyncNow = useCallback(async () => {
-    if (!hasConnections) {
-      toast({
-        title: "Connect an account to sync",
-        description:
-          "Link a brokerage, bank, or exchange to pull the latest balances.",
-      });
-      return;
-    }
+    if (!hasConnections) return;
 
     try {
       setRefreshing(true);
       await getPlaidInvestments();
-      await loadConnections(); // update timestamps/status
+      await loadConnections();
+      toast({
+        title: "Sync complete",
+        description: "Your portfolio data is up to date.",
+      });
     } catch (e) {
-      console.error("Failed to get investments:", e);
-
-      const message =
-        (e as any)?.message || "Couldn’t sync your connections right now.";
-      const status = (e as any)?.status as number | undefined;
-      const missingToken =
-        status === 404 ||
-        message.toLowerCase().includes("access token") ||
-        message.toLowerCase().includes("not found");
-
+      console.error("Failed to sync:", e);
       toast({
         variant: "destructive",
         title: "Sync unsuccessful",
-        description: missingToken
-          ? "No linked access token found. Please connect an account first."
-          : "Please try again in a moment.",
+        description: "Please check your connection and try again.",
       });
     } finally {
       setRefreshing(false);
@@ -105,155 +102,134 @@ export function Connections({ onRemove }: ConnectionsProps) {
 
   return (
     <Page>
-      <header className="flex flex-wrap items-start justify-between gap-4 sm:gap-5">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-            Accounts
+      {/* --- HEADER --- */}
+      <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text">
+            Assets & Institutions
           </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold text-neutral-900 sm:text-[32px]">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
               Connections
             </h1>
-            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 shadow-[0_12px_30px_-26px_rgba(15,23,42,0.4)]">
-              {connections.length} connected
-            </span>
+            {!loading && (
+              <Badge
+                variant="secondary"
+                className="rounded-full bg-neutral-100 text-neutral-600 border-none"
+              >
+                {connections.length} Linked
+              </Badge>
+            )}
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-xl border-neutral-200 bg-white font-semibold text-neutral-700 shadow-sm"
+            onClick={onSyncNow}
+            disabled={!hasConnections || refreshing}
+          >
+            <RefreshCcw
+              className={cn("mr-2 h-4 w-4", refreshing && "animate-spin")}
+            />
+            {refreshing ? "Syncing..." : "Sync All"}
+          </Button>
+
+          <PlaidLinkButton
+            userId={userId}
+            onSuccess={handlePlaidSuccess}
+            variant="default"
+            className="h-10 rounded-xl bg-neutral-900 px-4 text-sm font-semibold text-white shadow-lg hover:bg-neutral-800"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Account
+          </PlaidLinkButton>
         </div>
       </header>
 
+      {/* --- CONTENT --- */}
       {loading ? (
-        <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
-          <CardHeader className="space-y-2">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-6 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-3 pb-8">
-            <Skeleton className="h-14 w-full rounded-2xl" />
-            <Skeleton className="h-14 w-full rounded-2xl" />
-          </CardContent>
-        </Card>
+        <div className="grid gap-4">
+          <Skeleton className="h-[100px] w-full rounded-3xl" />
+          <Skeleton className="h-[100px] w-full rounded-3xl" />
+        </div>
       ) : error ? (
-        <Card className="rounded-3xl border border-rose-100 bg-white shadow-[0_20px_56px_-40px_rgba(15,23,42,0.38)]">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-neutral-900">
-              We hit a snag
-            </CardTitle>
-            <CardDescription className="text-sm text-neutral-600">
-              {error}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap items-center gap-3 pb-6">
+        <Card className="rounded-[32px] border-rose-100 bg-rose-50/20 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="mb-4 h-10 w-10 text-rose-500" />
+            <CardTitle className="mb-2">Connection Error</CardTitle>
+            <CardDescription className="mb-6 max-w-xs">{error}</CardDescription>
             <Button
-              variant="outline"
-              size="sm"
               onClick={loadConnections}
-              className="rounded-lg"
+              variant="outline"
+              className="rounded-xl border-rose-200 text-rose-700 hover:bg-rose-50"
             >
-              Retry
+              Try again
             </Button>
-            <PlaidLinkButton
-              userId={userId}
-              onSuccess={handlePlaidSuccess}
-              size="sm"
-              className="rounded-lg"
-            />
           </CardContent>
         </Card>
-      ) : (
-        <Card className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)]">
-          <CardHeader className="flex flex-col gap-3 border-b border-neutral-100/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 sm:self-start">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-11 gap-1.5 rounded-xl border-neutral-200 bg-white px-4 text-neutral-800 shadow-sm"
-                onClick={onSyncNow}
-                disabled={!hasConnections || refreshing}
-                title={
-                  hasConnections
-                    ? "Refresh your linked institutions"
-                    : "Link an account to enable sync"
-                }
-              >
-                <RefreshCcw
-                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                />
-                {refreshing ? "Syncing…" : "Sync now"}
-              </Button>
+      ) : !hasConnections ? (
+        <Card className="overflow-hidden rounded-[32px] border-neutral-200/60 bg-white shadow-xl shadow-neutral-200/40">
+          <CardContent className="flex flex-col items-center justify-center px-6 py-20 text-center">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 animate-ping rounded-full bg-emerald-100 opacity-20" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-neutral-50 text-neutral-400 ring-1 ring-neutral-100">
+                <Link2 className="h-10 w-10" />
+              </div>
+            </div>
 
+            <h3 className="mb-2 text-xl font-bold text-neutral-900">
+              Connect your first account
+            </h3>
+            <p className="mb-8 max-w-sm text-sm text-neutral-500 leading-relaxed">
+              Sync your brokerages, banks, or crypto wallets to see all your
+              holdings, performance, and AI insights in one unified dashboard.
+            </p>
+
+            <div className="flex w-full max-w-xs flex-col gap-4">
               <PlaidLinkButton
                 userId={userId}
                 onSuccess={handlePlaidSuccess}
-                size="sm"
-                variant="secondary"
-                className="rounded-lg bg-neutral-900 text-white hover:bg-neutral-800"
-              >
-                Add another account
-              </PlaidLinkButton>
+                className="w-full rounded-2xl h-12 bg-neutral-900 text-base font-bold text-white shadow-xl"
+              />
+              <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                <ShieldCheck className="h-4 w-4" />
+                Bank-level Security
+              </div>
             </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4 pb-7">
-            {hasConnections ? (
-              <div className="space-y-3">
-                {connections.map((c) => (
-                  <ConnectionItem
-                    key={c.id}
-                    connection={c}
-                    onRemove={onRemove}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/70 px-6 py-10 text-center sm:px-10">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-neutral-700 ring-1 ring-neutral-200">
-                  <Link2 className="h-6 w-6" />
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold text-neutral-900">
-                    No connections yet
-                  </p>
-                  <p className="max-w-xl text-sm text-neutral-600">
-                    Connect your brokerage, bank, or crypto exchange to sync and
-                    track your holdings in one place.
-                  </p>
-                </div>
-
-                <div className="w-full max-w-sm space-y-3">
-                  <PlaidLinkButton
-                    userId={userId}
-                    onSuccess={handlePlaidSuccess}
-                    fullWidth
-                    className="w-full"
-                  />
-                  <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-500">
-                    <ShieldCheck className="h-4 w-4" />
-                    Securely powered by Plaid
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {hasConnections ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-neutral-50/70 px-4 py-3 text-xs text-neutral-600">
-                <span className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-neutral-500" />
-                  Securely powered by Plaid
-                </span>
-                <PlaidLinkButton
-                  userId={userId}
-                  onSuccess={handlePlaidSuccess}
-                  size="sm"
-                  variant="ghost"
-                  className="h-9 px-3 text-sm text-neutral-800 hover:bg-white"
-                >
-                  Add another account
-                </PlaidLinkButton>
-              </div>
-            ) : null}
           </CardContent>
         </Card>
+      ) : (
+        <div className="space-y-6">
+          {/* Active Connections List */}
+          <div className="grid gap-4">
+            {connections.map((c) => (
+              <ConnectionItem key={c.id} connection={c} onRemove={onRemove} />
+            ))}
+          </div>
+
+          {/* Security Footer */}
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-neutral-100 bg-neutral-50/50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-neutral-900">
+                  Your data is encrypted
+                </p>
+                <p className="text-[10px] text-neutral-500">
+                  Only you can see your portfolio details.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-tighter">
+              Powered by <span className="text-neutral-900">Plaid</span>
+            </div>
+          </div>
+        </div>
       )}
     </Page>
   );

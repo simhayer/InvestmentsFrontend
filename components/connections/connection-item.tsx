@@ -1,25 +1,27 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import * as React from "react";
 import {
   RefreshCcw,
   AlertTriangle,
   Trash2,
   Power,
   CheckCircle2,
+  Calendar,
+  History,
 } from "lucide-react";
-import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { Connection, ConnectionStatus } from "@/types/connection";
 
 /* ---------------- utils ---------------- */
 
 function formatWhen(d: string | Date | null | undefined) {
-  if (!d) return "NA";
+  if (!d) return "Never";
   const date = typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(date.getTime())) return "NA";
 
-  // Try a compact “time ago” for recent timestamps, otherwise locale date+time
   const now = Date.now();
   const diffMs = now - date.getTime();
   const minute = 60_000;
@@ -28,130 +30,96 @@ function formatWhen(d: string | Date | null | undefined) {
 
   if (diffMs < day) {
     if (diffMs < minute) return "just now";
-    if (diffMs < hour) return `${Math.floor(diffMs / minute)} min ago`;
-    return `${Math.floor(diffMs / hour)} hr ago`;
+    if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
+    return `${Math.floor(diffMs / hour)}h ago`;
   }
-  return date.toLocaleString(undefined, {
-    year: "numeric",
+  return date.toLocaleDateString(undefined, {
     month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
+    day: "numeric",
   });
 }
 
-function statusBadge(status: ConnectionStatus) {
-  switch (status) {
-    case "connected":
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-          title="Connection is active"
-        >
-          <span className="inline-flex items-center gap-1">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Connected
-          </span>
-        </Badge>
-      );
-    case "syncing":
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-blue-50 text-blue-700 ring-1 ring-blue-100"
-          title="Sync in progress"
-        >
-          <span className="inline-flex items-center gap-1">
-            <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
-            Syncing
-          </span>
-        </Badge>
-      );
-    case "error":
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-rose-50 text-rose-700 ring-1 ring-rose-100"
-          title="There was an issue with this connection"
-        >
-          <span className="inline-flex items-center gap-1">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            Error
-          </span>
-        </Badge>
-      );
-    case "disconnected":
-    default:
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200"
-          title="Connection is not active"
-        >
-          <span className="inline-flex items-center gap-1">
-            <Power className="h-3.5 w-3.5" />
-            Disconnected
-          </span>
-        </Badge>
-      );
-  }
-}
+function StatusBadge({ status }: { status: ConnectionStatus }) {
+  const configs = {
+    connected: {
+      className: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      icon: CheckCircle2,
+      label: "Healthy",
+    },
+    syncing: {
+      className: "bg-blue-50 text-blue-700 border-blue-100",
+      icon: RefreshCcw,
+      label: "Syncing",
+      iconClass: "animate-spin",
+    },
+    error: {
+      className: "bg-rose-50 text-rose-700 border-rose-100",
+      icon: AlertTriangle,
+      label: "Re-auth required",
+    },
+    disconnected: {
+      className: "bg-neutral-50 text-neutral-500 border-neutral-100",
+      icon: Power,
+      label: "Paused",
+    },
+  };
 
-function initialsFromName(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase();
-}
+  const config = configs[status] || configs.disconnected;
+  const Icon = config.icon;
 
-function guessDomainFromName(name: string): string | null {
-  if (!name) return null;
-  // Take first word only, lowercased
-  const firstWord = name.split(/\s+/)[0].toLowerCase();
-  return `${firstWord}.com`;
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight shadow-none transition-all",
+        config.className
+      )}
+    >
+      <Icon className={cn("mr-1 h-3 w-3", config.icon)} />
+      {config.label}
+    </Badge>
+  );
 }
 
 export function ProviderAvatar({ name }: { name: string }) {
   const [imgError, setImgError] = React.useState(false);
-
-  const initials = initialsFromName(name);
-  const guessedDomain = guessDomainFromName(name);
-  const logoUrl = guessedDomain
-    ? `https://logo.clearbit.com/${guessedDomain}`
-    : null;
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((s) => s[0])
+    .join("")
+    .toUpperCase();
+  const firstWord = name.split(/\s+/)[0].toLowerCase();
+  const logoUrl = `https://logo.clearbit.com/${firstWord}.com`;
 
   const hue = React.useMemo(() => {
     let h = 0;
-    for (let i = 0; i < name.length; i++) {
+    for (let i = 0; i < name.length; i++)
       h = (h * 31 + name.charCodeAt(i)) % 360;
-    }
     return h;
   }, [name]);
 
-  const bg = `hsl(${hue} 70% 95%)`;
-  const fg = `hsl(${hue} 45% 35%)`;
-
-  if (logoUrl && !imgError) {
+  if (!imgError) {
     return (
-      <img
-        src={logoUrl}
-        alt={`${name} logo`}
-        className="h-10 w-10 rounded-xl object-contain bg-white border"
-        onError={() => setImgError(true)}
-      />
+      <div className="relative h-12 w-12 shrink-0">
+        <img
+          src={logoUrl}
+          alt={name}
+          className="h-12 w-12 rounded-2xl border border-neutral-100 bg-white object-contain p-2 shadow-sm"
+          onError={() => setImgError(true)}
+        />
+        <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+      </div>
     );
   }
 
-  // fallback initials
   return (
     <div
-      className="h-10 w-10 rounded-xl flex items-center justify-center font-semibold"
-      style={{ backgroundColor: bg, color: fg }}
-      aria-hidden
+      className="h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm"
+      style={{
+        backgroundColor: `hsl(${hue} 70% 95%)`,
+        color: `hsl(${hue} 45% 35%)`,
+      }}
     >
       {initials}
     </div>
@@ -163,7 +131,7 @@ export function ProviderAvatar({ name }: { name: string }) {
 type ConnectionItemProps = {
   connection: Connection;
   onRemove?: (id: string) => void;
-  confirmRemove?: boolean; // default true
+  confirmRemove?: boolean;
 };
 
 export function ConnectionItem({
@@ -173,16 +141,17 @@ export function ConnectionItem({
 }: ConnectionItemProps) {
   const [removing, setRemoving] = React.useState(false);
 
-  const handleRemove = async () => {
+  const handleRemove = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!onRemove) return;
-    if (confirmRemove) {
-      const ok = window.confirm(
-        `Remove ${connection.institutionName}? You can link it again later.`
-      );
-      if (!ok) return;
-    }
+    if (
+      confirmRemove &&
+      !window.confirm(`Disconnect ${connection.institutionName}?`)
+    )
+      return;
+
+    setRemoving(true);
     try {
-      setRemoving(true);
       await onRemove(connection.id);
     } finally {
       setRemoving(false);
@@ -191,44 +160,50 @@ export function ConnectionItem({
 
   return (
     <div
-      key={connection.id}
-      className="group flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white/80 px-4 py-4 shadow-[0_14px_42px_-30px_rgba(15,23,42,0.45)] transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[0_18px_52px_-30px_rgba(15,23,42,0.45)] sm:flex-row sm:items-center sm:gap-4"
-      data-testid={`connection-${connection.id}`}
-      aria-busy={connection.status === "syncing" ? "true" : "false"}
+      className={cn(
+        "group relative flex flex-col gap-4 rounded-[24px] border border-neutral-200/60 bg-white p-5 transition-all duration-300",
+        "hover:border-neutral-300 hover:shadow-xl hover:shadow-neutral-200/40 sm:flex-row sm:items-center",
+        removing && "opacity-50 grayscale pointer-events-none"
+      )}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      {/* 1. Logo & Basic Info */}
+      <div className="flex items-center gap-4 min-w-0 flex-1">
         <ProviderAvatar name={connection.institutionName} />
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-semibold text-neutral-900 truncate">
-            {connection.institutionName}
-          </p>
-          <p className="text-xs text-neutral-600 flex flex-wrap items-center gap-1">
-            <span className="text-neutral-500">Added</span>
-            <span>{formatWhen(connection.createdAt ?? null)}</span>
-            <span className="text-neutral-300">•</span>
-            <span className="text-neutral-500">Last sync</span>
-            <span title={String(connection.syncedAt ?? "")}>
-              {formatWhen(connection.syncedAt ?? null)}
-            </span>
-          </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-bold text-neutral-900 truncate">
+              {connection.institutionName}
+            </h4>
+            <StatusBadge status={connection.status} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-neutral-400">
+              <Calendar className="h-3 w-3" />
+              <span>Linked {formatWhen(connection.createdAt)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-neutral-400">
+              <History className="h-3 w-3" />
+              <span>Synced {formatWhen(connection.syncedAt)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:ml-auto">
-        <div aria-live="polite">{statusBadge(connection.status)}</div>
-        {onRemove ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-rose-600 hover:text-rose-700"
-            onClick={handleRemove}
-            disabled={removing}
-            aria-label={`Remove ${connection.institutionName}`}
-          >
-            <Trash2 className="h-4 w-4" />
-            {removing ? "Removing..." : "Remove"}
-          </Button>
-        ) : null}
+      {/* 2. Actions */}
+      <div className="flex items-center justify-between border-t border-neutral-50 pt-3 sm:border-none sm:pt-0 sm:justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 rounded-xl text-neutral-400 hover:text-rose-600 hover:bg-rose-50/50"
+          onClick={handleRemove}
+          disabled={removing}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          <span className="text-xs font-bold uppercase tracking-wider">
+            Remove
+          </span>
+        </Button>
       </div>
     </div>
   );

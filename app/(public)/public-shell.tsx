@@ -23,7 +23,7 @@ export default function PublicShell({
           <Header />
 
           <main className="flex-1 min-w-0 overflow-x-hidden">
-            <div className="mx-auto w-full max-w-[1260px] px-4 sm:px-6 lg:px-10 xl:px-14 py-9 sm:py-10 lg:py-12">
+            <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6">
               {children}
             </div>
           </main>

@@ -1,414 +1,37 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import {
-  ArrowDownRight,
-  ArrowRight,
-  ArrowUpRight,
-  RefreshCw,
-  Sparkles,
-} from "lucide-react";
-
-import MarketOverviewGrid, {
-  type MarketIndexItem,
-} from "./market-overview-grid";
+import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useMarketOverview } from "@/hooks/use-market-overview";
 import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
-import { MarketSummary } from "./market-summary";
+import MarketOverviewGrid from "./market-overview-grid";
+import { TodayAiReadCard } from "./today-ai-read-card";
+import { ActionsSidebar } from "./actions-sidebar";
 
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import type { MarketSummaryData } from "@/types/market-summary";
-import type { ActionItem, PredictionAsset } from "@/types/portfolio-ai";
+import { Progress } from "@/components/ui/progress";
 import { Page } from "@/components/layout/Page";
+import { cn } from "@/lib/utils";
 
-const summarySurface =
-  "rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.45)]";
-const summaryMinHeight = "lg:min-h-[640px]";
-
+// Optimized utility for time formatting
 const formatAgo = (input?: Date | string | null) => {
   if (!input) return null;
   const ts =
     input instanceof Date ? input.getTime() : new Date(input).getTime();
-  if (Number.isNaN(ts)) return null;
+  if (isNaN(ts)) return null;
   const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
   if (mins < 1) return "Just now";
   if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  return `${hours}h ago`;
+  return `${Math.round(mins / 60)}h ago`;
 };
-
-const truncateText = (value: string | undefined, max = 110) => {
-  if (!value) return "";
-  if (value.length <= max) return value;
-  return `${value.slice(0, max).trimEnd()}...`;
-};
-
-const directionToneClass = (direction?: string | null) => {
-  const normalized = direction?.toLowerCase();
-  if (normalized === "up") {
-    return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
-  }
-  if (normalized === "down") {
-    return "bg-rose-50 text-rose-700 ring-1 ring-rose-100";
-  }
-  return "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200";
-};
-
-const directionIcon = (direction?: string | null) => {
-  const normalized = direction?.toLowerCase();
-  if (normalized === "up") return ArrowUpRight;
-  if (normalized === "down") return ArrowDownRight;
-  return null;
-};
-
-const formatDirectionLabel = (direction?: string | null) => {
-  if (!direction) return "Neutral";
-  return `${direction.charAt(0).toUpperCase()}${direction.slice(1)}`;
-};
-
-const formatExpectedChange = (value?: number | null) => {
-  if (value == null || Number.isNaN(value)) return "—";
-  return `${Math.abs(value).toFixed(1)}%`;
-};
-
-type TodayAiReadCardProps = {
-  summary: MarketSummaryData | null;
-  loading: boolean;
-  error: string | null;
-  updatedAgo?: string | null;
-  onRetry: () => void;
-};
-
-function TodayAiReadCard({
-  summary,
-  loading,
-  error,
-  updatedAgo,
-  onRetry,
-}: TodayAiReadCardProps) {
-  if (loading) {
-    return (
-      <div
-        className={cn(
-          summarySurface,
-          summaryMinHeight,
-          "p-5 sm:p-6 lg:p-7 space-y-4"
-        )}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-24 rounded-full" />
-            <Skeleton className="h-7 w-48 rounded-full" />
-          </div>
-          <Skeleton className="h-8 w-24 rounded-full" />
-        </div>
-
-        <div className="grid gap-3">
-          {[...Array(3)].map((_, i) => (
-            <Card
-              key={i}
-              className="rounded-2xl border border-neutral-200/70 bg-white/80 shadow-sm"
-            >
-              <CardHeader className="pb-2">
-                <Skeleton className="h-5 w-3/4 rounded-full" />
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-full rounded-full" />
-                <Skeleton className="h-4 w-5/6 rounded-full" />
-                <Skeleton className="h-4 w-2/3 rounded-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div
-        className={cn(summarySurface, summaryMinHeight, "p-5 sm:p-6 lg:p-7")}
-      >
-        <Alert variant="destructive" className="rounded-2xl border-rose-200">
-          <AlertTitle>Something went wrong</AlertTitle>
-          <AlertDescription className="flex flex-col gap-2">
-            {error}
-            <Button
-              onClick={onRetry}
-              variant="secondary"
-              size="sm"
-              className="w-fit"
-            >
-              <RefreshCw className="mr-1 h-4 w-4" />
-              Try again
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (!summary) {
-    return (
-      <div
-        className={cn(
-          summarySurface,
-          summaryMinHeight,
-          "p-5 sm:p-6 lg:p-7 space-y-2"
-        )}
-      >
-        <h2 className="text-2xl font-semibold leading-tight text-neutral-900 sm:text-[22px]">
-          Today&apos;s AI read
-        </h2>
-        <p className="text-sm text-neutral-600">No summary available.</p>
-      </div>
-    );
-  }
-
-  return (
-    <MarketSummary
-      data={summary}
-      refreshing={loading}
-      updatedAgo={updatedAgo}
-    />
-  );
-}
-
-type AiStatusCardProps = {
-  updatedAgo?: string | null;
-};
-
-function AiStatusCard({ updatedAgo }: AiStatusCardProps) {
-  return (
-    <section className="space-y-4 rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5 shadow-[0_18px_44px_-32px_rgba(16,185,129,0.5)]">
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white ring-1 ring-emerald-100">
-          <Sparkles className="h-5 w-5 text-emerald-600" />
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-neutral-900">
-            AI read updated {updatedAgo ?? "just now"}
-          </p>
-          <p className="text-xs text-neutral-600">
-            Monitoring macro shifts, liquidity, and sector breadth for
-            today&apos;s session.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 text-xs text-emerald-800">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
-        Live signals running across top sectors and AI momentum.
-      </div>
-    </section>
-  );
-}
-
-type AiPredictionsActionsCardProps = {
-  predictions: PredictionAsset[];
-  actions: ActionItem[];
-  forecastWindow?: string | null;
-  loading: boolean;
-  error: string | null;
-};
-
-function AiPredictionsActionsCard({
-  predictions,
-  actions,
-  forecastWindow,
-  loading,
-  error,
-}: AiPredictionsActionsCardProps) {
-  const topPredictions = predictions.slice(0, 3);
-  const topActions = actions.slice(0, 2);
-  const hasContent = topPredictions.length > 0 || topActions.length > 0;
-  const authError =
-    error?.toLowerCase().includes("not authenticated") ||
-    error?.includes("401");
-
-  return (
-    <section className="space-y-4 rounded-3xl border border-neutral-200/80 bg-white px-5 py-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] sm:px-6 sm:py-6 lg:px-7 lg:py-7">
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-neutral-900">Predictions</h3>
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-2/3 rounded-full" />
-          <Skeleton className="h-12 w-full rounded-2xl" />
-          <Skeleton className="h-12 w-full rounded-2xl" />
-        </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50 px-3 py-3 text-xs text-neutral-600">
-          {authError
-            ? "Sign in to view AI predictions and actions."
-            : "Unable to load AI predictions and actions right now."}
-        </div>
-      ) : !hasContent ? (
-        <p className="text-sm text-neutral-600">
-          No AI predictions or actions available yet.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-[11px] text-neutral-500">
-              {forecastWindow ? (
-                <span className="text-[10px] text-neutral-400">
-                  Forecast window: {forecastWindow}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="space-y-3">
-              {topPredictions.length === 0 ? (
-                <p className="text-xs text-neutral-500">
-                  No predictions available yet.
-                </p>
-              ) : (
-                topPredictions.map((prediction) => {
-                  const Icon = directionIcon(prediction.expected_direction);
-                  const directionLabel = formatDirectionLabel(
-                    prediction.expected_direction
-                  );
-
-                  return (
-                    <div
-                      key={prediction.symbol}
-                      className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 space-y-1">
-                          <div className="text-sm font-semibold text-neutral-900">
-                            {prediction.symbol}
-                          </div>
-                          <p className="text-xs leading-relaxed text-neutral-600">
-                            {truncateText(prediction.rationale, 96)}
-                          </p>
-                        </div>
-
-                        <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                          <Badge
-                            variant="secondary"
-                            className={cn(
-                              "whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium",
-                              directionToneClass(prediction.expected_direction)
-                            )}
-                          >
-                            {Icon ? (
-                              <Icon className="mr-1 h-3.5 w-3.5 shrink-0" />
-                            ) : null}
-                            {directionLabel}{" "}
-                            {formatExpectedChange(
-                              prediction.expected_change_pct
-                            )}
-                          </Badge>
-
-                          <span className="text-[11px] text-neutral-500">
-                            Confidence{" "}
-                            {Math.round((prediction.confidence || 0) * 100)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          <div className="h-px bg-neutral-200/70" />
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-neutral-900">Actions</h3>
-          </div>
-
-          <div className="space-y-3">
-            {topActions.length === 0 ? (
-              <p className="text-xs text-neutral-500">
-                No actions suggested yet.
-              </p>
-            ) : (
-              topActions.map((action, idx) => (
-                <div
-                  key={`${action.title}-${idx}`}
-                  className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 px-3 py-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-neutral-900">
-                      {action.title}
-                    </span>
-                    <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-neutral-600 ring-1 ring-neutral-200">
-                      {action.category.replaceAll("_", " ")}
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-600">
-                    {truncateText(action.rationale, 90)}
-                  </p>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-neutral-600">
-                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                      Effort {action.effort}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                      Impact {action.impact}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 ring-1 ring-neutral-200">
-                      Urgency {action.urgency}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end">
-        <Link
-          href="/analytics"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 transition hover:text-neutral-900"
-        >
-          View full analytics
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-type IndexPulseProps = {
-  items: MarketIndexItem[];
-  loading: boolean;
-  error: string | null;
-  updatedAgo?: string | null;
-};
-
-function IndexPulse({ items, loading, error }: IndexPulseProps) {
-  return (
-    <section className="space-y-4 rounded-3xl border border-neutral-200/70 bg-white px-5 py-4 shadow-[0_18px_50px_-42px_rgba(15,23,42,0.35)] sm:px-6 sm:py-5 lg:px-7">
-      <MarketOverviewGrid
-        variant="strip"
-        items={items}
-        isLoading={loading}
-        error={error}
-      />
-    </section>
-  );
-}
 
 export default function MarketOverviewPage() {
   const {
     data,
     overviewLoading,
     overviewError,
-    overviewFetchedAt,
     fetchOverview,
     fetchMarketSummary,
     summary,
@@ -424,33 +47,35 @@ export default function MarketOverviewPage() {
     fetchMarketSummary();
   }, [fetchOverview, fetchMarketSummary]);
 
-  const items = data?.top_items || [];
-
   const aiUpdatedAgo = useMemo(
     () => formatAgo(summaryMeta?.updated_at),
     [summaryMeta?.updated_at]
   );
-
-  const overviewUpdatedAgo = useMemo(
-    () => formatAgo(overviewFetchedAt),
-    [overviewFetchedAt]
-  );
-
   const predictions = layers?.performance?.predictions?.assets ?? [];
-  const forecastWindow = layers?.performance?.predictions?.forecast_window;
   const actions = layers?.scenarios_rebalance?.actions ?? [];
 
   return (
-    <Page className="space-y-10">
-      <IndexPulse
-        items={items}
-        loading={overviewLoading}
-        error={overviewError}
-        updatedAgo={overviewUpdatedAgo}
-      />
+    <Page className="max-w-[1400px] mx-auto space-y-8">
+      {/* 1. TOP MARKET STRIP */}
+      <section>
+        <div className="mb-4 flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+            Market Pulse
+          </h2>
+          {overviewLoading && <Skeleton className="h-4 w-20" />}
+        </div>
+        <MarketOverviewGrid
+          variant="strip"
+          items={data?.top_items || []}
+          isLoading={overviewLoading}
+          error={overviewError}
+        />
+      </section>
 
-      <div className="grid grid-cols-12 items-start gap-6 lg:gap-8 xl:gap-10">
-        <div className="order-2 col-span-12 lg:order-1 lg:col-span-8">
+      {/* 2. MAIN CONTENT GRID */}
+      <div className="grid grid-cols-12 gap-6 lg:gap-10">
+        {/* LEFT COLUMN: AI READ */}
+        <div className="col-span-12 lg:col-span-8 space-y-6">
           <TodayAiReadCard
             summary={summary}
             loading={summaryLoading}
@@ -460,22 +85,106 @@ export default function MarketOverviewPage() {
           />
         </div>
 
-        <div className="contents lg:order-2 lg:col-span-4 lg:flex lg:flex-col lg:gap-6">
-          <div className="order-1 col-span-12 lg:order-1">
-            <AiStatusCard updatedAgo={aiUpdatedAgo} />
-          </div>
+        {/* RIGHT COLUMN: SIDEBAR */}
+        <aside className="col-span-12 lg:col-span-4 space-y-6">
+          <AiStatusCard updatedAgo={aiUpdatedAgo} />
 
-          <div className="order-3 col-span-12 lg:order-2">
-            <AiPredictionsActionsCard
-              predictions={predictions}
-              actions={actions}
-              forecastWindow={forecastWindow}
-              loading={aiLoading}
-              error={aiError}
-            />
+          <PredictionsSidebar
+            predictions={predictions}
+            loading={aiLoading}
+            error={aiError}
+            window={layers?.performance?.predictions?.forecast_window}
+          />
+
+          <ActionsSidebar actions={actions} loading={aiLoading} />
+        </aside>
+      </div>
+    </Page>
+  );
+}
+
+// --- Sub-components (AiStatusCard, etc.) ---
+
+function AiStatusCard({ updatedAgo }: { updatedAgo?: string | null }) {
+  return (
+    <div className="relative overflow-hidden rounded-[28px] border border-emerald-100 bg-emerald-50/40 p-5 shadow-sm">
+      <div className="relative z-10 flex items-start gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+          <Sparkles className="h-5 w-5" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-neutral-900 leading-none">
+            AI Signals Active
+          </p>
+          <p className="text-[11px] text-neutral-500 font-medium">
+            Updated {updatedAgo ?? "just now"}
+          </p>
+          <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-emerald-700 uppercase tracking-tight">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </span>
+            Real-time Monitoring
           </div>
         </div>
       </div>
-    </Page>
+    </div>
+  );
+}
+
+function PredictionsSidebar({ predictions, loading, error, window }: any) {
+  if (loading) return <Skeleton className="h-[300px] w-full rounded-[28px]" />;
+
+  return (
+    <div className="rounded-[28px] border border-neutral-200/80 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-neutral-900">
+            Top Predictions
+          </h3>
+          <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">
+            {window || "Short term"}
+          </p>
+        </div>
+        <Link
+          href="/analytics"
+          className="text-neutral-400 hover:text-neutral-900 transition-colors"
+        >
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      <div className="space-y-4">
+        {predictions.slice(0, 3).map((p: any) => (
+          <div key={p.symbol} className="group cursor-default">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-bold text-neutral-800 group-hover:text-black transition-colors">
+                {p.symbol}
+              </span>
+              <Badge
+                className={cn(
+                  "rounded-md text-[10px] px-1.5 py-0 border-none shadow-none",
+                  p.expected_direction === "up"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-rose-100 text-rose-700"
+                )}
+              >
+                {p.expected_direction === "up" ? "+" : "-"}
+                {p.expected_change_pct}%
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3">
+              <Progress
+                value={p.confidence * 100}
+                className="h-1 flex-1 bg-neutral-100"
+              />
+              <span className="text-[10px] font-bold text-neutral-400 w-8 text-right">
+                {Math.round(p.confidence * 100)}%
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

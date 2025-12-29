@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NProgressProvider } from "@/app/nprogress-provider";
 import { AuthProvider } from "@/lib/auth-provider";
 import { Suspense } from "react";
+import { inter } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "AI for Investments",
@@ -35,7 +36,9 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body
+        className={`${inter.variable} min-h-screen bg-background text-foreground antialiased`}
+      >
         <Suspense fallback={null}>
           <AuthProvider>
             <ThemeProvider

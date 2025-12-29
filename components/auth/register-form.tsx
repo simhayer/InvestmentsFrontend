@@ -2,14 +2,14 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { register as apiRegister } from "@/utils/authService";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -19,13 +19,13 @@ function isSafeRedirect(next: string | null) {
 }
 
 export function RegisterForm() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [inlineError, setInlineError] = React.useState<string | null>(null);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -34,31 +34,11 @@ export function RegisterForm() {
   const validate = () => {
     if (!name.trim()) return "Please enter your full name.";
     if (!email.trim()) return "Please enter your email.";
-    // simple email check; rely on server for authoritative validation
     if (!/^\S+@\S+\.\S+$/.test(email.trim()))
       return "Please enter a valid email.";
     if (password.length < 8) return "Password must be at least 8 characters.";
     if (password !== confirmPassword) return "Passwords do not match.";
     return null;
-  };
-
-  const handleRegisterSuccess = (autoLoggedIn: boolean) => {
-    toast({
-      title: autoLoggedIn ? "Welcome!" : "Registration successful!",
-      description: autoLoggedIn
-        ? "Your account has been created."
-        : "Please sign in to continue.",
-    });
-
-    const nextParam = searchParams.get("next");
-    const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
-
-    if (autoLoggedIn) {
-      router.replace(next);
-      router.refresh();
-    } else {
-      router.replace("/login");
-    }
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,24 +60,37 @@ export function RegisterForm() {
     setInlineError(null);
 
     try {
-      let response: any;
-      try {
-        //response = await apiRegister({ name: name.trim(), email: email.trim(), password });
-        response = await apiRegister(email.trim(), password);
-      } catch {
-        // Handle error
+      const res = await apiRegister(email.trim(), password);
+
+      // Supabase signUp:
+      // - If email confirmation is ON: res.data.session is often null.
+      // - If confirmation is OFF: res.data.session exists and user is signed in.
+      const session = res?.data?.session ?? null;
+
+      const nextParam = searchParams.get("next");
+      const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
+
+      if (session) {
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created.",
+        });
+
+        router.replace(next);
+        router.refresh();
+        return;
       }
 
-      const ok = response?.ok !== undefined ? Boolean(response.ok) : true; // assume 2xx if no explicit ok
-      const token: string | undefined =
-        response?.access_token || response?.token || undefined;
+      // Email confirm flow
+      toast({
+        title: "Check your email",
+        description:
+          "We sent you a verification link. Verify your email, then sign in.",
+      });
 
-      handleRegisterSuccess(Boolean(token) || ok);
+      router.replace("/login");
     } catch (err: any) {
-      const msg =
-        err?.message ||
-        err?.response?.data?.message ||
-        "Failed to create account. Please try again.";
+      const msg = err?.message ?? "Failed to create account. Please try again.";
       setInlineError(msg);
       toast({
         title: "Registration Failed",
@@ -111,58 +104,62 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="name"
+          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
+        >
+          Full Name
+        </Label>
         <Input
           id="name"
-          type="text"
-          autoComplete="name"
-          placeholder="Enter your full name"
+          placeholder="Warren Buffett"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="email"
+          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
+        >
+          Email
+        </Label>
         <Input
           id="email"
           type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="Enter your email"
+          placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="password"
+          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
+        >
+          Password
+        </Label>
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
-            autoComplete="new-password"
-            placeholder="Create a password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
             disabled={isLoading}
-            aria-invalid={!!inlineError}
-            className="pr-10"
+            className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="absolute inset-y-0 right-0 px-3 grid place-items-center text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={-1}
+            className="absolute inset-y-0 right-0 px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -171,35 +168,41 @@ export function RegisterForm() {
             )}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Use at least 8 characters. Consider mixing letters, numbers, and
-          symbols.
-        </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
+      {/* Confirm Password - Optional: Only show if password length > 0 to keep UI clean */}
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="confirmPassword"
+          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
+        >
+          Confirm Password
+        </Label>
         <Input
           id="confirmPassword"
           type={showPassword ? "text" : "password"}
-          autoComplete="new-password"
-          placeholder="Confirm your password"
+          placeholder="••••••••"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
+          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
-      {inlineError && (
-        <p role="alert" className="text-sm text-destructive">
-          {inlineError}
-        </p>
-      )}
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Creating account..." : "Create Account"}
+      <Button
+        type="submit"
+        size="lg"
+        className="h-12 w-full mt-2 rounded-xl bg-neutral-900 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg active:scale-[0.98]"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Creating account...
+          </div>
+        ) : (
+          "Create Account"
+        )}
       </Button>
     </form>
   );

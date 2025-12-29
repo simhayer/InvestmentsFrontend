@@ -1,4 +1,28 @@
+"use client";
+
 import React from "react";
+import {
+  Target,
+  BarChart4,
+  ShieldAlert,
+  Zap,
+  HelpCircle,
+  Info,
+  TrendingUp,
+  Compass,
+  ChevronRight,
+  BrainCircuit,
+} from "lucide-react";
+import {
+  Tabs,
+  TabList,
+  TabTrigger,
+  TabPanels,
+  TabPanel,
+} from "@/components/investment/tabs/tabs";
+import { cn } from "@/lib/utils";
+
+// ... [Keep your Type Definitions here] ...
 
 type CompanyProfile = {
   name: string;
@@ -121,797 +145,448 @@ const clampStyle: React.CSSProperties = {
   overflow: "hidden",
 };
 
-/**
- * Helper: extract first percentage (e.g. "+62%") from a string.
- */
-function extractFirstPercentage(text?: string): string | null {
-  if (!text) return null;
-  const match = text.match(/([-+]?\d+(\.\d+)?)%/);
-  return match ? `${match[1]}%` : null;
-}
+export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
+  stock,
+}) => {
+  const { company_profile, thesis, explainability } = stock;
 
-/**
- * Helper: extract a money figure like "$51.2 billion" from a string.
- */
-function extractFirstMoneyFigure(text?: string): string | null {
-  if (!text) return null;
-  const match = text.match(/\$[\d,.]+\s*\w+/);
-  return match ? match[0] : null;
-}
+  const sentimentTone =
+    stock.sentiment_snapshot.overall_sentiment === "bearish"
+      ? "negative"
+      : stock.sentiment_snapshot.overall_sentiment === "bullish"
+      ? "positive"
+      : "neutral";
 
-const Pill: React.FC<
-  React.PropsWithChildren<{
-    tone?: "neutral" | "accent" | "positive" | "negative";
-  }>
-> = ({ children, tone = "neutral" }) => {
-  const base =
-    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold";
-  const toneMap = {
-    neutral: "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-200",
-    accent: "bg-neutral-900 text-white shadow-sm shadow-neutral-900/15",
-    positive: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
-    negative: "bg-rose-50 text-rose-700 ring-1 ring-rose-100",
-  } as const;
+  return (
+    <div className="w-full bg-white border border-neutral-200 rounded-[32px] overflow-hidden shadow-sm">
+      {/* 1. HEADER SECTION (Always Visible) */}
+      <header className="p-8 bg-neutral-900 text-white">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+          <div className="space-y-4 max-w-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500 rounded-lg">
+                <BrainCircuit className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300">
+                AI Intelligence Report
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {company_profile.name}{" "}
+              <span className="text-white/40 font-light">Analysis</span>
+            </h1>
+            <p className="text-neutral-400 text-sm leading-relaxed italic">
+              "{thesis.base_case}"
+            </p>
+          </div>
 
-  return <span className={`${base} ${toneMap[tone]}`}>{children}</span>;
+          <div className="flex flex-wrap gap-2">
+            <Pill tone={sentimentTone}>
+              Sentiment: {stock.sentiment_snapshot.overall_sentiment}
+            </Pill>
+            <Pill tone="accent">Horizon: {thesis.typical_time_horizon}</Pill>
+          </div>
+        </div>
+
+        {/* Confidence Progress Bar */}
+        <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
+          <div className="flex-1">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
+              <span>Overall AI Confidence</span>
+              <span>
+                {Math.round(explainability.confidence_overall * 100)}%
+              </span>
+            </div>
+            <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-400 transition-all duration-1000"
+                style={{ width: `${explainability.confidence_overall * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. TABBED NAVIGATION */}
+      <Tabs defaultValue="summary">
+        <TabList className="px-4 py-2 bg-neutral-50/50 border-b border-neutral-100 rounded-none ring-0">
+          <TabTrigger value="summary" className="gap-2">
+            <Target className="h-3.5 w-3.5" /> Summary
+          </TabTrigger>
+          <TabTrigger value="operations" className="gap-2">
+            <BarChart4 className="h-3.5 w-3.5" /> Operations
+          </TabTrigger>
+          <TabTrigger value="thesis" className="gap-2">
+            <Zap className="h-3.5 w-3.5" /> Thesis & Scenarios
+          </TabTrigger>
+          <TabTrigger value="risks" className="gap-2">
+            <ShieldAlert className="h-3.5 w-3.5" /> Risks & FAQ
+          </TabTrigger>
+        </TabList>
+
+        <TabPanels className="p-8">
+          {/* TAB 1: EXECUTIVE SUMMARY */}
+          <TabPanel
+            value="summary"
+            className="space-y-8 animate-in fade-in slide-in-from-bottom-2"
+          >
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <MetricCard label="Sector" value={company_profile.sector} />
+              <MetricCard label="Country" value={company_profile.country} />
+              <MetricCard
+                label="Primary Moat"
+                value={company_profile.moat_and_competitive_advantages
+                  .split(" ")
+                  .slice(0, 2)
+                  .join(" ")}
+                hint="Key advantage"
+              />
+              <MetricCard
+                label="Capital"
+                value={company_profile.capital_intensity}
+              />
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-4">
+                <SectionHeader eyebrow="Business Model" title="The Mechanics" />
+                <p className="text-neutral-600 text-sm leading-relaxed bg-neutral-50 p-6 rounded-2xl border border-neutral-100">
+                  {company_profile.business_model}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <SectionHeader
+                  eyebrow="Intelligence Basis"
+                  title="Confidence Levels"
+                />
+                <div className="space-y-3">
+                  {Object.entries(explainability.section_confidence).map(
+                    ([section, value]) => (
+                      <ConfidenceRow
+                        key={section}
+                        label={section}
+                        value={value}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* TAB 2: OPERATIONS */}
+          <TabPanel value="operations" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <DetailBox
+                title="Financial Trends"
+                items={[
+                  {
+                    label: "Top Line",
+                    content:
+                      stock.financial_and_operating_summary.top_line_trend,
+                  },
+                  {
+                    label: "Profitability",
+                    content:
+                      stock.financial_and_operating_summary.profitability_trend,
+                  },
+                  {
+                    label: "Health",
+                    content:
+                      stock.financial_and_operating_summary
+                        .balance_sheet_health,
+                  },
+                ]}
+              />
+              <DetailBox
+                title="Competitive Stance"
+                items={[
+                  {
+                    label: "Peers",
+                    content: stock.competitive_positioning.peer_set.join(", "),
+                  },
+                  {
+                    label: "Positioning",
+                    content: stock.competitive_positioning.position_vs_peers,
+                  },
+                ]}
+              />
+            </div>
+          </TabPanel>
+
+          {/* TAB 3: THESIS & SCENARIOS */}
+          <TabPanel value="thesis" className="space-y-8">
+            <div className="grid md:grid-cols-3 gap-4">
+              <ScenarioCard
+                tone="bull"
+                title="Bull Case"
+                body={thesis.bull_case}
+                probability={stock.scenarios.probabilities.bull}
+              />
+              <ScenarioCard
+                tone="base"
+                title="Base Case"
+                body={thesis.base_case}
+                probability={stock.scenarios.probabilities.base}
+              />
+              <ScenarioCard
+                tone="bear"
+                title="Bear Case"
+                body={thesis.bear_case}
+                probability={stock.scenarios.probabilities.bear}
+              />
+            </div>
+            <div className="bg-neutral-900 rounded-[24px] p-6 text-white">
+              <h4 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-4">
+                Sentiment Drivers
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                {stock.sentiment_snapshot.drivers.map((d) => (
+                  <div
+                    key={d.theme}
+                    className="bg-white/5 border border-white/10 p-4 rounded-xl"
+                  >
+                    <span className="text-indigo-400 font-bold text-xs">
+                      {d.theme}
+                    </span>
+                    <p className="text-sm text-neutral-300 mt-1">
+                      {d.commentary}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabPanel>
+
+          {/* TAB 4: RISKS & FAQ */}
+          <TabPanel value="risks" className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <SectionHeader
+                eyebrow="Risk Assessment"
+                title="Critical Watchpoints"
+              />
+              {stock.risks.map((r) => (
+                <div
+                  key={r.risk}
+                  className="p-4 bg-rose-50/50 border border-rose-100 rounded-xl space-y-2"
+                >
+                  <div className="font-bold text-rose-900 text-sm flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4" /> {r.risk}
+                  </div>
+                  <p className="text-xs text-rose-800/80 leading-relaxed">
+                    {r.why_it_matters}
+                  </p>
+                  <div className="text-[10px] font-bold text-rose-600 uppercase">
+                    Monitor: {r.how_to_monitor}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-4">
+              <SectionHeader eyebrow="Common Questions" title="AI FAQ" />
+              {stock.faq.map((f) => (
+                <details
+                  key={f.question}
+                  className="group border-b border-neutral-100 pb-3"
+                >
+                  <summary className="list-none font-bold text-sm cursor-pointer flex justify-between items-center py-2 hover:text-indigo-600 transition-colors">
+                    {f.question}
+                    <ChevronRight className="h-4 w-4 group-open:rotate-90 transition-transform" />
+                  </summary>
+                  <p className="text-sm text-neutral-500 pl-2 border-l-2 border-neutral-100 mt-2">
+                    {f.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    </div>
+  );
 };
 
-const SectionHeader: React.FC<{
-  eyebrow: string;
+// --- Small Helper Components ---
+
+const DetailBox = ({
+  title,
+  items,
+}: {
   title: string;
-  subtitle?: string;
-  rightSlot?: React.ReactNode;
-}> = ({ eyebrow, title, subtitle, rightSlot }) => (
-  <div className="flex flex-wrap items-start justify-between gap-3">
-    <div className="space-y-1">
-      <p className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-        {eyebrow}
-      </p>
-      <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
-      {subtitle ? (
-        <p className="text-sm leading-relaxed text-neutral-600">{subtitle}</p>
-      ) : null}
-    </div>
-    {rightSlot ? (
-      <div className="text-xs text-neutral-500">{rightSlot}</div>
-    ) : null}
-  </div>
-);
-
-const CollapsibleCard: React.FC<
-  React.PropsWithChildren<{
-    title: string;
-    preview?: React.ReactNode;
-    defaultOpen?: boolean;
-    className?: string;
-  }>
-> = ({ title, preview, children, defaultOpen, className }) => (
-  <details
-    open={defaultOpen}
-    className={`group overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm ${className ?? ""}`}
-  >
-    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4 sm:px-5">
-      <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
-          {title}
-        </p>
-        {preview ? (
-          <div className="text-sm text-neutral-600" style={clampStyle}>
-            {preview}
-          </div>
-        ) : null}
-      </div>
-      <span className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 transition group-open:rotate-45 group-open:bg-neutral-50">
-        +
-      </span>
-    </summary>
-    <div className="border-t border-neutral-100 bg-neutral-50/70 px-4 py-4 text-sm text-neutral-800 sm:px-5 sm:py-5">
-      <div className="space-y-3">{children}</div>
-    </div>
-  </details>
-);
-
-const MetricCard: React.FC<{
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-}> = ({ label, value, hint }) => (
-  <div className="rounded-2xl border border-neutral-200/90 bg-white px-4 py-3 shadow-sm">
-    <p className="text-[11px] uppercase tracking-[0.1em] text-neutral-500 font-semibold">
-      {label}
-    </p>
-    <div className="mt-1 flex items-baseline gap-2">
-      <span className="text-xl font-semibold text-neutral-900">{value}</span>
-      {hint ? <span className="text-xs text-neutral-500">{hint}</span> : null}
+  items: { label: string; content: string }[];
+}) => (
+  <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm">
+    <h4 className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-6 border-b border-neutral-50 pb-2">
+      {title}
+    </h4>
+    <div className="space-y-6">
+      {items.map((i) => (
+        <div key={i.label} className="space-y-1">
+          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter">
+            {i.label}
+          </p>
+          <p className="text-sm text-neutral-900 leading-relaxed">
+            {i.content}
+          </p>
+        </div>
+      ))}
     </div>
   </div>
 );
 
 const scenarioStyles = {
   bull: {
-    border: "border-emerald-200",
-    bg: "bg-emerald-50/80",
-    text: "text-emerald-800",
-    badge: "bg-white/80 text-emerald-700",
+    border: "border-emerald-100",
+    bg: "bg-emerald-50/30",
+    text: "text-emerald-700",
     fill: "bg-emerald-500",
-    body: "text-emerald-900",
   },
   base: {
     border: "border-neutral-200",
-    bg: "bg-white",
-    text: "text-neutral-800",
-    badge: "bg-neutral-100 text-neutral-800",
-    fill: "bg-neutral-800",
-    body: "text-neutral-800",
+    bg: "bg-neutral-50/30",
+    text: "text-neutral-700",
+    fill: "bg-neutral-900",
   },
   bear: {
-    border: "border-rose-200",
-    bg: "bg-rose-50/90",
-    text: "text-rose-800",
-    badge: "bg-white/80 text-rose-700",
+    border: "border-rose-100",
+    bg: "bg-rose-50/30",
+    text: "text-rose-700",
     fill: "bg-rose-500",
-    body: "text-rose-900",
   },
 } as const;
 
-const ScenarioCard: React.FC<{
+const ScenarioCard = ({
+  tone,
+  title,
+  body,
+  probability,
+}: {
   tone: "bull" | "base" | "bear";
   title: string;
   body: string;
   probability?: number;
-  horizon?: string;
-}> = ({ tone, title, body, probability, horizon }) => {
-  const style = scenarioStyles[tone];
-  const pct =
-    typeof probability === "number"
-      ? Math.max(0, Math.min(Math.round(probability * 100), 100))
-      : null;
+}) => {
+  const s = scenarioStyles[tone];
+  const pct = probability ? Math.round(probability * 100) : 0;
 
   return (
     <div
-      className={`rounded-2xl border ${style.border} ${style.bg} p-4 shadow-sm`}
+      className={cn(
+        "rounded-2xl border p-5 space-y-3 shadow-sm transition-all hover:shadow-md",
+        s.border,
+        s.bg
+      )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div
-          className={`text-xs font-semibold uppercase tracking-[0.12em] ${style.text}`}
+      <div className="flex items-center justify-between">
+        <span
+          className={cn(
+            "text-[10px] font-black uppercase tracking-widest",
+            s.text
+          )}
         >
           {title}
-        </div>
-        {pct != null ? (
-          <span
-            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${style.badge}`}
-          >
-            {pct}%
-          </span>
-        ) : null}
+        </span>
+        <span className={cn("text-xs font-bold", s.text)}>{pct}% Prob.</span>
       </div>
-      {horizon ? (
-        <p className="mt-1 text-[11px] text-neutral-600">Horizon {horizon}</p>
-      ) : null}
-      <p className={`mt-2 text-sm leading-relaxed ${style.body}`}>{body}</p>
-      {pct != null ? (
-        <div className="mt-3 h-1.5 rounded-full bg-neutral-100">
-          <span
-            className={`block h-full rounded-full ${style.fill}`}
+
+      <p className="text-sm leading-relaxed text-neutral-900 font-medium">
+        {body}
+      </p>
+
+      <div className="pt-2">
+        <div className="h-1 w-full bg-neutral-200/50 rounded-full overflow-hidden">
+          <div
+            className={cn("h-full transition-all duration-700", s.fill)}
             style={{ width: `${pct}%` }}
           />
         </div>
-      ) : null}
-    </div>
-  );
-};
-
-const ConfidenceRow: React.FC<{ label: string; value: number }> = ({
-  label,
-  value,
-}) => {
-  const pct = Math.max(0, Math.min(Math.round(value * 100), 100));
-  return (
-    <div className="space-y-1 rounded-xl border border-neutral-200 bg-white px-3 py-2">
-      <div className="flex items-center justify-between text-xs text-neutral-600">
-        <span className="font-semibold text-neutral-800">
-          {label.replace(/_/g, " ")}
-        </span>
-        <span className="font-semibold text-neutral-900">{pct}%</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-neutral-100">
-        <span
-          className="block h-full rounded-full bg-neutral-800"
-          style={{ width: `${pct}%` }}
-        />
       </div>
     </div>
   );
 };
 
-export const StockAnalysisCard: React.FC<StockAnalysisCardProps> = ({
-  stock,
+const SectionHeader = ({
+  eyebrow,
+  title,
+}: {
+  eyebrow: string;
+  title: string;
+}) => (
+  <div className="space-y-1 mb-4">
+    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600/70">
+      {eyebrow}
+    </p>
+    <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+      {title}
+    </h3>
+  </div>
+);
+
+const Pill = ({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "accent" | "positive" | "negative";
 }) => {
-  const { company_profile, financial_and_operating_summary, thesis } = stock;
-
-  const revenueGrowth = extractFirstPercentage(
-    financial_and_operating_summary.top_line_trend
-  );
-  const profitGrowth = extractFirstPercentage(
-    financial_and_operating_summary.profitability_trend
-  );
-  const dataCenterRev = extractFirstMoneyFigure(
-    financial_and_operating_summary.top_line_trend
-  );
-  const horizon = thesis?.typical_time_horizon ?? "—";
-  const sentiment = stock.sentiment_snapshot?.overall_sentiment ?? "—";
-  const sentimentTone =
-    sentiment === "bearish"
-      ? "negative"
-      : sentiment === "bullish"
-      ? "positive"
-      : "neutral";
-
-  const probabilities = stock.scenarios?.probabilities ?? {
-    bull: 0.3,
-    base: 0.5,
-    bear: 0.2,
+  const variants = {
+    neutral: "bg-neutral-100 text-neutral-600 border-neutral-200",
+    accent: "bg-indigo-500 text-white border-indigo-400",
+    positive: "bg-emerald-500 text-white border-emerald-400",
+    negative: "bg-rose-500 text-white border-rose-400",
   };
 
-  const formatProb = (val: number | undefined) =>
-    typeof val === "number" ? `${Math.round(val * 100)}%` : "—";
-  const quickTakeaway =
-    thesis?.base_case ?? financial_and_operating_summary.top_line_trend;
-  const previewProducts = company_profile.key_products_services
-    .slice(0, 3)
-    .join(" • ");
-  const previewDrivers = company_profile.revenue_drivers
-    .slice(0, 3)
-    .join(" • ");
-
   return (
-    <div className="mx-auto w-full max-w-[1260px] space-y-6 font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]">
-      {/* Hero */}
-      <div className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)]">
-        <div className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 px-6 py-7 text-white sm:px-8 sm:py-8">
-          <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr] lg:items-start">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-white/70">
-                  Symbol analysis
-                </p>
-                <Pill tone="accent">AI-generated insight</Pill>
-              </div>
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-[32px]">
-                    {stock.symbol} — {company_profile.name}
-                  </h1>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Pill tone="accent">{company_profile.sector}</Pill>
-                  <Pill tone="neutral">{company_profile.industry}</Pill>
-                  <Pill tone="neutral">{company_profile.country}</Pill>
-                  <Pill tone={sentimentTone}>Sentiment: {sentiment}</Pill>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-white/70">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15">
-                  Time horizon {horizon}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15">
-                  Base probability {formatProb(probabilities.base)}
-                </span>
-              </div>
-            </div>
+    <span
+      className={cn(
+        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm",
+        variants[tone]
+      )}
+    >
+      {children}
+    </span>
+  );
+};
 
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-inner">
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-white/70">
-                    Time horizon
-                  </p>
-                  <p className="mt-1 text-lg font-semibold capitalize">
-                    {horizon}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-inner">
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-white/70">
-                    Base probability
-                  </p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {formatProb(probabilities.base)}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-inner">
-                <p className="text-[11px] uppercase tracking-[0.1em] text-white/70">
-                  Quick takeaway
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-white/90">
-                  {quickTakeaway}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+const MetricCard = ({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) => (
+  <div className="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm group hover:border-indigo-200 transition-all">
+    <p className="text-[9px] font-black text-neutral-400 uppercase tracking-widest mb-1 group-hover:text-indigo-500 transition-colors">
+      {label}
+    </p>
+    <div className="flex items-baseline gap-2">
+      <span className="text-sm font-bold text-neutral-900 tracking-tight">
+        {value}
+      </span>
+      {hint && (
+        <span className="text-[10px] text-neutral-400 font-medium italic">
+          {hint}
+        </span>
+      )}
+    </div>
+  </div>
+);
+
+const ConfidenceRow = ({ label, value }: { label: string; value: number }) => {
+  const pct = Math.max(0, Math.min(Math.round(value * 100), 100));
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[10px] font-bold text-neutral-500 uppercase">
+        <span>{label.replace(/_/g, " ")}</span>
+        <span className="text-neutral-900">{pct}%</span>
       </div>
-
-      {/* Quick snapshot */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-5 sm:px-7 sm:py-6">
-        <SectionHeader
-          eyebrow="Quick snapshot"
-          title="Key metrics at a glance"
-          rightSlot={<span>High-level momentum checks</span>}
+      <div className="h-1 rounded-full bg-neutral-100 overflow-hidden">
+        <div
+          className="h-full bg-indigo-500 transition-all duration-500"
+          style={{ width: `${pct}%` }}
         />
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="Revenue growth" value={revenueGrowth ?? "—"} />
-          <MetricCard label="Profit growth" value={profitGrowth ?? "—"} />
-          <MetricCard label="Data center key metric" value={dataCenterRev ?? "—"} hint="Last noted" />
-          <MetricCard label="Time horizon" value={<span className="capitalize">{horizon}</span>} />
-        </div>
-      </section>
-
-      {/* Business & Operations */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-6 sm:px-7 sm:py-7">
-        <SectionHeader
-          eyebrow="Business & Operations"
-          title="How the company runs and makes money"
-          subtitle="Concise previews with full detail on expand"
-        />
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <CollapsibleCard
-            title="Company profile"
-            preview={company_profile.business_model}
-            defaultOpen
-          >
-            <p className="leading-relaxed">{company_profile.business_model}</p>
-            <div className="flex flex-wrap gap-2">
-              <Pill tone="neutral">Sector: {company_profile.sector}</Pill>
-              <Pill tone="neutral">Industry: {company_profile.industry}</Pill>
-              <Pill tone="neutral">Country: {company_profile.country}</Pill>
-            </div>
-          </CollapsibleCard>
-
-          <CollapsibleCard
-            title="Financial & operating summary"
-            preview={financial_and_operating_summary.top_line_trend}
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Top line trend
-                </p>
-                <p className="leading-relaxed">
-                  {financial_and_operating_summary.top_line_trend}
-                </p>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Profitability trend
-                </p>
-                <p className="leading-relaxed">
-                  {financial_and_operating_summary.profitability_trend}
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Balance sheet health
-                </p>
-                <p className="leading-relaxed">
-                  {financial_and_operating_summary.balance_sheet_health}
-                </p>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Cash flow & capex
-                </p>
-                <p className="leading-relaxed">
-                  {financial_and_operating_summary.cash_flow_and_capex}
-                </p>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Capital allocation
-                </p>
-                <p className="leading-relaxed">
-                  {financial_and_operating_summary.capital_allocation}
-                </p>
-              </div>
-            </div>
-          </CollapsibleCard>
-
-          <CollapsibleCard
-            title="Key products & services"
-            preview={previewProducts}
-          >
-            <ul className="list-disc list-inside space-y-1 text-neutral-800">
-              {company_profile.key_products_services.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </CollapsibleCard>
-
-          <CollapsibleCard title="Revenue drivers" preview={previewDrivers}>
-            <ul className="list-disc list-inside space-y-1 text-neutral-800">
-              {company_profile.revenue_drivers.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </CollapsibleCard>
-        </div>
-      </section>
-
-      {/* Moat, Structure & Positioning */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-6 sm:px-7 sm:py-7">
-        <SectionHeader
-          eyebrow="Moat, Structure & Positioning"
-          title="Durability, cyclicality, and peer context"
-        />
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <CollapsibleCard
-            title="Moat"
-            preview={company_profile.moat_and_competitive_advantages}
-          >
-            <p className="leading-relaxed">
-              {company_profile.moat_and_competitive_advantages}
-            </p>
-          </CollapsibleCard>
-          <CollapsibleCard
-            title="Cyclicality"
-            preview={company_profile.cyclicality}
-          >
-            <p className="leading-relaxed">{company_profile.cyclicality}</p>
-          </CollapsibleCard>
-          <CollapsibleCard
-            title="Capital intensity"
-            preview={company_profile.capital_intensity}
-          >
-            <p className="leading-relaxed">
-              {company_profile.capital_intensity}
-            </p>
-          </CollapsibleCard>
-
-          <CollapsibleCard
-            title="Competitive positioning"
-            preview={stock.competitive_positioning.position_vs_peers}
-            defaultOpen
-            className="lg:col-span-2"
-          >
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                Peer set
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {stock.competitive_positioning.peer_set.map((peer) => (
-                  <Pill key={peer} tone="neutral">
-                    {peer}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                Position vs peers
-              </p>
-              <p className="leading-relaxed">
-                {stock.competitive_positioning.position_vs_peers}
-              </p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Structural tailwinds
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-neutral-800">
-                  {stock.competitive_positioning.structural_tailwinds.map(
-                    (item) => (
-                      <li key={item}>{item}</li>
-                    )
-                  )}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Structural headwinds
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-neutral-800">
-                  {stock.competitive_positioning.structural_headwinds.map(
-                    (item) => (
-                      <li key={item}>{item}</li>
-                    )
-                  )}
-                </ul>
-              </div>
-            </div>
-          </CollapsibleCard>
-
-          <CollapsibleCard
-            title="Recent developments"
-            preview={stock.recent_developments[0]?.headline}
-            className="lg:col-span-3"
-          >
-            <div className="space-y-3">
-              {stock.recent_developments.map((news) => (
-                <article
-                  key={news.headline}
-                  className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <a
-                      href={news.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-semibold text-neutral-900 underline-offset-4 hover:underline"
-                    >
-                      {news.headline}
-                    </a>
-                    <span className="text-xs text-neutral-500">
-                      {news.source} • {news.date}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-700">
-                    {news.summary}
-                  </p>
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1 text-[11px] font-semibold text-neutral-700 ring-1 ring-neutral-200">
-                    <span className="h-2 w-2 rounded-full bg-neutral-400" />
-                    Impact: {news.impact}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </CollapsibleCard>
-        </div>
-      </section>
-
-      {/* Sentiment & Thesis */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-gradient-to-br from-indigo-50 via-white to-emerald-50 shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-6 sm:px-7 sm:py-7">
-        <SectionHeader
-          eyebrow="Sentiment & AI Thesis"
-          title="Tone in the market plus bull / base / bear narratives"
-          subtitle="Core AI read-out; scenarios match the probability cards below"
-        />
-        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Pill tone={sentimentTone}>{sentiment}</Pill>
-              <span className="text-xs text-neutral-600">
-                Sentiment snapshot
-              </span>
-            </div>
-            <div className="mt-3 space-y-2">
-              {stock.sentiment_snapshot.drivers.map((driver) => (
-                <div
-                  key={driver.theme}
-                  className="rounded-xl border border-neutral-200 bg-neutral-50/80 p-3"
-                >
-                  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-600">
-                    {driver.theme} ({driver.tone})
-                  </div>
-                  <p className="text-sm leading-relaxed text-neutral-800">
-                    {driver.commentary}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                Sources considered
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {stock.sentiment_snapshot.sources_considered.map((source) => (
-                  <Pill key={source} tone="neutral">
-                    {source}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-3">
-            <div className="grid gap-3 md:grid-cols-3">
-              <ScenarioCard
-                tone="bull"
-                title="Bull case"
-                body={stock.thesis.bull_case}
-                horizon={horizon}
-              />
-              <ScenarioCard
-                tone="base"
-                title="Base case"
-                body={stock.thesis.base_case}
-                horizon={horizon}
-              />
-              <ScenarioCard
-                tone="bear"
-                title="Bear case"
-                body={stock.thesis.bear_case}
-                horizon={horizon}
-              />
-            </div>
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                Key drivers
-              </p>
-              <ul className="mt-2 list-disc list-inside space-y-1 text-neutral-800">
-                {stock.thesis.key_drivers.map((driver) => (
-                  <li key={driver}>{driver}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Risk, Scenarios & Valuation */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-6 sm:px-7 sm:py-7">
-        <SectionHeader
-          eyebrow="Risks, Scenarios & Valuation"
-          title="Watch-outs, weighted scenarios, and valuation framing"
-        />
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                Risks
-              </p>
-              <div className="mt-2 space-y-3">
-                {stock.risks.map((risk) => (
-                  <div
-                    key={risk.risk}
-                    className="rounded-xl border border-amber-100 bg-amber-50/70 p-3"
-                  >
-                    <div className="text-xs font-semibold uppercase tracking-[0.1em] text-amber-800">
-                      {risk.risk}
-                    </div>
-                    <p className="text-sm leading-relaxed text-neutral-800">
-                      <span className="font-semibold">Why it matters:</span>{" "}
-                      {risk.why_it_matters}
-                    </p>
-                    <p className="text-xs text-neutral-700">
-                      <span className="font-semibold">Monitor:</span>{" "}
-                      {risk.how_to_monitor}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Scenarios & probabilities
-                </p>
-                <span className="text-[11px] text-neutral-500">
-                  Likelihood-weighted narratives
-                </span>
-              </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <ScenarioCard
-                  tone="bull"
-                  title="Bull"
-                  body={stock.scenarios.bull}
-                  probability={probabilities.bull}
-                />
-                <ScenarioCard
-                  tone="base"
-                  title="Base"
-                  body={stock.scenarios.base}
-                  probability={probabilities.base}
-                />
-                <ScenarioCard
-                  tone="bear"
-                  title="Bear"
-                  body={stock.scenarios.bear}
-                  probability={probabilities.bear}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <CollapsibleCard
-              title="Valuation context"
-              preview={stock.valuation_context.relative_positioning}
-              defaultOpen
-            >
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Relative positioning
-                </p>
-                <p className="leading-relaxed">
-                  {stock.valuation_context.relative_positioning}
-                </p>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Key multiples mentioned
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {stock.valuation_context.key_multiples_mentioned.map((m) => (
-                    <Pill key={m} tone="neutral">
-                      {m}
-                    </Pill>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                  Valuation narrative
-                </p>
-                <p className="leading-relaxed">
-                  {stock.valuation_context.valuation_narrative}
-                </p>
-              </div>
-            </CollapsibleCard>
-
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-                FAQ
-              </p>
-              <div className="mt-3 space-y-2">
-                {stock.faq.map((faq) => (
-                  <details
-                    key={faq.question}
-                    className="group rounded-xl border border-neutral-200 bg-neutral-50/80 px-3 py-2"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-neutral-900">
-                      {faq.question}
-                      <span className="text-lg font-normal text-neutral-500 transition group-open:rotate-45">
-                        +
-                      </span>
-                    </summary>
-                    <p className="mt-2 text-sm leading-relaxed text-neutral-700">
-                      {faq.answer}
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Explainability & Confidence */}
-      <section className="rounded-3xl border border-neutral-200/80 bg-white shadow-[0_22px_60px_-38px_rgba(15,23,42,0.35)] px-5 py-6 sm:px-7 sm:py-7">
-        <SectionHeader
-          eyebrow="Explainability & Confidence"
-          title="Assumptions, constraints, and conviction levels"
-        />
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-              Assumptions
-            </p>
-            <ul className="mt-2 list-disc list-inside space-y-1 text-neutral-800">
-              {stock.explainability.assumptions.map((a) => (
-                <li key={a}>{a}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">
-              Limitations
-            </p>
-            <ul className="mt-2 list-disc list-inside space-y-1 text-neutral-800">
-              {stock.explainability.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {Object.entries(stock.explainability.section_confidence).map(
-            ([section, value]) => (
-              <ConfidenceRow key={section} label={section} value={value} />
-            )
-          )}
-        </div>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm">
-          Overall confidence {formatProb(stock.explainability.confidence_overall)}
-        </div>
-      </section>
-
-      {/* Disclaimer */}
-      <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4 text-[11px] leading-relaxed text-neutral-600">
-        {stock.disclaimer}
       </div>
     </div>
   );

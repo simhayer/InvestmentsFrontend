@@ -417,8 +417,7 @@ function AppTourOverlay({
               aria-modal="true"
               aria-label={`${step.title} (${index + 1} of ${steps.length})`}
               className={cn(
-                "relative max-w-[380px] rounded-2xl border border-neutral-200 bg-white px-5 py-5 text-left shadow-[0_24px_70px_-34px_rgba(15,23,42,0.45)]",
-                "font-['Futura_PT_Book',_Futura,_sans-serif]"
+                "relative max-w-[380px] rounded-2xl border border-neutral-200 bg-white px-5 py-5 text-left shadow-[0_24px_70px_-34px_rgba(15,23,42,0.45)]"
               )}
               style={{
                 top: coords.top,

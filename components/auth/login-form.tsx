@@ -38,12 +38,14 @@ export function LoginForm() {
     e.preventDefault();
     if (isLoading) return;
 
+    const safeEmail = email.trim();
+
     setIsLoading(true);
     setInlineError(null);
 
     try {
-      // 1) Supabase login
-      const result = await login(email.trim(), password);
+      // 1) Supabase login (via your helper)
+      const result = await login(safeEmail, password);
       if (!result?.ok) {
         throw new Error("Invalid email or password. Please try again.");
       }
@@ -83,10 +85,7 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
       <div className="space-y-2.5">
-        <Label
-          htmlFor="email"
-          className='text-sm font-medium text-neutral-700 font-["Futura_PT_Demi",_Futura,_sans-serif]'
-        >
+        <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
           Email
         </Label>
         <Input
@@ -98,15 +97,15 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={isLoading}
-          aria-invalid={!!inlineError}
-          className="h-11 rounded-lg border-neutral-200 bg-white/90 text-base focus-visible:ring-neutral-900/70"
+          aria-invalid={inlineError ? true : false}
+          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
 
       <div className="space-y-2.5">
         <Label
           htmlFor="password"
-          className='text-sm font-medium text-neutral-700 font-["Futura_PT_Demi",_Futura,_sans-serif]'
+          className="text-sm font-medium text-neutral-700"
         >
           Password
         </Label>
@@ -120,15 +119,14 @@ export function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            aria-invalid={!!inlineError}
-            className="h-11 rounded-lg border-neutral-200 bg-white/90 pr-10 text-base focus-visible:ring-neutral-900/70"
+            aria-invalid={inlineError ? true : false}
+            className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
             className="absolute inset-y-0 right-0 grid place-items-center px-3 text-muted-foreground transition hover:text-foreground"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={-1}
           >
             {showPassword ? (
               <EyeOff className="h-4 w-4" />
@@ -141,7 +139,7 @@ export function LoginForm() {
         <div className="flex items-center justify-end text-sm">
           <Link
             href="/forget-password"
-            className='font-medium text-neutral-800 underline-offset-4 hover:text-neutral-950 hover:underline font-["Futura_PT_Demi",_Futura,_sans-serif]'
+            className="font-medium text-neutral-800 underline-offset-4 hover:text-neutral-950 hover:underline"
           >
             Forgot password?
           </Link>
@@ -157,10 +155,17 @@ export function LoginForm() {
       <Button
         type="submit"
         size="lg"
-        className='w-full rounded-lg text-base font-["Futura_PT_Demi",_Futura,_sans-serif]'
+        className="h-12 w-full rounded-xl bg-neutral-900 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg active:scale-[0.98]"
         disabled={isLoading}
       >
-        {isLoading ? "Signing in..." : "Sign In"}
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Signing in...
+          </div>
+        ) : (
+          "Sign In"
+        )}
       </Button>
     </form>
   );

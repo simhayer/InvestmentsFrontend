@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { RegisterForm } from "@/components/auth/register-form";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,134 +13,124 @@ import {
 } from "@/components/ui/card";
 import { ArrowUpRight, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
 
-const futuraSignInFontClasses =
-  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
-
 export default function RegisterPage() {
   return (
-    <div className="relative isolate overflow-hidden bg-neutral-50">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(16,185,129,0.10),transparent_38%),radial-gradient(circle_at_82%_6%,rgba(59,130,246,0.08),transparent_34%)]" />
-      <div className="relative mx-auto flex min-h-[calc(100vh-4.5rem)] items-center px-3 py-8 sm:px-4 sm:py-12 md:px-6 lg:px-8 lg:py-16">
-        <div
-          className={[
-            "grid w-full max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 mx-auto",
-            futuraSignInFontClasses,
-          ].join(" ")}
-        >
+    <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+      {/* Background Polish - Matches Login */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-white to-white" />
+
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
           {/* Left column: brand + benefits */}
-          <div className="order-1 space-y-8 lg:order-1">
+          <div className="order-1 space-y-8">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/90 shadow-[0_16px_45px_-30px_rgba(15,23,42,0.65)] ring-1 ring-neutral-200/80">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-neutral-200">
                 <Image
                   src="/placeholder-logo.svg"
-                  alt="AI Investing logo"
+                  alt="Logo"
                   width={28}
                   height={28}
                   className="h-7 w-7"
-                  priority
                 />
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg">
                 AI for investments
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-3 w-3 text-indigo-400" />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h1 className='text-3xl leading-tight text-neutral-900 sm:text-4xl font-["Futura_PT_Demi",_Futura,_sans-serif]'>
-                Create your AI investing account.
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:leading-[1.1]">
+                Smart tracking. <br />
+                <span className="text-indigo-600">Pure clarity.</span>
               </h1>
-              <p className="max-w-xl text-base text-neutral-600 sm:text-lg">
-                Link your existing brokerages and get AI-powered insights on risk, diversification, and opportunities—all in a calm, read-only experience.
+              <p className="max-w-md text-lg text-neutral-500 leading-relaxed">
+                Connect your brokerages for an AI-powered view of your risk and
+                opportunities. Read-only, secure, and calm.
               </p>
             </div>
 
-            <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.60)] backdrop-blur motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-4 motion-reduce:animate-none">
-                <div className="flex items-center justify-between text-sm text-neutral-700">
-                  <span className='inline-flex items-center gap-2 font-medium text-neutral-800 font-["Futura_PT_Demi",_Futura,_sans-serif]'>
-                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    Bank-grade security
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Security Benefit Card */}
+              <div className="rounded-3xl border border-neutral-200/60 bg-white/80 backdrop-blur-sm p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-neutral-800 uppercase tracking-wider">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    Security
                   </span>
-                  <Badge variant="secondary" className="rounded-full text-[11px]">
-                    Read-only
+                  <Badge
+                    variant="secondary"
+                    className="bg-neutral-100 text-[10px] font-bold uppercase italic"
+                  >
+                    Read Only
                   </Badge>
                 </div>
-                <ul className="mt-3 space-y-3 text-sm text-neutral-700">
-                  <li className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-100">
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center ring-1 ring-emerald-100">
                       <LockKeyhole className="h-4 w-4 text-emerald-600" />
-                    </span>
-                    <div>
-                      <div className="font-medium text-neutral-800">Read-only connections</div>
-                      <p className="text-xs text-neutral-600">No trading permissions—just secure data sync.</p>
                     </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 ring-1 ring-neutral-200/70">
-                      <ShieldCheck className="h-4 w-4 text-neutral-700" />
-                    </span>
                     <div>
-                      <div className="font-medium text-neutral-800">Bank-grade encryption</div>
-                      <p className="text-xs text-neutral-600">Protected credentials with layered controls.</p>
+                      <p className="text-sm font-bold text-neutral-900">
+                        Encrypted Sync
+                      </p>
+                      <p className="text-[11px] text-neutral-500">
+                        Bank-grade data protection.
+                      </p>
                     </div>
-                  </li>
-                </ul>
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-neutral-200/80 bg-white/85 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.60)] backdrop-blur motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-6 motion-reduce:animate-none">
-                <div className='flex items-center justify-between gap-2 text-sm font-medium text-neutral-800 font-["Futura_PT_Demi",_Futura,_sans-serif]'>
-                  <span className="inline-flex items-center gap-2">
+              {/* Insights Benefit Card */}
+              <div className="rounded-3xl border border-neutral-200/60 bg-white/80 backdrop-blur-sm p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-neutral-800 uppercase tracking-wider">
                     <Sparkles className="h-4 w-4 text-amber-500" />
-                    Plain-English insights
+                    Insights
                   </span>
-                  <ArrowUpRight className="h-4 w-4 text-neutral-400" />
+                  <ArrowUpRight className="h-4 w-4 text-neutral-300" />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-                  Clarity on what matters, delivered with calm visual cues.
-                </p>
-                <ul className="mt-4 space-y-2 text-sm text-neutral-700">
-                  <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    Diversification, risk, and concentration at a glance.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-neutral-300" />
-                    Signals on what changed since your last login.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-neutral-300" />
-                    Transparent language, no jargon.
-                  </li>
-                </ul>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-neutral-600">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Risk Analysis
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-neutral-600">
+                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                    Portfolio Health
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-neutral-600">
+                    <div className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
+                    Sector Diversification
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right column: sign-up card */}
-          <div className="order-2 w-full max-w-xl justify-self-center lg:order-2 lg:justify-self-end motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 motion-reduce:animate-none">
-            <Card className="rounded-2xl border-neutral-200/80 bg-white/95 shadow-[0_28px_80px_-52px_rgba(15,23,42,0.70)]">
-              <CardHeader className="space-y-2 pb-2">
-                <CardTitle className='text-3xl font-semibold text-neutral-900 font-["Futura_PT_Demi",_Futura,_sans-serif]'>
+          {/* Right column: Form */}
+          <div className="order-2 lg:order-2">
+            <Card className="rounded-[2.5rem] border-neutral-200/60 bg-white p-4 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] lg:p-6">
+              <CardHeader className="space-y-1 pb-6 text-center lg:text-left">
+                <CardTitle className="text-2xl font-bold text-neutral-900">
                   Create account
                 </CardTitle>
-                <CardDescription className="text-base text-neutral-600">
-                  Join your AI portfolio tracker and stay ahead with read-only insights.
+                <CardDescription className="text-sm font-medium text-neutral-500">
+                  Join 10,000+ investors using AI clarity.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-4">
+
+              <CardContent>
                 <RegisterForm />
-                <div className="text-center text-sm text-neutral-600">
+                <div className="mt-8 text-center text-xs font-medium text-neutral-500">
                   Already have an account?{" "}
-                  <Button
-                    asChild
-                    variant="link"
-                    className='px-1 font-["Futura_PT_Demi",_Futura,_sans-serif]'
+                  <Link
+                    href="/login"
+                    className="text-indigo-600 font-bold hover:underline transition-all"
                   >
-                    <Link href="/login" className="font-semibold">
-                      Sign in
-                    </Link>
-                  </Button>
+                    Sign in here
+                  </Link>
                 </div>
               </CardContent>
             </Card>

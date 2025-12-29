@@ -1,98 +1,65 @@
-// components/sidebar-public.tsx
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
-import { X } from "lucide-react";
-import darkLogo from "@/public/logo-full-dark-nobg.png";
-import lightLogo from "@/public/logo-full-light-nobg.png";
+import { X, Sparkles, ArrowRight } from "lucide-react";
 import { NAV_ITEMS_PUBLIC } from "../navigation/nav-items";
+import { cn } from "@/lib/utils";
 
-type Props = {
+export default function SidebarPublic({
+  sidebarOpen,
+  setSidebarOpen,
+}: {
   sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-};
-
-const futuraSignInFontClasses =
-  "font-['Futura_PT_Book',_Futura,_sans-serif] [&_.font-semibold]:font-['Futura_PT_Demi',_Futura,_sans-serif] [&_.font-bold]:font-['Futura_PT_Demi',_Futura,_sans-serif]";
-
-function cx(...c: Array<string | false | null | undefined>) {
-  return c.filter(Boolean).join(" ");
-}
-
-export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
+  setSidebarOpen: (o: boolean) => void;
+}) {
   const pathname = usePathname();
-  const loginHref = `/login?next=${encodeURIComponent(
-    pathname || "/dashboard"
-  )}`;
 
-  const NavList = ({ onItemClick }: { onItemClick?: () => void }) => (
-    <nav className="p-4 space-y-2">
-      <button className="mb-6 flex items-center gap-2">
-        {/* Show in light mode */}
-        <Image
-          src={darkLogo}
-          alt="Logo"
-          height={32}
-          priority
-          className="block dark:hidden"
-        />
-        {/* Show in dark mode */}
-        <Image
-          src={lightLogo}
-          alt="Logo"
-          height={32}
-          priority
-          className="hidden dark:block"
-        />
-      </button>
+  const SidebarContent = (
+    <div className="flex flex-col h-full bg-neutral-50 dark:bg-neutral-950 px-4 py-8">
+      <div className="flex items-center gap-2 px-2 mb-10">
+        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-serif font-bold italic">
+          W
+        </div>
+        <span className="font-bold tracking-tight">WealthAI</span>
+      </div>
 
-      {NAV_ITEMS_PUBLIC.map((item) => {
-        const active =
-          pathname === item.href || pathname?.startsWith(item.href + "/");
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => onItemClick?.()}
-            className={cx(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.name}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
+      <nav className="flex-1 space-y-1">
+        {NAV_ITEMS_PUBLIC.map((item) => {
+          const active = pathname === item.href;
+          const IconComponent = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all",
+                active
+                  ? "bg-white dark:bg-neutral-900 text-indigo-600 shadow-sm ring-1 ring-black/5"
+                  : "text-neutral-500 hover:text-neutral-900"
+              )}
+            >
+              {IconComponent && <IconComponent className="h-5 w-5" />}
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
 
-  const LoginBlock = ({ onAction }: { onAction?: () => void }) => (
-    <div className="mt-auto p-4 border-t border-border">
-      <div
-        className={[
-          "rounded-xl border p-3 text-sm bg-muted",
-          futuraSignInFontClasses,
-        ].join(" ")}
-      >
-        <div className="font-medium mb-1">Unlock your dashboard</div>
-        <p className="text-muted-foreground mb-2">
-          Sign in to access portfolio, analytics, and alerts.
+      {/* Upsell Card */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-indigo-600 p-6 text-white shadow-xl shadow-indigo-200 dark:shadow-none">
+        <Sparkles className="absolute -top-2 -right-2 h-16 w-16 opacity-20" />
+        <p className="relative z-10 text-sm font-bold">Ready to scale?</p>
+        <p className="relative z-10 mt-1 text-xs text-indigo-100 opacity-80">
+          Join 10k+ investors today.
         </p>
         <Link
-          href={loginHref}
-          onClick={() => onAction?.()}
-          className={[
-            "inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm bg-primary text-primary-foreground hover:opacity-90",
-            futuraSignInFontClasses,
-          ].join(" ")}
+          href="/register"
+          className="relative z-10 mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-white py-2 text-xs font-bold text-indigo-600 hover:bg-neutral-50 transition-colors"
         >
-          Sign in
+          Get Started <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
@@ -100,48 +67,28 @@ export default function SidebarPublic({ sidebarOpen, setSidebarOpen }: Props) {
 
   return (
     <>
-      {/* Mobile sidebar (overlay drawer) */}
       <div
-        className={cx(
-          "fixed inset-0 z-50 lg:hidden",
-          sidebarOpen ? "block" : "hidden"
+        className={cn(
+          "fixed inset-0 z-[60] lg:hidden transition-opacity",
+          sidebarOpen ? "visible opacity-100" : "invisible opacity-0"
         )}
       >
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-neutral-900/20 backdrop-blur-md"
           onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
         />
         <aside
-          className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col"
-          role="dialog"
-          aria-modal="true"
+          className={cn(
+            "absolute inset-y-0 left-0 w-80 transition-transform duration-300",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}
         >
-          <div className="flex h-16 items-center justify-between px-4">
-            <button
-              aria-label="Close sidebar"
-              className="inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <NavList onItemClick={() => setSidebarOpen(false)} />
-          <LoginBlock onAction={() => setSidebarOpen(false)} />
+          {SidebarContent}
         </aside>
       </div>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:block lg:w-64 lg:shrink-0">
-        <div className="fixed inset-y-0 left-0 w-64 bg-card border-r flex flex-col justify-between">
-          <div>
-            <NavList />
-          </div>
-          <div className="border-t">
-            <LoginBlock />
-          </div>
-        </div>
+      <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 border-r border-neutral-100 bg-neutral-50">
+        {SidebarContent}
       </aside>
     </>
   );

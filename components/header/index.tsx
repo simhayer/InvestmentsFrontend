@@ -37,7 +37,6 @@ import {
   NAV_ITEMS_PUBLIC,
   type NavItem,
 } from "../navigation/nav-items";
-import { useAppTour } from "@/components/tour/app-tour";
 import { logout } from "@/utils/authService";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +44,6 @@ export function Header() {
   const { user, refresh } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const { start: startTour } = useAppTour();
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
   const navItems: NavItem[] = user ? NAV_ITEMS_AUTHED : NAV_ITEMS_PUBLIC;
@@ -71,7 +69,7 @@ export function Header() {
                 W
               </div>
               <span className="hidden font-bold tracking-tight text-neutral-900 md:block">
-                WealthAI
+                WallStreetAI
               </span>
             </Link>
 
@@ -146,12 +144,6 @@ export function Header() {
                     className="rounded-lg gap-2 cursor-pointer"
                   >
                     <Settings className="h-4 w-4" /> Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => startTour()}
-                    className="rounded-lg gap-2 cursor-pointer text-indigo-600 font-medium"
-                  >
-                    <Sparkles className="h-4 w-4" /> Restart Tour
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="mx-1" />
                   <DropdownMenuItem

@@ -3,13 +3,20 @@
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
-import { ProtectedClientShell } from "./protected-client-shell";
+import { Header } from "@/components/header";
+import { AppTourProvider } from "@/components/tour/app-tour";
+import { cn } from "@/lib/utils";
+import { getOnboarding } from "@/utils/onboardingService";
 
 export function ProtectedGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoading, sessionReady, hasSession } = useAuth();
+  const { isLoading, sessionReady, hasSession } = useAuth();
 
+  const [gateReady, setGateReady] = React.useState(false);
+  const hideHeader = pathname.startsWith("/onboarding");
+
+  // Auth gate
   React.useEffect(() => {
     if (!sessionReady || isLoading) return;
     if (!hasSession) {
@@ -17,10 +24,65 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
     }
   }, [sessionReady, isLoading, hasSession, router, pathname]);
 
-  if (!sessionReady || isLoading || !hasSession) {
-    // You can return a loading spinner or null while checking auth status
+  // Onboarding gate
+  React.useEffect(() => {
+    if (!sessionReady || isLoading) return;
+    if (!hasSession) return;
+
+    let cancelled = false;
+
+    async function run() {
+      try {
+        setGateReady(false);
+
+        const data = await getOnboarding();
+        const completed = !!data.completed;
+        const isOnboardingRoute = pathname.startsWith("/onboarding");
+
+        if (!completed && !isOnboardingRoute) {
+          router.replace("/onboarding");
+          return;
+        }
+
+        if (completed && isOnboardingRoute) {
+          router.replace("/dashboard");
+          return;
+        }
+
+        if (!cancelled) setGateReady(true);
+      } catch {
+        // If onboarding fetch fails, do not brick the app
+        if (!cancelled) setGateReady(true);
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionReady, isLoading, hasSession, pathname, router]);
+
+  if (!sessionReady || isLoading || !hasSession || !gateReady) {
     return null;
   }
 
-  return <ProtectedClientShell>{children}</ProtectedClientShell>;
+  return (
+    <AppTourProvider>
+      <div
+        className={cn(
+          "min-h-screen w-full overflow-x-hidden",
+          "bg-[#f6f7f8] text-neutral-900"
+        )}
+      >
+        <div className="min-h-screen flex flex-col min-w-0">
+          {!hideHeader && <Header />}
+          <main className="flex-1 min-w-0 overflow-x-hidden">
+            <div className="mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </AppTourProvider>
+  );
 }

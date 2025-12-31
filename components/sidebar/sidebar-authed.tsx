@@ -38,7 +38,7 @@ export default function SidebarAuthed({
           W
         </div>
         <span className="font-bold tracking-tight text-neutral-900 dark:text-white">
-          WealthAI
+          WallStreetAI
         </span>
       </div>
 

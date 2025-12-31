@@ -76,9 +76,13 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
-                const active =
-                  pathname === item.href ||
-                  (item.href !== "/" && pathname?.startsWith(item.href));
+                const isExact = item.exact ?? false;
+
+                const active = isExact
+                  ? pathname === item.href
+                  : pathname === item.href ||
+                    pathname?.startsWith(item.href + "/");
+
                 return (
                   <Link
                     key={item.href}
@@ -155,7 +159,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <Link
                   href="/login"
                   className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
@@ -164,7 +168,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/register"
-                  className="hidden sm:block px-4 py-2 text-sm font-bold text-white bg-neutral-900 rounded-full hover:bg-neutral-800 transition-all"
+                  className="hidden sm:inline-flex px-4 py-2 text-sm font-bold text-white bg-neutral-900 rounded-full hover:bg-neutral-800 transition-all"
                 >
                   Get Started
                 </Link>

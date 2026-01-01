@@ -28,17 +28,24 @@ function toSec(t: string | number): number {
   return Number.isNaN(ms) ? NaN : Math.floor(ms / 1000);
 }
 
-export function useHistory(symbol: string, period: string, interval: string) {
+export function useHistory(
+  symbol: string,
+  period: string,
+  interval: string,
+  quoteSymbol?: string
+) {
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // simple in-memory cache per (symbol, period, interval)
   const cacheRef = useRef<Record<string, HistoryResponse>>({});
-  const key = `${symbol}|${period}|${interval}`;
+
+  const display = (symbol || "").trim();
+  const qSym = (quoteSymbol || "").trim();
+  const key = `${display}|${qSym}|${period}|${interval}`;
 
   useEffect(() => {
-    if (!symbol) return;
+    if (!display && !qSym) return;
     let cancelled = false;
 
     const cached = cacheRef.current[key];
@@ -47,20 +54,22 @@ export function useHistory(symbol: string, period: string, interval: string) {
     (async () => {
       try {
         if (!cached) setLoading(true);
+
+        const basePath = `/api/investment/history/${encodeURIComponent(
+          display || qSym
+        )}`;
+        const qs = new URLSearchParams({ period, interval });
+        if (qSym) qs.set("q", qSym);
+
         const h = await fetchJSON<HistoryResponse>(
-          apiUrl(
-            `/api/investment/history/${encodeURIComponent(
-              symbol
-            )}?period=${period}&interval=${interval}`
-          )
+          apiUrl(`${basePath}?${qs.toString()}`)
         );
 
-        // sanitize & sort ascending by time to satisfy lightweight-charts
         const pts: CandlePoint[] = (h.points ?? [])
           .map((p) => ({ ...p, t: toSec(p.t) }))
           .filter((p) => Number.isFinite(p.t as number))
           .sort((a, b) => (a.t as number) - (b.t as number))
-          .map((p) => ({ ...p, t: p.t as number })); // keep seconds
+          .map((p) => ({ ...p, t: p.t as number }));
 
         const sanitized: HistoryResponse = { ...h, points: pts };
         cacheRef.current[key] = sanitized;
@@ -75,26 +84,36 @@ export function useHistory(symbol: string, period: string, interval: string) {
     return () => {
       cancelled = true;
     };
-  }, [symbol, period, interval]);
+  }, [display, qSym, period, interval]);
 
   return { data, loading, error };
 }
 
-export function useQuote(symbol: string) {
+export function useQuote(symbol: string, quoteSymbol?: string) {
   const [data, setData] = useState<QuoteResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!symbol) return;
+    const display = (symbol || "").trim();
+    const qSym = (quoteSymbol || "").trim();
+    if (!display && !qSym) return;
+
     let cancelled = false;
+
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const q = await fetchJSON<QuoteResponse>(
-          apiUrl(`/api/investment/quote/${encodeURIComponent(symbol)}`)
-        );
+        const url = qSym
+          ? apiUrl(
+              `/api/investment/quote/${encodeURIComponent(
+                display || qSym
+              )}?q=${encodeURIComponent(qSym)}`
+            )
+          : apiUrl(`/api/investment/quote/${encodeURIComponent(display)}`);
+
+        const q = await fetchJSON<QuoteResponse>(url);
         if (!cancelled) setData(q);
       } catch (e: any) {
         if (!cancelled) setError(e.message || "Failed to load quote");
@@ -102,10 +121,11 @@ export function useQuote(symbol: string) {
         if (!cancelled) setLoading(false);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [symbol]);
+  }, [symbol, quoteSymbol]);
 
   return { data, loading, error };
 }

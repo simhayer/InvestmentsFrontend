@@ -272,19 +272,6 @@ export function Settings() {
                       <span className="capitalize">
                         {sub?.status ?? "free"}
                       </span>
-                      {sub?.cancel_at_period_end && (
-                        <>
-                          <span className="text-neutral-400"> • </span>
-                          <span className="text-neutral-500">
-                            Cancels on{" "}
-                            <span className="font-medium">
-                              {fmtDate(
-                                sub?.cancel_at || sub?.current_period_end
-                              )}
-                            </span>
-                          </span>
-                        </>
-                      )}
                     </p>
 
                     {sub?.status === "trialing" && fmtDate(sub.trial_end) ? (

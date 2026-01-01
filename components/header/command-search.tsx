@@ -94,7 +94,11 @@ export function CommandSearch() {
                 <CommandItem
                   key={r.symbol}
                   onSelect={() => {
-                    router.push(`/investment/${r.symbol}`);
+                    const params = new URLSearchParams();
+                    if (r.asset_type) params.set("type", r.asset_type);
+                    if (r.quote_symbol) params.set("q", r.quote_symbol);
+
+                    router.push(`/investment/${r.symbol}?${params.toString()}`);
                     setOpen(false);
                     setQuery("");
                   }}

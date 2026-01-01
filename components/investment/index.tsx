@@ -1,19 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Sparkles,
-  Activity,
-  Layers,
-  BarChart3,
-  TrendingUp,
-  Clock,
-  ChevronRight,
-  Globe,
-  ShieldCheck,
-  Info,
-  RefreshCcw,
-} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Sparkles, RefreshCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Card } from "@/components/ui/card";
@@ -42,11 +31,15 @@ import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);
-  const { data: quote } = useQuote(symbol);
+  const searchParams = useSearchParams();
+  const quoteSymbol = searchParams.get("q") ?? undefined;
+
+  const { data: quote } = useQuote(symbol, quoteSymbol);
   const { data: history, loading: loadingH } = useHistory(
     symbol,
     r.period,
-    r.interval
+    r.interval,
+    quoteSymbol
   );
   const {
     loading: aiLoading,

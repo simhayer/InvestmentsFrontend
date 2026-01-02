@@ -90,7 +90,7 @@ export function ProviderAvatar({ name }: { name: string }) {
     .join("")
     .toUpperCase();
   const firstWord = name.split(/\s+/)[0].toLowerCase();
-  const logoUrl = `https://logo.clearbit.com/${firstWord}.com`;
+  const logoUrl = `https://img.logo.dev/${firstWord}.com?token=pk_DWddSk6fRYe-yJ7z1BG3OA`;
 
   const hue = React.useMemo(() => {
     let h = 0;

@@ -16,6 +16,7 @@ import {
   CommandGroup,
 } from "@/components/ui/command";
 import { searchSymbols } from "@/lib/finnhub";
+import SymbolLogo from "../layout/SymbolLogo";
 
 export function CommandSearch() {
   const router = useRouter();
@@ -79,7 +80,7 @@ export function CommandSearch() {
       </PopoverAnchor>
       <PopoverContent
         sideOffset={8}
-        className="w-[var(--radix-popover-trigger-width)] p-0 shadow-2xl rounded-2xl overflow-hidden border-neutral-200"
+        className="w-[var(--radix-popover-trigger-width)] p-0 shadow-2xl rounded-2xl overflow-hidden border-neutral-200 z-50"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command shouldFilter={false}>
@@ -97,20 +98,34 @@ export function CommandSearch() {
                     const params = new URLSearchParams();
                     if (r.asset_type) params.set("type", r.asset_type);
                     if (r.quote_symbol) params.set("q", r.quote_symbol);
+                    const qs = params.toString();
+                    router.push(
+                      qs
+                        ? `/investment/${r.symbol}?${qs}`
+                        : `/investment/${r.symbol}`
+                    );
 
-                    router.push(`/investment/${r.symbol}?${params.toString()}`);
                     setOpen(false);
                     setQuery("");
                   }}
                   className="flex items-center justify-between px-4 py-3 cursor-pointer"
                 >
-                  <div className="flex flex-col">
-                    <span className="font-bold text-neutral-900">
-                      {r.symbol}
-                    </span>
-                    <span className="text-xs text-neutral-500 line-clamp-1">
-                      {r.description}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    {/* The reusable logo component */}
+                    <SymbolLogo
+                      symbol={r.symbol}
+                      className="h-8 w-8 rounded-md" // Slightly smaller and tighter corners for lists
+                      isCrypto={r.asset_type === "crypto"}
+                    />
+
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-neutral-900 leading-none mb-1">
+                        {r.symbol}
+                      </span>
+                      <span className="text-xs text-neutral-500 line-clamp-1">
+                        {r.description}
+                      </span>
+                    </div>
                   </div>
                   <div className="h-6 w-6 rounded-md bg-neutral-100 flex items-center justify-center">
                     <ChevronDown className="h-3 w-3 -rotate-90 text-neutral-400" />

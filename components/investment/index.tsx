@@ -28,11 +28,14 @@ import { NewsTab } from "./tabs/news-tab";
 
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
+import SymbolLogo from "../layout/SymbolLogo";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);
   const searchParams = useSearchParams();
   const quoteSymbol = searchParams.get("q") ?? undefined;
+  const assetType = searchParams.get("type");
+  const isCrypto = assetType === "crypto";
 
   const { data: quote } = useQuote(symbol, quoteSymbol);
   const { data: history, loading: loadingH } = useHistory(
@@ -59,9 +62,12 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             Live Market
           </div>
 
-          <h1 className="text-3xl font-black tracking-tighter text-neutral-900 leading-none">
-            {symbol}
-          </h1>
+          <div className="flex items-center gap-3 mb-1">
+            <SymbolLogo symbol={symbol} isCrypto={isCrypto} />
+            <h1 className="text-3xl font-black tracking-tighter text-neutral-900 leading-none">
+              {symbol}
+            </h1>
+          </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
             {quote?.name}
           </p>

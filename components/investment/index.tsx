@@ -33,9 +33,11 @@ import SymbolLogo from "@/components//layout/SymbolLogo";
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);
   const searchParams = useSearchParams();
-  const quoteSymbol = searchParams.get("q") ?? undefined;
   const assetType = searchParams.get("type");
   const isCrypto = assetType === "crypto";
+
+  const qParam = searchParams.get("q") ?? undefined;
+  const quoteSymbol = qParam ?? (isCrypto ? `${symbol}-USD` : undefined);
 
   const { data: quote } = useQuote(symbol, quoteSymbol);
   const { data: history, loading: loadingH } = useHistory(

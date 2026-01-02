@@ -21,7 +21,7 @@ import type { Holding } from "@/types/holding";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -31,15 +31,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fmtCurrency, fmtNumber } from "@/utils/format";
+import { fmtCurrency, fmtNumber, fmtPct } from "@/utils/format";
 import { Page } from "@/components/layout/Page";
 import SymbolLogo from "@/components/layout/SymbolLogo";
 
 /**
  * UTILS
  */
-const fmtPercent = (n: number | null | undefined) =>
-  n == null ? "—" : `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
 
 function toneFromPct(pct?: number | null) {
   if (pct == null) return "text-neutral-500 bg-neutral-50";
@@ -139,8 +137,15 @@ export function Holdings() {
     return { totalValue, totalPl, totalPlPct };
   }, [filteredHoldings]);
 
-  const handleRowClick = (symbol: string) =>
-    router.push(`/dashboard/symbol/${encodeURIComponent(symbol)}`);
+  const handleRowClick = (h: Holding) => {
+    const isCrypto = h.type === "cryptocurrency";
+    const params = new URLSearchParams();
+    params.set("type", isCrypto ? "crypto" : "stock");
+
+    router.push(
+      `/investment/${encodeURIComponent(h.symbol)}?${params.toString()}`
+    );
+  };
 
   return (
     <Page>
@@ -225,7 +230,7 @@ export function Holdings() {
                 ) : (
                   <ArrowDownRight className="h-4 w-4" />
                 )}
-                {fmtPercent(stats.totalPlPct)}
+                {fmtPct(stats.totalPlPct)}
               </div>
             </div>
           </div>
@@ -299,7 +304,7 @@ export function Holdings() {
                     return (
                       <tr
                         key={h.externalId ?? h.id ?? h.symbol}
-                        onClick={() => handleRowClick(h.symbol)}
+                        onClick={() => handleRowClick(h)}
                         className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
                       >
                         <td className="px-6 py-5">
@@ -346,7 +351,7 @@ export function Holdings() {
                                 toneFromPct(pl)
                               )}
                             >
-                              {fmtPercent(pl)}
+                              {fmtPct(pl)}
                             </Badge>
                             <span className="text-[9px] uppercase tracking-tighter font-bold text-neutral-400">
                               Total P/L

@@ -15,8 +15,7 @@ export default function SymbolLogo({
   className,
 }: SymbolLogoProps) {
   const [error, setError] = useState(false);
-  //   const TOKEN = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN!;
-  const TOKEN = "pk_DWddSk6fRYe-yJ7z1BG3OA";
+  const TOKEN = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN!;
 
   useEffect(() => {
     setError(false);
@@ -28,10 +27,6 @@ export default function SymbolLogo({
   const getUrl = () => {
     const s = normalizeSymbol(symbol);
     if (isCrypto) {
-      console.log("crypto logo url");
-      console.log(
-        `https://img.logo.dev/crypto/${s}?token=${TOKEN}&retina=true`
-      );
       return `https://img.logo.dev/crypto/${s}?token=${TOKEN}&retina=true`;
     }
     return `https://img.logo.dev/ticker/${s}?token=${TOKEN}&retina=true`;

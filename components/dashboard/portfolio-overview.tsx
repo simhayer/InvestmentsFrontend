@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { Page } from "@/components/layout/Page";
 import { StackedBar, KeyVal, TimeAgo } from "./_bits";
 import { AnalysisSummaryCard } from "./ai-summary-card";
+import { Provider } from "@radix-ui/react-toast";
+import ProviderAvatar from "../layout/ProviderAvatar";
 
 export function PortfolioOverview() {
   const [data, setData] = React.useState<PortfolioSummary | null>(null);
@@ -298,7 +300,8 @@ function ConnectionsCard({ connections, compact }: any) {
             className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-100 bg-neutral-50/50 p-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <Building2 className="h-4 w-4 text-neutral-400" />
+              {/* <Building2 className="h-4 w-4 text-neutral-400" /> */}
+              <ProviderAvatar name={c.institutionName} className="h-10 w-10" />
               <div className="truncate text-sm font-medium text-neutral-700">
                 {c.institutionName}
               </div>

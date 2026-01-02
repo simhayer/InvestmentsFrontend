@@ -50,8 +50,14 @@ export function TopHoldings({
   const visibleHoldings = sortedHoldings.slice(0, maxRows);
   const hasMoreHoldings = (holdings?.length ?? 0) > visibleHoldings.length;
 
-  const goToSymbol = (symbol: string) => {
-    router.push(`/dashboard/symbol/${encodeURIComponent(symbol)}`);
+  const goToSymbol = (h: Holding) => {
+    const isCrypto = h.type === "cryptocurrency";
+    const params = new URLSearchParams();
+    params.set("type", isCrypto ? "crypto" : "stock");
+
+    router.push(
+      `/investment/${encodeURIComponent(h.symbol)}?${params.toString()}`
+    );
   };
 
   const TableContent = (
@@ -75,7 +81,7 @@ export function TopHoldings({
               <button
                 key={holding.id ?? `${holding.symbol}-${idx}`}
                 type="button"
-                onClick={() => goToSymbol(holding.symbol)}
+                onClick={() => goToSymbol(holding)}
                 className="grid w-full grid-cols-[auto_1fr_100px] items-center gap-3 px-3 py-3 text-left transition hover:bg-neutral-50"
               >
                 {/* Logo */}

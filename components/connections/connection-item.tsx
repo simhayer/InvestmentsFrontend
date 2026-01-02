@@ -10,10 +10,14 @@ import {
   Calendar,
   History,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Connection, ConnectionStatus } from "@/types/connection";
+
+// ✅ shared avatar
+import ProviderAvatar from "@/components/layout/ProviderAvatar";
 
 /* ---------------- utils ---------------- */
 
@@ -33,6 +37,7 @@ function formatWhen(d: string | Date | null | undefined) {
     if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
     return `${Math.floor(diffMs / hour)}h ago`;
   }
+
   return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -81,51 +86,6 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
   );
 }
 
-export function ProviderAvatar({ name }: { name: string }) {
-  const [imgError, setImgError] = React.useState(false);
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join("")
-    .toUpperCase();
-  const firstWord = name.split(/\s+/)[0].toLowerCase();
-  const logoUrl = `https://img.logo.dev/${firstWord}.com?token=pk_DWddSk6fRYe-yJ7z1BG3OA`;
-
-  const hue = React.useMemo(() => {
-    let h = 0;
-    for (let i = 0; i < name.length; i++)
-      h = (h * 31 + name.charCodeAt(i)) % 360;
-    return h;
-  }, [name]);
-
-  if (!imgError) {
-    return (
-      <div className="relative h-12 w-12 shrink-0">
-        <img
-          src={logoUrl}
-          alt={name}
-          className="h-12 w-12 rounded-2xl border border-neutral-100 bg-white object-contain p-2 shadow-sm"
-          onError={() => setImgError(true)}
-        />
-        <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center font-bold text-sm shadow-sm"
-      style={{
-        backgroundColor: `hsl(${hue} 70% 95%)`,
-        color: `hsl(${hue} 45% 35%)`,
-      }}
-    >
-      {initials}
-    </div>
-  );
-}
-
 /* --------------- component --------------- */
 
 type ConnectionItemProps = {
@@ -144,6 +104,7 @@ export function ConnectionItem({
   const handleRemove = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!onRemove) return;
+
     if (
       confirmRemove &&
       !window.confirm(`Disconnect ${connection.institutionName}?`)
@@ -168,7 +129,11 @@ export function ConnectionItem({
     >
       {/* 1. Logo & Basic Info */}
       <div className="flex items-center gap-4 min-w-0 flex-1">
-        <ProviderAvatar name={connection.institutionName} />
+        <ProviderAvatar
+          name={connection.institutionName}
+          className="h-10 w-10 [&_.status-dot]:h-2 [&_.status-dot]:w-2"
+        />
+
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-bold text-neutral-900 truncate">

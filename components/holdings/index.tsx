@@ -33,6 +33,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtCurrency, fmtNumber } from "@/utils/format";
 import { Page } from "@/components/layout/Page";
+import SymbolLogo from "@/components/layout/SymbolLogo";
 
 /**
  * UTILS
@@ -303,9 +304,11 @@ export function Holdings() {
                       >
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-[10px] font-bold text-white shadow-sm transition-transform group-hover:scale-110">
-                              {h.symbol?.substring(0, 3)}
-                            </div>
+                            <SymbolLogo
+                              symbol={h.symbol}
+                              isCrypto={h.type === "cryptocurrency"}
+                              className="h-10 w-10 rounded-xl shadow-sm transition-transform group-hover:scale-110"
+                            />
                             <div className="min-w-0">
                               <div className="font-bold text-neutral-900 leading-none mb-1">
                                 {h.symbol}

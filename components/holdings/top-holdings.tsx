@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { fmtCurrency, fmtNumber } from "@/utils/format";
-import { cn } from "@/lib/utils";
+import SymbolLogo from "@/components/layout/SymbolLogo";
 
 interface Props {
   holdings: Holding[];
@@ -57,9 +57,8 @@ export function TopHoldings({
   const TableContent = (
     <div className="space-y-1">
       {/* Table Header */}
-      <div className="grid grid-cols-[1fr_80px_100px] gap-2 px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+      <div className="grid grid-cols-[1fr_100px] gap-2 px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
         <span>Asset</span>
-        <span className="text-right">Qty</span>
         <span className="text-right">Value</span>
       </div>
 
@@ -71,26 +70,32 @@ export function TopHoldings({
         <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-100 bg-white shadow-sm overflow-hidden">
           {visibleHoldings.map((holding, idx) => {
             const totalValue = getTotalValue(holding);
+
             return (
               <button
                 key={holding.id ?? `${holding.symbol}-${idx}`}
                 type="button"
                 onClick={() => goToSymbol(holding.symbol)}
-                className="grid w-full grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-3 text-left transition hover:bg-neutral-50"
+                className="grid w-full grid-cols-[auto_1fr_100px] items-center gap-3 px-3 py-3 text-left transition hover:bg-neutral-50"
               >
+                {/* Logo */}
+                <SymbolLogo
+                  symbol={holding.symbol}
+                  isCrypto={holding.type === "cryptocurrency"}
+                  className="h-8 w-8 rounded-lg"
+                />
+
+                {/* Asset info */}
                 <div className="min-w-0">
                   <div className="truncate text-sm font-bold text-neutral-900">
                     {holding.symbol}
                   </div>
                   <div className="truncate text-[11px] text-neutral-500">
-                    {holding.name || "Stock"}
+                    {holding.name || "Asset"}
                   </div>
                 </div>
 
-                <div className="text-right text-xs text-neutral-600">
-                  {fmtNumber(holding.quantity ?? 0)}
-                </div>
-
+                {/* Value */}
                 <div className="text-right text-sm font-semibold text-neutral-900">
                   {fmtCurrency(totalValue, currency)}
                 </div>
@@ -101,7 +106,6 @@ export function TopHoldings({
       )}
     </div>
   );
-
   // Layout for when used as a standalone card
   if (variant === "card") {
     return (

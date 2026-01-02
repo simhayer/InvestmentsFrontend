@@ -28,7 +28,7 @@ import { NewsTab } from "./tabs/news-tab";
 
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
-import SymbolLogo from "../layout/SymbolLogo";
+import SymbolLogo from "@/components//layout/SymbolLogo";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);

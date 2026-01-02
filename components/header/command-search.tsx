@@ -16,7 +16,7 @@ import {
   CommandGroup,
 } from "@/components/ui/command";
 import { searchSymbols } from "@/lib/finnhub";
-import SymbolLogo from "../layout/SymbolLogo";
+import SymbolLogo from "@/components/layout/SymbolLogo";
 
 export function CommandSearch() {
   const router = useRouter();

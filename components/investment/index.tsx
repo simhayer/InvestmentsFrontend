@@ -29,6 +29,7 @@ import { NewsTab } from "./tabs/news-tab";
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
 import SymbolLogo from "@/components//layout/SymbolLogo";
+import AnalyzePilot from "./analyze-pilot";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);
@@ -125,6 +126,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
 
       {/* MAIN VIEWPORT: Wide Insights */}
       <main className="flex-1 p-4 lg:p-8 space-y-8 max-w-[1200px]">
+        <AnalyzePilot symbol={symbol} />
         {/* 1. CHART AREA */}
         <section className="space-y-4">
           <div className="flex items-center justify-between px-2">

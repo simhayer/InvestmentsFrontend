@@ -10,7 +10,7 @@ import { authedFetch } from "@/utils/authService";
 
 export async function getAiInsightSymbol(symbol: string): Promise<string> {
   console.log("Fetching AI insight for symbol:", symbol);
-  const path = "/api/ai/analyze-symbol";
+  const path = "/api/v2/analyze-symbol/analyze/" + encodeURIComponent(symbol);
   try {
     const res = await authedFetch(path, {
       method: "POST",

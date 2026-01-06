@@ -146,15 +146,21 @@ export default function FinancialsTab({ symbol }: { symbol: string }) {
                   <>
                     <Tr
                       label="Operating CF"
-                      values={rows.map((r) => fmtCompact(r.operating_cash_flow))}
+                      values={rows.map((r) =>
+                        fmtCompact(r.operating_cash_flow)
+                      )}
                     />
                     <Tr
                       label="Investing CF"
-                      values={rows.map((r) => fmtCompact(r.investing_cash_flow))}
+                      values={rows.map((r) =>
+                        fmtCompact(r.investing_cash_flow)
+                      )}
                     />
                     <Tr
                       label="Financing CF"
-                      values={rows.map((r) => fmtCompact(r.financing_cash_flow))}
+                      values={rows.map((r) =>
+                        fmtCompact(r.financing_cash_flow)
+                      )}
                     />
                     <Tr
                       label="Free Cash Flow"

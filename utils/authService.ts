@@ -67,10 +67,7 @@ export async function authedFetch(path: string, init?: RequestInit) {
 
 /** Supabase handles reset emails. */
 export async function requestPasswordReset(email: string) {
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/reset-password`
-      : undefined;
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,

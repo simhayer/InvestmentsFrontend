@@ -44,7 +44,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
     symbol,
     r.period,
     r.interval,
-    quoteSymbol
+    quoteSymbol,
   );
   const {
     loading: aiLoading,
@@ -81,7 +81,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             <div
               className={cn(
                 "text-sm font-bold flex items-center gap-1 mt-0.5",
-                isPositive ? "text-emerald-600" : "text-rose-600"
+                isPositive ? "text-emerald-600" : "text-rose-600",
               )}
             >
               {isPositive ? "+" : ""}
@@ -140,7 +140,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                     "px-3 py-1 text-[10px] font-black rounded-lg transition-all",
                     r.label === p.label
                       ? "bg-neutral-900 text-white shadow-md"
-                      : "text-neutral-400 hover:bg-neutral-50"
+                      : "text-neutral-400 hover:bg-neutral-50",
                   )}
                 >
                   {p.label}
@@ -181,8 +181,8 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                   AI Deep Reasoning
                 </span>
               </div>
-              {/* This card now has full width to accommodate its internal tabs */}
-              <StockAnalysisCard stock={analysis} />
+              {/* Fix this type cast once structure is finalized */}
+              <StockAnalysisCard stock={analysis as any} />
             </motion.section>
           )}
         </AnimatePresence>
@@ -190,7 +190,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         {/* 3. CONTEXTUAL DATA TABS */}
         <section className="bg-white border border-neutral-200 rounded-[32px] overflow-hidden shadow-sm">
           <Tabs defaultValue="news">
-            <TabList className="bg-neutral-50/50 border-b border-neutral-100 p-2 min-h-[52px]">
+            <TabList className="bg-neutral-50/50 border-b border-neutral-100 p-2 min-h-[52px] rounded-[32px]">
               <TabTrigger
                 value="news"
                 className="px-6 py-2 text-[10px] font-black uppercase tracking-widest"

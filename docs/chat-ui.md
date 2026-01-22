@@ -6,12 +6,12 @@
 - "Clear chat" removes the stored session ID and resets the UI state.
 
 ## Streaming parsing
-- `POST /api/ai/chat/stream` is called with `Accept: text/event-stream`.
+- `POST /chat/stream` is called with `Accept: text/event-stream`.
 - Request body includes `{ message, session_id? }`.
 - The stream is read via `ReadableStream.getReader()` and decoded with `TextDecoder`.
 - Chunks are buffered, split on `\n\n`, and each event is parsed by `event:` + `data:` lines.
-- `delta` events append text to the assistant draft; `final` replaces it; `error` displays a banner.
-- If streaming fails, the UI falls back to `POST /api/ai/chat` and renders `answer`.
+- `meta` carries JSON `{ session_id }`; `delta` is plain text to append (no JSON parsing); `done` carries `{ status, response_ms }`; `error` carries `{ error }`.
+- If streaming fails, the UI falls back to `POST /chat` and renders `answer`.
 
 ## Local testing
 1) Start the frontend: `npm run dev`

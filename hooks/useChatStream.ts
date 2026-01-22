@@ -9,29 +9,38 @@ type UseChatStreamArgs = {
 
 type StreamEvent = {
   type: string;
-  payload: unknown;
+  data: string;
 };
 
 function parseEventChunk(chunk: string): StreamEvent | null {
   const lines = chunk.split("\n");
-  const eventLine = lines.find((line) => line.startsWith("event:"));
-  const dataLines = lines.filter((line) => line.startsWith("data:"));
+  let event = "delta";
+  const dataLines: string[] = [];
 
-  if (dataLines.length === 0) return null;
-
-  const event = eventLine ? eventLine.replace("event:", "").trim() : "delta";
-  const raw = dataLines
-    .map((line) => line.replace("data:", "").trim())
-    .join("\n");
-
-  let payload: any = null;
-  try {
-    payload = raw ? JSON.parse(raw) : null;
-  } catch {
-    payload = raw;
+  for (const line of lines) {
+    const cleanLine = line.endsWith("\r") ? line.slice(0, -1) : line;
+    if (cleanLine.startsWith("event:")) {
+      event = cleanLine.slice("event:".length).trim() || "delta";
+      continue;
+    }
+    if (cleanLine.startsWith("data:")) {
+      let data = cleanLine.slice("data:".length);
+      if (data.startsWith(" ")) data = data.slice(1);
+      dataLines.push(data);
+    }
   }
 
-  return { type: event, payload };
+  if (dataLines.length === 0) return null;
+  return { type: event, data: dataLines.join("\n") };
+}
+
+function safeParseJson(raw: string): any | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
@@ -226,61 +235,66 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             const event = parseEventChunk(part);
             if (!event) continue;
 
-            const payload = event.payload as any;
-            const text =
-              typeof payload === "string"
-                ? payload
-                : payload?.text || payload?.answer || payload?.message;
-
-            if (event.type === "meta" && payload?.session_id) {
-              setSessionId?.(payload.session_id);
-            }
-
-            if (
+            const isDelta =
               event.type === "delta" ||
               event.type === "message" ||
               event.type === "data" ||
-              event.type === "chunk"
-            ) {
-              if (text) {
-                hadDeltaRef.current = true;
-                enqueueTyping(text);
+              event.type === "chunk";
+
+            if (event.type === "meta") {
+              const meta = safeParseJson(event.data) as
+                | { session_id?: string }
+                | null;
+              if (meta?.session_id) {
+                setSessionId?.(meta.session_id);
               }
             }
 
-            if (event.type === "final") {
-              if (text) {
-                if (hadDeltaRef.current) {
-                  const combined =
-                    assistantTextRef.current + pendingTextRef.current;
-                  if (text.startsWith(combined)) {
-                    enqueueTyping(text.slice(combined.length));
-                  } else {
-                    await typeOutText(text);
-                  }
-                } else {
-                  await typeOutText(text);
-                }
+            if (isDelta) {
+              if (event.data.length > 0) {
+                hadDeltaRef.current = true;
+                enqueueTyping(event.data);
               }
+            }
+
+            if (event.type === "done") {
               done = true;
               break;
             }
 
             if (event.type === "error") {
-              setError(payload?.message || "Stream error");
+              const errorPayload = safeParseJson(event.data) as
+                | { error?: string; message?: string }
+                | null;
+              setError(errorPayload?.error || errorPayload?.message || "Stream error");
               done = true;
               break;
             }
 
-            if (
-              event.type !== "meta" &&
-              event.type !== "delta" &&
-              event.type !== "final" &&
-              event.type !== "error" &&
-              event.type !== "ping" &&
-              text
-            ) {
-              updateAssistant(assistantTextRef.current + text);
+            if (event.type === "final") {
+              const finalPayload = safeParseJson(event.data) as
+                | { text?: string; answer?: string; message?: string }
+                | null;
+              const finalText =
+                finalPayload?.text ||
+                finalPayload?.answer ||
+                finalPayload?.message ||
+                event.data;
+              if (finalText) {
+                if (hadDeltaRef.current) {
+                  const combined =
+                    assistantTextRef.current + pendingTextRef.current;
+                  if (finalText.startsWith(combined)) {
+                    enqueueTyping(finalText.slice(combined.length));
+                  } else {
+                    await typeOutText(finalText);
+                  }
+                } else {
+                  await typeOutText(finalText);
+                }
+              }
+              done = true;
+              break;
             }
           }
         }

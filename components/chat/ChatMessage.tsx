@@ -2,6 +2,7 @@
 
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
+import { formatChatMarkdown } from "@/lib/chatFormat";
 import { renderMarkdown } from "@/lib/markdown";
 
 type ChatMessageProps = {
@@ -28,7 +29,9 @@ export function ChatMessage({ message, isDraft }: ChatMessageProps) {
           ) : (
             <div
               className="chat-markdown"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(message.text) }}
+              dangerouslySetInnerHTML={{
+                __html: renderMarkdown(formatChatMarkdown(message.text)),
+              }}
             />
           )
         ) : isDraft ? (

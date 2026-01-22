@@ -5,6 +5,7 @@ export type ChatMessage = {
   role: ChatRole;
   text: string;
   createdAt: number;
+  responseMs?: number;
 };
 
 export type ChatRequest = {
@@ -15,4 +16,5 @@ export type ChatRequest = {
 export type ChatResponse = {
   session_id?: string;
   answer?: string;
+  response_ms?: number;
 };

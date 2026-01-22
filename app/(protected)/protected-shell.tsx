@@ -4,7 +4,11 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
 import { Header } from "@/components/header";
-import { ChatLauncher } from "@/components/chat/ChatLauncher";
+import { AgentDock } from "@/components/chat/AgentDock";
+import {
+  AgentDockProvider,
+  useAgentDockStore,
+} from "@/components/chat/agent-dock-store";
 import { cn } from "@/lib/utils";
 import { getOnboarding } from "@/utils/onboardingService";
 
@@ -67,6 +71,23 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
+    <AgentDockProvider>
+      <ProtectedShell hideHeader={hideHeader}>{children}</ProtectedShell>
+    </AgentDockProvider>
+  );
+}
+
+function ProtectedShell({
+  children,
+  hideHeader,
+}: {
+  children: React.ReactNode;
+  hideHeader: boolean;
+}) {
+  const { isExpanded, isHidden } = useAgentDockStore();
+  const dockPadding = !isHidden ? (isExpanded ? "pb-[420px]" : "pb-24") : "";
+
+  return (
     <div
       className={cn(
         "min-h-screen w-full overflow-x-hidden",
@@ -76,11 +97,16 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex flex-col min-w-0">
         {!hideHeader && <Header />}
         <main className="flex-1 min-w-0 overflow-x-hidden">
-          <div className="max-w-8xl mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6">
+          <div
+            className={cn(
+              "max-w-8xl mx-auto w-full px-4 sm:px-6 lg:px-10 xl:px-14 py-6",
+              dockPadding
+            )}
+          >
             {children}
           </div>
         </main>
-        <ChatLauncher />
+        <AgentDock />
       </div>
     </div>
   );

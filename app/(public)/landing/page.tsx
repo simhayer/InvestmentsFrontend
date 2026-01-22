@@ -2,13 +2,15 @@ import Link from "next/link";
 import {
   Activity,
   ArrowRight,
-  ArrowUpRight,
   BarChart3,
   Bell,
+  Brain,
+  ChevronRight,
   Link2,
   ShieldCheck,
   Sparkles,
-  ChevronRight,
+  Target,
+  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,18 +19,17 @@ import { Badge } from "@/components/ui/badge";
 function CTASection() {
   return (
     <section className="relative overflow-hidden rounded-[3rem] bg-neutral-900 py-20 px-8 text-center shadow-2xl">
-      {/* Decorative background glow */}
-      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 h-96 w-96 rounded-full bg-indigo-500/20 blur-[100px]" />
+      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-[90px]" />
+      <div className="absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-emerald-500/10 blur-[90px]" />
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-          Start your journey to{" "}
-          <span className="text-indigo-400 font-serif italic">calm</span>{" "}
-          investing.
+          Deploy your <span className="text-indigo-300">AI agent</span> in
+          minutes.
         </h2>
-        <p className="mt-6 text-lg text-neutral-400">
-          Get started today. No credit card required. Link your accounts and see
-          the difference AI clarity makes.
+        <p className="mt-6 text-lg text-neutral-300">
+          Set your goals once. The agent watches every position, flags risk, and
+          drafts actions so you stay ahead.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
           <Button
@@ -36,7 +37,7 @@ function CTASection() {
             size="lg"
             className="h-14 rounded-2xl bg-white px-10 font-bold text-neutral-900 hover:bg-neutral-100"
           >
-            <Link href="/register">Create Free Account</Link>
+            <Link href="/register">Activate AI Agent</Link>
           </Button>
           <Button
             asChild
@@ -63,12 +64,12 @@ function Footer({ year }: { year: number }) {
                 W
               </div>
               <span className="text-lg font-bold tracking-tight text-neutral-900">
-                AI for Investments
+                WallStreetAI
               </span>
             </div>
             <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
-              Empowering individual investors with institutional-grade AI
-              analysis and portfolio monitoring.
+              An AI investment agent that continuously monitors, explains, and
+              guides your portfolio decisions.
             </p>
           </div>
 
@@ -140,13 +141,11 @@ function Footer({ year }: { year: number }) {
 
         <div className="mt-16 border-t border-neutral-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-neutral-400">
-            © {year} AI for Investments. All rights reserved.
+            © {year} WallStreetAI. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <div className="h-5 w-5 bg-neutral-100 rounded" />{" "}
-            {/* Social Placeholder */}
-            <div className="h-5 w-5 bg-neutral-100 rounded" />{" "}
-            {/* Social Placeholder */}
+            <div className="h-5 w-5 bg-neutral-100 rounded" />
+            <div className="h-5 w-5 bg-neutral-100 rounded" />
           </div>
         </div>
       </div>
@@ -157,26 +156,26 @@ function Footer({ year }: { year: number }) {
 function FeatureSection() {
   const features = [
     {
-      title: "Holdings analysis",
+      title: "Autonomous monitoring",
       description:
-        "Plain-English breakdown of each asset, risks, and upside potentials.",
-      icon: BarChart3,
+        "The agent tracks every holding, alerting you the moment risk drifts or opportunity spikes.",
+      icon: Activity,
       color: "text-indigo-600",
       bg: "bg-indigo-50",
     },
     {
-      title: "Portfolio health",
+      title: "Goal-driven playbooks",
       description:
-        "Automated diversification, risk, and concentration checks across all accounts.",
-      icon: Activity,
+        "Set guardrails and targets once. The agent builds action plans that match your strategy.",
+      icon: Target,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
     {
-      title: "Signals & news",
+      title: "Explainable recommendations",
       description:
-        "Contextual AI summaries of market events that actually affect your specific book.",
-      icon: Bell,
+        "Every suggestion comes with clear reasoning, data, and next-step options.",
+      icon: Brain,
       color: "text-amber-600",
       bg: "bg-amber-50",
     },
@@ -186,11 +185,10 @@ function FeatureSection() {
     <section className="relative">
       <div className="mb-16 text-center lg:text-left">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-indigo-600">
-          Product Capability
+          Agent Capabilities
         </h2>
         <p className="mt-4 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-          Everything you need to <br className="hidden lg:block" /> invest with
-          conviction.
+          Built for decision-ready insight.
         </p>
       </div>
 
@@ -223,18 +221,18 @@ function HowItWorksSection() {
   const steps = [
     {
       title: "Connect",
-      desc: "Securely link your brokerages via bank-grade encrypted sync.",
+      desc: "Securely link your brokerages through encrypted, read-only sync.",
       icon: Link2,
     },
     {
-      title: "Analyze",
-      desc: "Our AI scans every position for risk and concentration.",
-      icon: Sparkles,
+      title: "Set priorities",
+      desc: "Tell the agent your goals, risk limits, and preferred strategies.",
+      icon: Target,
     },
     {
-      title: "Optimize",
-      desc: "Receive plain-English insights to improve your health score.",
-      icon: BarChart3,
+      title: "Stay ahead",
+      desc: "The agent monitors daily and drafts actions before volatility hits.",
+      icon: Bell,
     },
   ];
 
@@ -242,10 +240,10 @@ function HowItWorksSection() {
     <section className="rounded-[3rem] bg-neutral-50/50 py-20 px-8 border border-neutral-200/50">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-3xl font-bold tracking-tight text-neutral-900">
-          Three steps to clarity.
+          A dedicated agent in three steps.
         </h2>
         <p className="mt-4 text-neutral-500">
-          Wealth management complexity, simplified into a calm workflow.
+          Less dashboarding. More clarity, delivered continuously.
         </p>
       </div>
 
@@ -283,13 +281,13 @@ function TrustSection() {
       icon: ShieldCheck,
     },
     {
-      title: "Read-only access",
-      desc: "We can only see data. We cannot move funds or execute trades.",
+      title: "Read-only control",
+      desc: "The agent can analyze and advise. You execute trades on your terms.",
       icon: Link2,
     },
     {
-      title: "Strict Privacy",
-      desc: "We never sell your financial data. You are the customer, not the product.",
+      title: "Privacy first",
+      desc: "We never sell your financial data. You stay in control of your agent.",
       icon: Sparkles,
     },
   ];
@@ -303,11 +301,11 @@ function TrustSection() {
           </h2>
           <p className="mt-4 text-4xl font-bold tracking-tight text-neutral-900">
             Your data is safe. <br />
-            Your broker stays.
+            Your agent is accountable.
           </p>
           <p className="mt-6 text-lg text-neutral-500 leading-relaxed">
-            We built this to be the tool we wanted for our own families. That
-            means security isn't a feature—it's the foundation.
+            The agent stays transparent and read-only, with security built into
+            every workflow.
           </p>
           <div className="mt-8 flex gap-4">
             <div className="flex -space-x-2">
@@ -319,12 +317,8 @@ function TrustSection() {
               ))}
             </div>
             <p className="text-sm font-medium text-neutral-600">
-              Trusted by{" "}
-              <span className="text-neutral-900 font-bold">
-                10,000+ investors
-              </span>{" "}
-              <br />
-              tracking $2B+ in assets.
+              Trusted by <span className="text-neutral-900 font-bold">10,000+</span>
+              investors <br /> tracking $2B+ in assets.
             </p>
           </div>
         </div>
@@ -357,8 +351,11 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen bg-[#FAFAFA]">
-      {/* Abstract Background Elements */}
-      <div className="absolute top-0 left-1/2 -z-10 h-[1000px] w-full -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_0%,rgba(99,102,241,0.05)_0%,rgba(250,250,250,0)_100%)]" />
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 left-1/2 h-[900px] w-full -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_0%,rgba(99,102,241,0.08)_0%,rgba(250,250,250,0)_100%)]" />
+        <div className="absolute -top-20 right-0 h-72 w-72 rounded-full bg-emerald-200/20 blur-[110px]" />
+        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-indigo-200/20 blur-[120px]" />
+      </div>
 
       <div className="mx-auto max-w-7xl px-6 pb-20 pt-10 sm:pt-16 lg:px-8">
         <HeroSection />
@@ -377,144 +374,246 @@ export default function LandingPage() {
 }
 
 function HeroSection() {
+  const highlights = [
+    {
+      title: "24/7 Monitoring",
+      description: "Always-on scans across holdings, news, and risk shifts.",
+      icon: Activity,
+    },
+    {
+      title: "Proactive Alerts",
+      description: "The agent surfaces what matters before markets move.",
+      icon: Bell,
+    },
+    {
+      title: "Action Plans",
+      description: "Turn insights into clear steps, not endless dashboards.",
+      icon: Zap,
+    },
+  ];
+
   return (
     <section className="relative">
-      <div className="flex flex-col items-center text-center">
-        <Badge
-          variant="outline"
-          className="mb-6 rounded-full border-indigo-100 bg-indigo-50/50 px-4 py-1 text-xs font-medium text-indigo-700 backdrop-blur-sm"
-        >
-          <Sparkles className="mr-2 h-3 w-3" />
-          V2.0 is now live: Enhanced AI Insights
-        </Badge>
-
-        <h1 className="max-w-4xl text-5xl font-bold tracking-tight text-neutral-900 sm:text-7xl">
-          The institutional-grade <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">
-            AI Copilot
-          </span>{" "}
-          for your wealth.
-        </h1>
-
-        <p className="mt-8 max-w-2xl text-lg leading-8 text-neutral-600">
-          Stop guessing. Link your existing brokerages to receive a
-          plain-English breakdown of your portfolio risk, diversification, and
-          opportunities—powered by world-class AI.
-        </p>
-
-        <div className="mt-10 flex items-center gap-x-6">
-          <Button
-            asChild
-            size="lg"
-            className="h-12 rounded-xl bg-neutral-900 px-8 font-bold text-white hover:bg-neutral-800 shadow-xl shadow-neutral-200"
+      <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <Badge
+            variant="outline"
+            className="mb-6 inline-flex rounded-full border-indigo-100 bg-indigo-50/50 px-4 py-1 text-xs font-medium text-indigo-700 backdrop-blur-sm"
           >
-            <Link href="/register">Connect Portfolio</Link>
-          </Button>
-          <Button
-            asChild
-            variant="ghost"
-            size="lg"
-            className="h-12 font-bold text-neutral-600 hover:text-neutral-900"
-          >
-            <Link href="/login" className="flex items-center gap-2">
-              View Sample Analysis <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
+            <Sparkles className="mr-2 h-3 w-3" />
+            Agent mode is live: continuous portfolio monitoring
+          </Badge>
+
+          <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-neutral-900 sm:text-6xl">
+            Your AI investment agent, <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-emerald-500">
+              always on.
+            </span>
+          </h1>
+
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-neutral-600">
+            Assign the agent your goals once. It monitors your holdings, tracks
+            risk, and drafts the next best actions in plain English.
+          </p>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 rounded-xl bg-neutral-900 px-8 font-bold text-white hover:bg-neutral-800 shadow-xl shadow-neutral-200"
+            >
+              <Link href="/register">Activate AI Agent</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="lg"
+              className="h-12 font-bold text-neutral-600 hover:text-neutral-900"
+            >
+              <Link href="/login" className="flex items-center gap-2">
+                View Agent Demo <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {highlights.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-neutral-200/70 bg-white/70 p-4 shadow-sm"
+              >
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 text-white">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <h3 className="text-sm font-bold text-neutral-900">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-xs text-neutral-500 leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="mt-20">
-        <ProductPreview />
+        <div className="relative">
+          <AgentCommandCenter />
+        </div>
       </div>
     </section>
   );
 }
 
-function ProductPreview() {
+function AgentCommandCenter() {
+  const priorities = [
+    {
+      label: "Concentration",
+      value: "Tech exposure 12% above target",
+      icon: Target,
+      tone: "text-rose-600",
+      bg: "bg-rose-50/70",
+    },
+    {
+      label: "Risk guardrail",
+      value: "Shift 3% into low-volatility assets",
+      icon: BarChart3,
+      tone: "text-emerald-700",
+      bg: "bg-emerald-50/70",
+    },
+    {
+      label: "Event watch",
+      value: "CPI release in 3 days; watch duration",
+      icon: Bell,
+      tone: "text-amber-700",
+      bg: "bg-amber-50/70",
+    },
+  ];
+
+  const feed = [
+    {
+      label: "Action",
+      title: "Trim NVDA exposure by 4%",
+      detail: "Reduce single-name risk while keeping growth upside.",
+      icon: Zap,
+    },
+    {
+      label: "Insight",
+      title: "Energy rotation building",
+      detail: "Agent suggests a 2% tilt to XLE for balance.",
+      icon: Brain,
+    },
+  ];
+
   return (
-    <div className="relative mx-auto max-w-5xl">
-      {/* Decorative Glow */}
-      <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-indigo-500/20 to-emerald-500/20 blur-2xl opacity-50" />
+    <div className="relative mx-auto max-w-xl lg:max-w-none">
+      <div className="absolute -inset-2 rounded-[2.75rem] bg-gradient-to-tr from-indigo-500/25 via-transparent to-emerald-500/20 blur-2xl opacity-60" />
 
       <div className="relative overflow-hidden rounded-[2.5rem] border border-neutral-200/60 bg-white shadow-2xl">
-        <div className="border-b border-neutral-100 bg-neutral-50/50 px-6 py-4 flex items-center justify-between">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-neutral-200" />
-            <div className="h-3 w-3 rounded-full bg-neutral-200" />
-            <div className="h-3 w-3 rounded-full bg-neutral-200" />
+        <div className="flex items-center justify-between border-b border-neutral-100 bg-neutral-50/60 px-6 py-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-400">
+            Agent Control Center
           </div>
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
-            Secure Read-Only Access
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700">
+              Live
+            </span>
+            <span>Next sweep in 14m</span>
           </div>
         </div>
 
-        <div className="p-8 lg:p-12">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="space-y-6">
+        <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="border-b border-neutral-100 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-900 text-white">
+                <Brain className="h-5 w-5" />
+              </div>
               <div>
-                <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider">
-                  Portfolio Snapshot
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400">
+                  Today's Brief
                 </p>
-                <h3 className="text-4xl font-bold text-neutral-900 mt-1">
-                  $264,500.00
+                <h3 className="mt-2 text-2xl font-bold text-neutral-900">
+                  Protect downside, keep momentum.
                 </h3>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 flex-1">
-                  <p className="text-[10px] font-bold text-emerald-700 uppercase">
-                    Daily Gain
-                  </p>
-                  <p className="text-xl font-bold text-emerald-700">
-                    +$1,420.50
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-neutral-100 bg-neutral-50 p-4 flex-1">
-                  <p className="text-[10px] font-bold text-neutral-500 uppercase">
-                    Risk Level
-                  </p>
-                  <p className="text-xl font-bold text-neutral-900">Moderate</p>
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-neutral-100 p-4">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                  <span>AI Health Score</span>
-                  <span className="text-indigo-600">88%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-neutral-100">
-                  <div className="h-full w-[88%] rounded-full bg-indigo-600" />
-                </div>
-                <p className="text-xs text-neutral-500 leading-relaxed italic">
-                  "Your portfolio is well-diversified, but AI flags a 12%
-                  concentration in Tech Growth that exceeds your target."
+                <p className="mt-2 text-sm text-neutral-500">
+                  The agent is balancing growth exposure with volatility
+                  defense.
                 </p>
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <div className="h-full rounded-2xl bg-neutral-900 p-6 text-white shadow-inner">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
-                    Smart Signals
-                  </span>
-                  <Sparkles className="h-4 w-4 text-indigo-400" />
-                </div>
-                <div className="space-y-4">
-                  <div className="border-l-2 border-indigo-500 pl-4 py-1">
-                    <p className="text-sm font-bold">Earnings Drift: AAPL</p>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      Valuation is 15% above 5-year mean. AI suggests protective
-                      stops.
+            <div className="mt-6 grid gap-3">
+              {priorities.map((priority) => (
+                <div
+                  key={priority.label}
+                  className={`flex items-start gap-3 rounded-2xl border border-neutral-100 p-4 ${priority.bg}`}
+                >
+                  <priority.icon className={`mt-0.5 h-4 w-4 ${priority.tone}`} />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                      {priority.label}
                     </p>
-                  </div>
-                  <div className="border-l-2 border-emerald-500 pl-4 py-1">
-                    <p className="text-sm font-bold">Sector Rotation</p>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      Capital moving to Energy. Your XLE position is well-timed.
+                    <p className="text-sm font-semibold text-neutral-900">
+                      {priority.value}
                     </p>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-neutral-100 bg-neutral-50 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                Active Goals
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {["Grow 8-10%", "Max drawdown 12%", "Tax-aware moves"].map(
+                  (goal) => (
+                    <span
+                      key={goal}
+                      className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-700 shadow-sm"
+                    >
+                      {goal}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-neutral-900 p-6 text-white sm:p-8">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+                Agent Feed
+              </span>
+              <Sparkles className="h-4 w-4 text-emerald-300" />
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {feed.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                    <item.icon className="h-3 w-3 text-emerald-300" />
+                    {item.label}
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-white">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-xs text-neutral-400">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                <span>Command</span>
+                <span className="text-emerald-300">Listening</span>
+              </div>
+              <div className="mt-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-neutral-900">
+                Run a downside stress test on my tech exposure.
               </div>
             </div>
           </div>

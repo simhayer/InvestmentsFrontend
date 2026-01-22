@@ -12,6 +12,15 @@ type StreamEvent = {
   payload: unknown;
 };
 
+function coerceResponseMs(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 function parseEventChunk(chunk: string): StreamEvent | null {
   const lines = chunk.split("\n");
   const eventLine = lines.find((line) => line.startsWith("event:"));
@@ -122,6 +131,11 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
           )
         );
       };
+      const updateAssistantMeta = (meta: Partial<ChatMessage>) => {
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === assistantId ? { ...msg, ...meta } : msg))
+        );
+      };
 
       const flushImmediate = (nextText: string) => {
         updateAssistant(nextText);
@@ -198,6 +212,10 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
           if (fallback?.session_id) {
             setSessionId?.(fallback.session_id);
           }
+          const fallbackMs = coerceResponseMs(fallback?.response_ms);
+          if (fallbackMs !== null) {
+            updateAssistantMeta({ responseMs: fallbackMs });
+          }
           const answer =
             fallback?.answer ||
             fallback?.text ||
@@ -232,8 +250,14 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
                 ? payload
                 : payload?.text || payload?.answer || payload?.message;
 
-            if (event.type === "meta" && payload?.session_id) {
-              setSessionId?.(payload.session_id);
+            if (event.type === "meta") {
+              if (payload?.session_id) {
+                setSessionId?.(payload.session_id);
+              }
+              const responseMs = coerceResponseMs(payload?.response_ms);
+              if (responseMs !== null) {
+                updateAssistantMeta({ responseMs });
+              }
             }
 
             if (
@@ -249,6 +273,10 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             }
 
             if (event.type === "final") {
+              const responseMs = coerceResponseMs(payload?.response_ms);
+              if (responseMs !== null) {
+                updateAssistantMeta({ responseMs });
+              }
               if (text) {
                 if (hadDeltaRef.current) {
                   const combined =
@@ -270,6 +298,11 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
               setError(payload?.message || "Stream error");
               done = true;
               break;
+            }
+
+            const responseMs = coerceResponseMs(payload?.response_ms);
+            if (responseMs !== null) {
+              updateAssistantMeta({ responseMs });
             }
 
             if (
@@ -299,6 +332,10 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
           const fallback = await postChat(request, controller.signal);
           if (fallback.session_id) {
             setSessionId?.(fallback.session_id);
+          }
+          const fallbackMs = coerceResponseMs(fallback.response_ms);
+          if (fallbackMs !== null) {
+            updateAssistantMeta({ responseMs: fallbackMs });
           }
           await typeOutText(fallback.answer || "");
         } catch (fallbackErr) {

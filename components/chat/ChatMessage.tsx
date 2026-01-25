@@ -17,26 +17,43 @@ export function ChatMessage({ message, isDraft }: ChatMessageProps) {
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[82%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-          isUser
-            ? "bg-neutral-900 text-white"
-            : "bg-white text-neutral-900 border border-neutral-200"
+          "flex max-w-[86%] flex-col gap-1",
+          isUser ? "items-end" : "items-start"
         )}
       >
-        {message.text ? (
-          isUser ? (
-            <span className="whitespace-pre-wrap">{message.text}</span>
-          ) : (
-            <div
-              className="chat-markdown"
-              dangerouslySetInnerHTML={{
-                __html: renderMarkdown(formatChatMarkdown(message.text)),
-              }}
-            />
-          )
-        ) : isDraft ? (
-          <span className="text-neutral-400 italic">Thinking...</span>
-        ) : null}
+        <span
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-widest",
+            isUser ? "text-neutral-400" : "text-emerald-600/80"
+          )}
+        >
+          {isUser ? "You" : "AI"}
+        </span>
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
+            isUser
+              ? "bg-neutral-900/90 text-white"
+              : "border border-white/40 bg-white/55 text-neutral-900 backdrop-blur"
+          )}
+        >
+          {message.text ? (
+            isUser ? (
+              <span className="whitespace-pre-wrap">{message.text}</span>
+            ) : (
+              <div
+                className="chat-markdown"
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdown(formatChatMarkdown(message.text)),
+                }}
+              />
+            )
+          ) : isDraft ? (
+            <span className="text-neutral-500 italic animate-pulse">
+              Thinking...
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -43,6 +43,18 @@ function safeParseJson(raw: string): any | null {
   }
 }
 
+function extractDeltaText(raw: string): string {
+  if (!raw) return "";
+  const parsed = safeParseJson(raw);
+  if (!parsed) return raw;
+  if (typeof parsed === "string") return parsed;
+  if (typeof parsed.delta === "string") return parsed.delta;
+  if (typeof parsed.text === "string") return parsed.text;
+  if (typeof parsed.content === "string") return parsed.content;
+  if (typeof parsed.message === "string") return parsed.message;
+  return raw;
+}
+
 export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -235,11 +247,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             const event = parseEventChunk(part);
             if (!event) continue;
 
-            const isDelta =
-              event.type === "delta" ||
-              event.type === "message" ||
-              event.type === "data" ||
-              event.type === "chunk";
+            const isDelta = event.type === "delta";
 
             if (event.type === "meta") {
               const meta = safeParseJson(event.data) as
@@ -251,15 +259,11 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             }
 
             if (isDelta) {
-              if (event.data.length > 0) {
+              const deltaText = extractDeltaText(event.data);
+              if (deltaText.length > 0) {
                 hadDeltaRef.current = true;
-                enqueueTyping(event.data);
+                enqueueTyping(deltaText);
               }
-            }
-
-            if (event.type === "done") {
-              done = true;
-              break;
             }
 
             if (event.type === "error") {
@@ -272,24 +276,9 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             }
 
             if (event.type === "final") {
-              const finalPayload = safeParseJson(event.data) as
-                | { text?: string; answer?: string; message?: string }
-                | null;
-              const finalText =
-                finalPayload?.text ||
-                finalPayload?.answer ||
-                finalPayload?.message ||
-                event.data;
-              if (finalText) {
-                if (hadDeltaRef.current) {
-                  const combined =
-                    assistantTextRef.current + pendingTextRef.current;
-                  if (finalText.startsWith(combined)) {
-                    enqueueTyping(finalText.slice(combined.length));
-                  } else {
-                    await typeOutText(finalText);
-                  }
-                } else {
+              if (!hadDeltaRef.current) {
+                const finalText = extractDeltaText(event.data);
+                if (finalText) {
                   await typeOutText(finalText);
                 }
               }

@@ -9,29 +9,50 @@ type UseChatStreamArgs = {
 
 type StreamEvent = {
   type: string;
-  payload: unknown;
+  data: string;
 };
 
 function parseEventChunk(chunk: string): StreamEvent | null {
   const lines = chunk.split("\n");
-  const eventLine = lines.find((line) => line.startsWith("event:"));
-  const dataLines = lines.filter((line) => line.startsWith("data:"));
+  let event = "delta";
+  const dataLines: string[] = [];
 
-  if (dataLines.length === 0) return null;
-
-  const event = eventLine ? eventLine.replace("event:", "").trim() : "delta";
-  const raw = dataLines
-    .map((line) => line.replace("data:", "").trim())
-    .join("\n");
-
-  let payload: any = null;
-  try {
-    payload = raw ? JSON.parse(raw) : null;
-  } catch {
-    payload = raw;
+  for (const line of lines) {
+    const cleanLine = line.endsWith("\r") ? line.slice(0, -1) : line;
+    if (cleanLine.startsWith("event:")) {
+      event = cleanLine.slice("event:".length).trim() || "delta";
+      continue;
+    }
+    if (cleanLine.startsWith("data:")) {
+      let data = cleanLine.slice("data:".length);
+      if (data.startsWith(" ")) data = data.slice(1);
+      dataLines.push(data);
+    }
   }
 
-  return { type: event, payload };
+  if (dataLines.length === 0) return null;
+  return { type: event, data: dataLines.join("\n") };
+}
+
+function safeParseJson(raw: string): any | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function extractDeltaText(raw: string): string {
+  if (!raw) return "";
+  const parsed = safeParseJson(raw);
+  if (!parsed) return raw;
+  if (typeof parsed === "string") return parsed;
+  if (typeof parsed.delta === "string") return parsed.delta;
+  if (typeof parsed.text === "string") return parsed.text;
+  if (typeof parsed.content === "string") return parsed.content;
+  if (typeof parsed.message === "string") return parsed.message;
+  return raw;
 }
 
 export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
@@ -226,61 +247,43 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             const event = parseEventChunk(part);
             if (!event) continue;
 
-            const payload = event.payload as any;
-            const text =
-              typeof payload === "string"
-                ? payload
-                : payload?.text || payload?.answer || payload?.message;
+            const isDelta = event.type === "delta";
 
-            if (event.type === "meta" && payload?.session_id) {
-              setSessionId?.(payload.session_id);
-            }
-
-            if (
-              event.type === "delta" ||
-              event.type === "message" ||
-              event.type === "data" ||
-              event.type === "chunk"
-            ) {
-              if (text) {
-                hadDeltaRef.current = true;
-                enqueueTyping(text);
+            if (event.type === "plan") {
+              const payload = safeParseJson(event.data) as
+                | { session_id?: string }
+                | null;
+              if (payload?.session_id) {
+                setSessionId?.(payload.session_id);
               }
             }
 
+            if (isDelta) {
+              const deltaText = extractDeltaText(event.data);
+              if (deltaText.length > 0) {
+                hadDeltaRef.current = true;
+                enqueueTyping(deltaText);
+              }
+            }
+
+            if (event.type === "error") {
+              const errorPayload = safeParseJson(event.data) as
+                | { error?: string; message?: string }
+                | null;
+              setError(errorPayload?.error || errorPayload?.message || "Stream error");
+              done = true;
+              break;
+            }
+
             if (event.type === "final") {
-              if (text) {
-                if (hadDeltaRef.current) {
-                  const combined =
-                    assistantTextRef.current + pendingTextRef.current;
-                  if (text.startsWith(combined)) {
-                    enqueueTyping(text.slice(combined.length));
-                  } else {
-                    await typeOutText(text);
-                  }
-                } else {
-                  await typeOutText(text);
+              if (!hadDeltaRef.current) {
+                const finalText = extractDeltaText(event.data);
+                if (finalText) {
+                  await typeOutText(finalText);
                 }
               }
               done = true;
               break;
-            }
-
-            if (event.type === "error") {
-              setError(payload?.message || "Stream error");
-              done = true;
-              break;
-            }
-
-            if (
-              event.type !== "meta" &&
-              event.type !== "delta" &&
-              event.type !== "final" &&
-              event.type !== "error" &&
-              event.type !== "ping" &&
-              text
-            ) {
-              updateAssistant(assistantTextRef.current + text);
             }
           }
         }

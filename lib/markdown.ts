@@ -58,7 +58,7 @@ export function renderMarkdown(input: string): string {
       continue;
     }
 
-    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
+    const headingMatch = line.match(/^(#{1,4})\s+(.*)$/);
     if (headingMatch) {
       closeLists();
       const level = headingMatch[1].length;

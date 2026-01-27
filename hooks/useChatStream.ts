@@ -249,12 +249,12 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
 
             const isDelta = event.type === "delta";
 
-            if (event.type === "meta") {
-              const meta = safeParseJson(event.data) as
+            if (event.type === "plan") {
+              const payload = safeParseJson(event.data) as
                 | { session_id?: string }
                 | null;
-              if (meta?.session_id) {
-                setSessionId?.(meta.session_id);
+              if (payload?.session_id) {
+                setSessionId?.(payload.session_id);
               }
             }
 

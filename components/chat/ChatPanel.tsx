@@ -146,7 +146,6 @@ export function ChatPanel({
           <div
             className={cn(
               "absolute -inset-4 rounded-[32px] opacity-70 blur-2xl",
-              "bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.25),_rgba(56,189,248,0.18),_transparent_65%)]",
               open && isMobile ? "hidden" : "block"
             )}
           />
@@ -161,7 +160,7 @@ export function ChatPanel({
                 : ""
             )}
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.65),_rgba(255,255,255,0.3),_transparent_70%)]" />
+            <div className="pointer-events-none absolute inset-0" />
 
             <div className="relative z-10 flex h-full flex-col">
               <header

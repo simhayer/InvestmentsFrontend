@@ -34,7 +34,7 @@ import {
 } from "@/components/investment/tabs/tabs";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"; // Assuming you have shadcn Button
+import { Button } from "@/components/ui/button";
 import type { StockAnalysis } from "@/types/symbol_analysis";
 
 interface StockAnalysisCardProps {

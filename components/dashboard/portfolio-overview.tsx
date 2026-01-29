@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Building2, Link2 } from "lucide-react";
 
-import { getPortfolioSummary } from "@/utils/portfolioService";
+import { getAiInsightPortfolio } from "@/utils/portfolioService";
 import { keysToCamel, fmtCurrency, fmtPct } from "@/utils/format";
 import { toast } from "@/components/ui/use-toast";
 
@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 import { Page } from "@/components/layout/Page";
 import { StackedBar, KeyVal, TimeAgo } from "./_bits";
 import { AnalysisSummaryCard } from "./ai-summary-card";
-import { Provider } from "@radix-ui/react-toast";
 import ProviderAvatar from "../layout/ProviderAvatar";
 
 export function PortfolioOverview() {
@@ -37,7 +36,7 @@ export function PortfolioOverview() {
     async (signal?: AbortSignal, opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       try {
-        const raw = await getPortfolioSummary({ signal });
+        const raw = await getAiInsightPortfolio({ signal });
         const summary = keysToCamel(raw) as unknown as PortfolioSummary;
         setData(summary);
       } catch (err: any) {

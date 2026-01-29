@@ -8,24 +8,6 @@ import type {
 } from "@/types/portfolio-ai";
 import { authedFetch } from "@/utils/authService";
 
-// export async function getAiInsightSymbol(symbol: string): Promise<string> {
-//   console.log("Fetching AI insight for symbol:", symbol);
-//   // const path = "/api/ai/analyze-symbol";
-//   const path = `/api/v2/ai/analyze/${symbol}`;
-//   try {
-//     const res = await authedFetch(path, {
-//       method: "POST",
-//       body: JSON.stringify({ symbol }),
-//     });
-//     const data = await res.json();
-//     console.log("AI insight response data:", data);
-//     return data || "No insight returned.";
-//   } catch (error) {
-//     console.error("AI insight fetch error:", error);
-//     return "Something went wrong while fetching AI insight.";
-//   }
-// }
-
 type TaskResp = { task_id: string; status: string };
 type StatusResp =
   | { status: "processing"; data: null }

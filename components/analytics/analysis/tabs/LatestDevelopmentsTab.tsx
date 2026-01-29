@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import type { LatestDevelopmentItem } from "@/types/portfolio-ai";
 import { latestSorted } from "@/utils/aiService";
-import { cn } from "@/lib/utils";
 
 export function LatestDevelopmentsTab({
   data,

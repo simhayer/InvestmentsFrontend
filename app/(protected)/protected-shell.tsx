@@ -4,9 +4,9 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-provider";
 import { Header } from "@/components/header";
-import { ChatLauncher } from "@/components/chat/ChatLauncher";
 import { cn } from "@/lib/utils";
 import { getOnboarding } from "@/utils/onboardingService";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export function ProtectedGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -80,7 +80,7 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </main>
-        <ChatLauncher />
+        <ChatPanel />
       </div>
     </div>
   );

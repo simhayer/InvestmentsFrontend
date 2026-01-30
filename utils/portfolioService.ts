@@ -69,8 +69,7 @@ export async function getAiInsightPortfolio(opts?: {
   intervalMs?: number;  // default 1200ms
 }) {
   const currency = opts?.currency ?? "USD";
-  // const force = opts?.force ?? false;
-  const force = true
+  const force = opts?.force ?? false;
 
   const maxWaitMs = opts?.maxWaitMs ?? 60_000;
   const intervalMs = opts?.intervalMs ?? 1200;

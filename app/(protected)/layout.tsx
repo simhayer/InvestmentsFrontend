@@ -1,6 +1,7 @@
 // app/(protected)/layout.tsx
 import { AuthProvider } from "@/lib/auth-provider";
 import { ProtectedGate } from "./protected-shell";
+import { ChatProvider } from "@/components/chat/ChatContext"; // Import your provider
 
 export default function ProtectedLayout({
   children,
@@ -9,7 +10,11 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthProvider>
-      <ProtectedGate>{children}</ProtectedGate>
+      <ChatProvider>
+        <ProtectedGate>
+          {children}
+        </ProtectedGate>
+      </ChatProvider>
     </AuthProvider>
   );
 }

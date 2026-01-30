@@ -1,341 +1,185 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronUp, Sparkles, X } from "lucide-react";
+import { Sparkles, ArrowUp, Square, Bot, Trash2, ChevronDown, History } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useChatSessionId } from "@/hooks/useChatSessionId";
-import { useChatStream } from "@/hooks/useChatStream";
+import { useChat } from "@/components/chat/ChatContext"; // Import the context hook
 import { ChatMessage } from "@/components/chat/ChatMessage";
 
-type ChatPanelProps = {
-  open: boolean;
-  onOpen?: () => void;
-  onClose: () => void;
-  className?: string;
-};
-
 const quickPrompts = [
-  "Summarize this page for me.",
-  "Explain today's portfolio movement.",
-  "What risks should I watch right now?",
+  "Summarize this view",
+  "Identify key risks",
+  "Forecast next month",
 ];
 
-export function ChatPanel({
-  open,
-  onOpen,
-  onClose,
-  className,
-}: ChatPanelProps) {
+export function ChatPanel() {
+  // Pull state from Context
+  const { 
+    isOpen, 
+    setIsOpen, 
+    messages, 
+    sendMessage, 
+    isStreaming, 
+    stop, 
+    clearMessages,
+    error
+  } = useChat();
+
   const [input, setInput] = React.useState("");
-  const [isMobile, setIsMobile] = React.useState(false);
-  const panelRef = React.useRef<HTMLDivElement | null>(null);
+  const [isFocused, setIsFocused] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
 
-  const { sessionId, resetSessionId, setSessionId } = useChatSessionId();
-  const { messages, isStreaming, error, sendMessage, stop, clearMessages } =
-    useChatStream({ sessionId, setSessionId });
+  const hasHistory = messages.length > 0;
 
+  // Auto-scroll
   React.useEffect(() => {
-    if (!open) return;
-    inputRef.current?.focus();
-  }, [open]);
+    if (isOpen && hasHistory) {
+      const node = listRef.current;
+      if (node) node.scrollTop = node.scrollHeight;
+    }
+  }, [messages, isOpen, hasHistory]);
 
+  // Click outside to minimize
   React.useEffect(() => {
-    if (!open) return;
-    const node = listRef.current;
-    if (node) node.scrollTop = node.scrollHeight;
-  }, [messages, open, isStreaming]);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  React.useEffect(() => {
-    if (!open || !isMobile) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = original;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsFocused(false);
+        if (!isStreaming) setIsOpen(false);
+      }
     };
-  }, [open, isMobile]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isStreaming, setIsOpen]);
 
-  const requestOpen = React.useCallback(() => {
-    if (!open) onOpen?.();
-  }, [onOpen, open]);
-
-  const handleSend = React.useCallback(async () => {
-    if (!input.trim() || isStreaming) return;
-    requestOpen();
-    await sendMessage(input);
-    setInput("");
-  }, [input, sendMessage, isStreaming, requestOpen]);
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!open) return;
-    if (event.key === "Escape") {
-      event.stopPropagation();
-      onClose();
-      return;
-    }
-
-    if (!isMobile || event.key !== "Tab") return;
-    const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
-      'button,[href],input,textarea,select,[tabindex]:not([tabindex="-1"])'
-    );
-    if (!focusable || focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
+  const handleFocus = () => {
+    setIsFocused(true);
+    if (hasHistory) setIsOpen(true);
   };
 
-  const handleClear = () => {
+  const handleSend = async () => {
+    if (!input.trim() || isStreaming) return;
+    setIsOpen(true);
+    setInput("");
+    await sendMessage(input);
+    setIsFocused(true);
+  };
+
+  const handleClear = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     stop();
     clearMessages();
-    resetSessionId();
+    setIsOpen(false);
+    setInput("");
   };
 
-  const draftAssistantId = React.useMemo(() => {
-    if (!isStreaming) return null;
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i].role === "assistant") return messages[i].id;
-    }
-    return null;
-  }, [messages, isStreaming]);
+  const adjustHeight = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    target.style.height = "auto";
+    target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
+    setInput(target.value);
+  };
 
   return (
-    <>
-      <div className="pointer-events-none fixed inset-0 z-40">
-        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-300/20 blur-[120px]" />
-        <div className="absolute left-[20%] top-[30%] h-44 w-44 rounded-full bg-sky-300/20 blur-[90px]" />
-      </div>
-
-      <div
-        ref={panelRef}
-        id="chat-panel"
-        role={open ? "dialog" : "region"}
-        aria-modal={open && isMobile ? true : undefined}
-        aria-expanded={open}
-        onKeyDown={handleKeyDown}
+    <div 
+      ref={containerRef}
+      className={cn(
+        "fixed left-1/2 z-50 flex -translate-x-1/2 flex-col justify-end transition-all duration-500",
+        "w-[94%] max-w-[700px] bottom-6"
+      )}
+    >
+      {/* HISTORY PANEL */}
+      <div 
         className={cn(
-          "fixed z-50 transition-all duration-300",
-          open && isMobile
-            ? "inset-0"
-            : "left-1/2 bottom-10 -translate-x-1/2",
-          className
+          "flex flex-col overflow-hidden bg-white/95 shadow-2xl backdrop-blur-xl transition-all duration-500",
+          "border-x border-t border-white/50 ring-1 ring-black/5",
+          isOpen ? "mb-[-1px] h-[60vh] rounded-t-3xl opacity-100" : "h-0 opacity-0 mb-4 rounded-3xl"
         )}
       >
-        <div
-          className={cn(
-            "relative",
-            open && isMobile ? "h-full w-full" : "w-[min(94vw,780px)]"
-          )}
-        >
-          <div
-            className={cn(
-              "absolute -inset-4 rounded-[32px] opacity-70 blur-2xl",
-              open && isMobile ? "hidden" : "block"
-            )}
-          />
-
-          <div
-            className={cn(
-              "relative flex flex-col overflow-hidden rounded-[28px] border border-white/30 bg-white/30 shadow-[0_40px_120px_rgba(15,23,42,0.18)] backdrop-blur-2xl",
-              "transition-all duration-300",
-              open ? "min-h-[420px] h-[70vh]" : "h-auto",
-              open && isMobile
-                ? "h-[100dvh] rounded-none border-0 bg-white/90"
-                : ""
-            )}
-          >
-            <div className="pointer-events-none absolute inset-0" />
-
-            <div className="relative z-10 flex h-full flex-col">
-              <header
-                className={cn(
-                  "flex items-center justify-between px-5 pt-5",
-                  open ? "pb-4" : "pb-3"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-900 text-white shadow-lg">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-600/80">
-                      AI Copilot
-                    </p>
-                    <h2 className="text-sm font-semibold text-neutral-900">
-                      Ask anything about this screen.
-                    </h2>
-                    {open ? (
-                      <p className="text-[11px] text-neutral-500">
-                        Context-aware answers, explanations, and next steps.
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-neutral-500">
-                  {open ? (
-                    <button
-                      type="button"
-                      onClick={handleClear}
-                      className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500 transition hover:text-neutral-900"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={open ? onClose : requestOpen}
-                    className="hidden items-center gap-1 rounded-full border border-white/40 bg-white/50 px-3 py-1 text-[11px] font-semibold text-neutral-700 shadow-sm transition hover:bg-white/80 sm:flex"
-                    aria-label={open ? "Collapse AI panel" : "Expand AI panel"}
-                  >
-                    {open ? "Collapse" : "Expand"}
-                    {open ? (
-                      <ChevronDown className="h-3 w-3" />
-                    ) : (
-                      <ChevronUp className="h-3 w-3" />
-                    )}
-                  </button>
-                  {open ? (
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="ml-1 rounded-full p-1 text-neutral-400 transition hover:text-neutral-900 sm:hidden"
-                      aria-label="Collapse AI panel"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </div>
-              </header>
-
-              {open ? (
-                <div
-                  ref={listRef}
-                  className="flex-1 space-y-4 overflow-y-auto px-5 pb-4"
-                >
-                  {messages.length === 0 ? (
-                    <div className="flex h-full flex-col justify-center rounded-2xl border border-white/60 bg-white/50 px-4 py-6 text-center text-sm text-neutral-500">
-                      <p className="text-base font-semibold text-neutral-900">
-                        Your AI assistant is ready.
-                      </p>
-                      <p className="mt-2 text-[12px] text-neutral-500">
-                        Ask about performance, risks, or anything on the page.
-                      </p>
-                    </div>
-                  ) : (
-                    messages.map((message) => (
-                      <ChatMessage
-                        key={message.id}
-                        message={message}
-                        isDraft={draftAssistantId === message.id}
-                      />
-                    ))
-                  )}
-                </div>
-              ) : null}
-
-              {error ? (
-                <div className="px-5 pb-2">
-                  <div className="rounded-2xl border border-rose-200/80 bg-rose-50/80 px-3 py-2 text-xs text-rose-700">
-                    {error}
-                  </div>
-                </div>
-              ) : null}
-              <div role="status" aria-live="polite" className="sr-only">
-                {error ? `Chat error: ${error}` : ""}
-              </div>
-
-              <form
-                className={cn("px-5 pb-5", open ? "pt-0" : "pt-1")}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSend();
-                }}
-              >
-                <div className="flex items-end gap-3 rounded-2xl border border-white/40 bg-white/45 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900 text-white shadow-md">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onFocus={requestOpen}
-                    onChange={(event) => setInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    rows={open ? 2 : 1}
-                    placeholder="Ask the AI about this page..."
-                    className="flex-1 resize-none bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
-                  />
-                  <div className="flex flex-col gap-2">
-                    {isStreaming ? (
-                      <button
-                        type="button"
-                        onClick={stop}
-                      className="rounded-full border border-white/40 bg-white/50 px-3 py-2 text-[11px] font-semibold text-neutral-700 transition hover:bg-white/80"
-                    >
-                      Stop
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      className="rounded-full bg-neutral-900/90 px-4 py-2 text-[11px] font-semibold text-white shadow transition hover:bg-neutral-900 disabled:opacity-50"
-                      disabled={!input.trim()}
-                    >
-                      Send
-                    </button>
-                  )}
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-neutral-500">
-                  <span>Enter to send, Shift+Enter for a new line.</span>
-                  <span className="text-emerald-600/80">
-                    Context-aware responses enabled.
-                  </span>
-                </div>
-
-                {!open ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {quickPrompts.map((prompt) => (
-                      <button
-                        key={prompt}
-                        type="button"
-                        onClick={() => {
-                          setInput(prompt);
-                          requestOpen();
-                          inputRef.current?.focus();
-                        }}
-                        className="rounded-full border border-white/40 bg-white/50 px-3 py-1 text-[11px] font-semibold text-neutral-700 shadow-sm transition hover:bg-white/80"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </form>
-            </div>
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-3">
+          <div className="flex items-center gap-2 text-emerald-600">
+              <Bot className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                {isStreaming ? "AI Thinking..." : "AI Analyst"}
+              </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={handleClear} className="rounded-lg p-2 text-neutral-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+            </button>
+            <button onClick={() => setIsOpen(false)} className="rounded-lg p-2 text-neutral-400 hover:text-neutral-900">
+                <ChevronDown className="h-4 w-4" />
+            </button>
           </div>
         </div>
+        <div ref={listRef} className="flex-1 space-y-6 overflow-y-auto p-6 scrollbar-thin">
+          {messages.map((msg) => (
+             <ChatMessage key={msg.id} message={msg} />
+          ))}
+          {error && <div className="text-xs text-red-500 px-4">Error: {error}</div>}
+        </div>
       </div>
-    </>
+
+      {/* SUGGESTIONS (Show when focused + closed) */}
+      <div className={cn(
+          "absolute bottom-full left-0 mb-4 w-full transition-all duration-300",
+          isFocused && !isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
+      )}>
+         <div className="flex flex-col items-center gap-2">
+           <span className="text-[10px] font-medium uppercase text-neutral-400/80 shadow-sm text-shadow">
+             {hasHistory ? "Continue Conversation" : "Suggested Actions"}
+           </span>
+           <div className="flex flex-wrap justify-center gap-2">
+             {quickPrompts.map((prompt) => (
+               <button
+                 key={prompt}
+                 onClick={() => {
+                   setInput(prompt);
+                   inputRef.current?.focus();
+                 }}
+                 className="rounded-full border border-white/40 bg-white/80 px-4 py-2 text-xs font-medium text-neutral-600 shadow-sm backdrop-blur-md hover:bg-white hover:text-emerald-700 hover:shadow-md"
+               >
+                 {prompt}
+               </button>
+             ))}
+           </div>
+         </div>
+      </div>
+
+      {/* INPUT BAR */}
+      <div className={cn(
+          "relative z-20 flex flex-col gap-2 bg-white shadow-[0_8px_40px_-12px_rgba(0,0,0,0.3)] transition-all duration-300",
+          isOpen ? "rounded-b-3xl rounded-t-none border-t border-neutral-100" : "rounded-3xl border border-white/50 ring-1 ring-black/5"
+      )}>
+         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative flex items-end p-2">
+            <div className={cn("absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300", input.length > 0 || isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100")}>
+               {hasHistory ? <History className="h-5 w-5 text-neutral-400" /> : <Sparkles className="h-5 w-5 text-emerald-500 animate-pulse" />}
+            </div>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onFocus={handleFocus}
+              onChange={adjustHeight}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
+              rows={1}
+              placeholder={hasHistory ? "Continue analysis..." : "Ask AI to analyze..."}
+              className={cn("max-h-[150px] w-full resize-none bg-transparent py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:outline-none", input.length > 0 || isOpen ? "px-4" : "pl-12 pr-12")}
+              style={{ minHeight: "48px" }}
+            />
+            <div className="flex shrink-0 items-center pb-2 pr-2">
+              {isStreaming ? (
+                <button type="button" onClick={stop} className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200">
+                  <Square className="h-3 w-3 fill-current" />
+                </button>
+              ) : (
+                <button type="submit" disabled={!input.trim()} className={cn("flex h-8 w-8 items-center justify-center rounded-full transition-all", input.trim() ? "bg-neutral-900 text-white shadow-md hover:bg-neutral-800" : "bg-neutral-100 text-neutral-300")}>
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+         </form>
+      </div>
+    </div>
   );
 }

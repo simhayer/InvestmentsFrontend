@@ -15,7 +15,7 @@ import { useChat } from "@/components/chat/ChatContext";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 
-const quickPrompts = ["Summarize this view", "Identify key risks", "Forecast next month"];
+const quickPrompts = ["How is my portfolio doing today", "Suggest improvements for my portfolio", "Is apple a good buy right now?"];
 
 export function ChatPanel() {
   const {
@@ -158,16 +158,13 @@ export function ChatPanel() {
       {/* SUGGESTIONS (Show when focused + closed) */}
       <div
         className={cn(
-          "absolute bottom-full left-0 mb-4 w-full transition-all duration-300",
+          "absolute bottom-full left-0 mb-0 w-full transition-all duration-300",
           isFocused && !isOpen
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0"
         )}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[10px] font-medium uppercase text-neutral-400/80 shadow-sm text-shadow">
-            {hasHistory ? "Continue Conversation" : "Suggested Actions"}
-          </span>
           <div className="flex flex-wrap justify-center gap-2">
             {quickPrompts.map((prompt) => (
               <button
@@ -199,7 +196,7 @@ export function ChatPanel() {
             e.preventDefault();
             handleSend();
           }}
-          className="relative flex items-end p-2"
+          className="relative flex items-end p-1"
         >
           <div
             className={cn(

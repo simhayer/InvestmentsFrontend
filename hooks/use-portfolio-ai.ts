@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PortfolioAnalysisResponse, AiLayers } from "@/types/portfolio-ai";
 import { safeParseAnalysis } from "@/utils/aiService";
-import { authedFetch } from "@/utils/authService";
+import { getAiInsightPortfolio } from "@/utils/portfolioService";
 
-const ANALYZE_PATH = `/api/ai/analyze-portfolio`;
 const SHOW_FORCE = (process.env.NEXT_PUBLIC_SHOW_FORCE || "0") === "1";
 
 /** ---------- helpers ---------- */
@@ -13,40 +12,15 @@ function isRecord(v: unknown): v is Record<string, any> {
   return !!v && typeof v === "object";
 }
 
-function humanizeSeconds(s?: number) {
-  if (s == null || s <= 0) return "now";
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const parts: string[] = [];
-  if (h) parts.push(`${h}h`);
-  if (m || !h) parts.push(`${m}m`);
-  return parts.join(" ");
-}
-
-/** ---------- envelope/meta ---------- */
-export type BackendEnvelope = {
-  status?: string;
-  ai_layers?: any;
-  cached?: boolean;
-  cached_at?: string;
-  ttl_seconds_remaining?: number;
-  warnings?: string[] | null;
-  detail?: string; // error
-  error?: string; // error
-};
-
+/** ---------- meta ---------- */
 export type PortfolioAiMeta = {
-  cached: boolean;
-  cachedAt?: string;
-  ttlSeconds: number;
-  nextUpdateIn: string; // e.g., "3h 12m" or "now"
-  nextUpdateAt?: Date;
+  // v2 doesn't provide TTL/cached_at in the same way, so keep meta minimal + useful
+  showForce: boolean;
+  lastUpdatedAt?: Date;
   warnings?: string[];
-  showForce: boolean; // env-driven ability to show Force button
-  canRefreshNow: boolean; // convenience: ttlSeconds <= 0
 };
 
-export function usePortfolioAi() {
+export function usePortfolioAi(opts?: { currency?: "USD" | "CAD" }) {
   const [analysis, setAnalysis] = useState<PortfolioAnalysisResponse | null>(
     null
   );
@@ -54,10 +28,11 @@ export function usePortfolioAi() {
   const [loading, setLoading] = useState(false);
   const [refetching, setRefetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchAi = useCallback(
-    async (isRefetch = false, opts?: { force?: boolean }) => {
+    async (isRefetch = false, params?: { force?: boolean }) => {
       try {
         setError(null);
         isRefetch ? setRefetching(true) : setLoading(true);
@@ -65,71 +40,55 @@ export function usePortfolioAi() {
         abortRef.current?.abort();
         const controller = new AbortController();
         abortRef.current = controller;
-
-        const query = opts?.force
-          ? `/api/ai/analyze-portfolio?force=true`
-          : ANALYZE_PATH;
-
-        const res = await authedFetch(query, {
-          method: "POST",
-          cache: "no-store",
+        
+        // v2 method: starts task + polls until complete (or returns cached result)
+        const report = await getAiInsightPortfolio({
+          currency: opts?.currency ?? "USD",
+          force: !!params?.force,
           signal: controller.signal,
-          // body: JSON.stringify({})
+          // optional overrides:
+          // maxWaitMs: 60_000,
+          // intervalMs: 1200,
         });
 
-        const isJson = res.headers
-          .get("content-type")
-          ?.includes("application/json");
-        const json = (
-          isJson ? await res.json() : null
-        ) as BackendEnvelope | null;
+        /**
+         * Your v2 service returns `report` (any).
+         * We stitch it into the same UI typed envelope you were using before.
+         *
+         * We accept either:
+         * - report.ai_layers
+         * - report.data.ai_layers (in case your backend nests it)
+         * - report (already is ai_layers)
+         */
+        const aiLayersCandidate: unknown =
+          isRecord(report) && isRecord((report as any).ai_layers)
+            ? (report as any).ai_layers
+            : isRecord(report) && isRecord((report as any).data)
+            ? (report as any).data
+            : report;
 
-        if (!res.ok) {
-          const msg = json?.detail || json?.error || `HTTP ${res.status}`;
-          throw new Error(msg);
-        }
-
-        // meta
-        const ttl = Number(json?.ttl_seconds_remaining ?? 0) || 0;
-        const nextUpdateAt =
-          ttl > 0 ? new Date(Date.now() + ttl * 1000) : undefined;
-        const metaNext: PortfolioAiMeta = {
-          cached: !!json?.cached,
-          cachedAt: json?.cached_at,
-          ttlSeconds: ttl,
-          nextUpdateIn: humanizeSeconds(ttl),
-          nextUpdateAt,
-          warnings: json?.warnings ?? undefined,
-          showForce: SHOW_FORCE,
-          canRefreshNow: ttl <= 0,
-        };
-
-        // Accept either ai_layers directly or nested data
-        const payload =
-          isRecord(json) && isRecord(json.ai_layers) ? json.ai_layers : null;
-        const maybeData: unknown =
-          payload && isRecord((payload as any).data)
-            ? (payload as any).data
-            : payload;
-
-        // Stitch back into a typed response for the UI
         const stitched: PortfolioAnalysisResponse | null = safeParseAnalysis({
           status: "ok",
           user_id: 0,
-          ai_layers: maybeData as AiLayers,
+          ai_layers: aiLayersCandidate as AiLayers,
         });
 
         if (!stitched) {
-          const msg =
-            json?.detail || json?.error || "Unexpected response shape";
-          setError(msg);
+          setError("Unexpected response shape");
           setAnalysis(null);
-          setMeta(metaNext);
+          setMeta({
+            showForce: SHOW_FORCE,
+            lastUpdatedAt: new Date(),
+          });
           return;
         }
 
         setAnalysis(stitched);
-        setMeta(metaNext);
+        setMeta({
+          showForce: SHOW_FORCE,
+          lastUpdatedAt: new Date(),
+          // If you later add warnings to v2 status payload, you can map them here.
+        });
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           setError(e?.message || "Failed to load");
@@ -140,7 +99,7 @@ export function usePortfolioAi() {
         isRefetch ? setRefetching(false) : setLoading(false);
       }
     },
-    []
+    [opts?.currency]
   );
 
   useEffect(() => {
@@ -149,8 +108,8 @@ export function usePortfolioAi() {
   }, [fetchAi]);
 
   return {
-    analysis, // full typed envelope
-    layers: analysis?.ai_layers ?? null, // convenience alias
+    analysis,
+    layers: analysis?.ai_layers ?? null,
     meta,
     loading,
     refetching,

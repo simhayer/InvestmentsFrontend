@@ -1,4 +1,3 @@
-// components/ai/StockAnalysisCard.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -22,7 +21,7 @@ import type {
 } from "@/types/symbol_analysis";
 
 // ============================================================================
-// MAIN COMPONENT
+// MAIN COMPONENT - Consolidated & Cleaned
 // ============================================================================
 
 interface StockAnalysisCardProps {
@@ -34,114 +33,154 @@ export function StockAnalysisCard({ data, className }: StockAnalysisCardProps) {
   const { report, dataGaps } = data;
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Verdict + Summary */}
+    <div className={cn("space-y-6", className)}>
+      {/* 1. HERO: Verdict Card */}
       <VerdictCard report={report} />
 
-      {/* Bull vs Bear */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ThesisCard
-          title="Bull Case"
-          items={report.bullCase}
-          variant="bull"
-        />
-        <ThesisCard
-          title="Bear Case"
-          items={report.bearCase}
-          variant="bear"
-        />
-      </div>
-
-      {/* Assessment Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AssessmentCard
-          title="Valuation"
-          assessment={report.valuation.assessment as Assessment}
-          detail={report.valuation.reasoning}
-        />
-        <AssessmentCard
-          title="Profitability"
-          assessment={report.profitability.assessment as Assessment}
-          detail={report.profitability.reasoning}
-        />
-        <AssessmentCard
-          title="Financial Health"
-          assessment={report.financialHealth.assessment as Assessment}
-          detail={report.financialHealth.reasoning}
-        />
-      </div>
-
-      {/* Momentum */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <LineChart className="h-4 w-4 text-neutral-400" />
-          <h3 className="text-sm font-semibold text-neutral-700">Momentum</h3>
+      {/* 2. CORE: Investment Thesis (Bull & Bear consolidated) */}
+      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50">
+          <h3 className="text-sm font-semibold text-neutral-900">
+            Investment Thesis
+          </h3>
         </div>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <p className="text-xs text-neutral-400 mb-2">Earnings Trend</p>
-            <MomentumBadge
-              value={report.momentum.earningsTrend}
-              type="earnings"
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-100">
+          <ThesisSection
+            title="Bull Case"
+            items={report.bullCase}
+            variant="bull"
+          />
+          <ThesisSection
+            title="Bear Case"
+            items={report.bearCase}
+            variant="bear"
+          />
+        </div>
+      </div>
+
+      {/* 3. DEEP DIVE: Fundamentals & Momentum (Consolidated) */}
+      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50 flex justify-between items-center">
+          <h3 className="text-sm font-semibold text-neutral-900">
+            Fundamentals & Health
+          </h3>
+        </div>
+        <div className="p-5 space-y-6">
+          {/* Top Row: Assessments */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <AssessmentCard
+              title="Valuation"
+              assessment={report.valuation.assessment as Assessment}
+              detail={report.valuation.reasoning}
+            />
+            <AssessmentCard
+              title="Profitability"
+              assessment={report.profitability.assessment as Assessment}
+              detail={report.profitability.reasoning}
+            />
+            <AssessmentCard
+              title="Financial Health"
+              assessment={report.financialHealth.assessment as Assessment}
+              detail={report.financialHealth.reasoning}
             />
           </div>
+
+          {/* Divider */}
+          <div className="h-px bg-neutral-100" />
+
+          {/* Bottom Row: Momentum */}
           <div>
-            <p className="text-xs text-neutral-400 mb-2">Growth Trajectory</p>
-            <MomentumBadge
-              value={report.momentum.growthTrajectory}
-              type="growth"
-            />
+            <div className="flex items-center gap-2 mb-3">
+              <LineChart className="h-4 w-4 text-neutral-400" />
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                Momentum Indicators
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <div>
+                <span className="text-xs text-neutral-400 mr-2">
+                  Earnings:
+                </span>
+                <MomentumBadge
+                  value={report.momentum.earningsTrend}
+                  type="earnings"
+                />
+              </div>
+              <div>
+                <span className="text-xs text-neutral-400 mr-2">
+                  Growth:
+                </span>
+                <MomentumBadge
+                  value={report.momentum.growthTrajectory}
+                  type="growth"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Risks & Catalysts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SimpleListCard
-          title="Key Risks"
-          icon={<AlertTriangle className="h-4 w-4 text-rose-500" />}
-          items={report.risks}
-          accentColor="rose"
-        />
-        <SimpleListCard
-          title="Catalysts"
-          icon={<Zap className="h-4 w-4 text-amber-500" />}
-          items={report.catalysts}
-          accentColor="amber"
-        />
+      {/* 4. OUTLOOK: Risks & Catalysts (Consolidated) */}
+      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50">
+          <h3 className="text-sm font-semibold text-neutral-900">
+            Market Outlook
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-100">
+          <SimpleListSection
+            title="Key Risks"
+            icon={<AlertTriangle className="h-4 w-4 text-rose-500" />}
+            items={report.risks}
+            accentColor="rose"
+          />
+          <SimpleListSection
+            title="Catalysts"
+            icon={<Zap className="h-4 w-4 text-amber-500" />}
+            items={report.catalysts}
+            accentColor="amber"
+          />
+        </div>
       </div>
 
-      {/* Notes */}
-      {(report.technicalNotes || report.peerComparison) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {report.technicalNotes && (
-            <NoteCard title="Technical Position" content={report.technicalNotes} />
-          )}
-          {report.peerComparison && (
-            <NoteCard title="Peer Comparison" content={report.peerComparison} />
-          )}
-        </div>
-      )}
+      {/* 5. FOOTER: Notes & Gaps */}
+      <div className="space-y-4">
+        {(report.technicalNotes || report.peerComparison) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {report.technicalNotes && (
+              <NoteCard
+                title="Technical Position"
+                content={report.technicalNotes}
+              />
+            )}
+            {report.peerComparison && (
+              <NoteCard
+                title="Peer Comparison"
+                content={report.peerComparison}
+              />
+            )}
+          </div>
+        )}
 
-      {/* Data Gaps */}
-      {dataGaps.length > 0 && <DataGapsCard gaps={dataGaps} />}
+        {dataGaps.length > 0 && <DataGapsCard gaps={dataGaps} />}
+      </div>
     </div>
   );
 }
 
 // ============================================================================
-// VERDICT CARD
+// COMPONENT 1: VERDICT CARD
 // ============================================================================
 
 function VerdictCard({ report }: { report: AnalysisReport }) {
   const config = {
     Bullish: {
-      bg: "bg-emerald-500",
+      bg: "bg-emerald-600",
       icon: TrendingUp,
       label: "Bullish",
     },
     Bearish: {
-      bg: "bg-rose-500",
+      bg: "bg-rose-600",
       icon: TrendingDown,
       label: "Bearish",
     },
@@ -158,25 +197,31 @@ function VerdictCard({ report }: { report: AnalysisReport }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
+      className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-md"
     >
-      {/* Header Bar */}
-      <div className={cn("px-5 py-4 flex items-center justify-between", config.bg)}>
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-xl">
-            <Icon className="h-5 w-5 text-white" />
+      <div
+        className={cn("px-6 py-5 flex items-center justify-between", config.bg)}
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
+            <Icon className="h-6 w-6 text-white" />
           </div>
           <div>
-            <p className="text-xs text-white/70 font-medium">AI Verdict</p>
-            <p className="text-lg font-bold text-white">{config.label}</p>
+            <p className="text-xs text-white/80 font-medium mb-0.5">
+              AI Verdict
+            </p>
+            <p className="text-2xl font-bold text-white tracking-tight">
+              {config.label}
+            </p>
           </div>
         </div>
         <ConfidenceIndicator confidence={report.confidence} />
       </div>
 
-      {/* Summary */}
-      <div className="p-5">
-        <p className="text-neutral-600 leading-relaxed">{report.summary}</p>
+      <div className="p-6">
+        <p className="text-neutral-700 leading-relaxed text-base">
+          {report.summary}
+        </p>
       </div>
     </motion.div>
   );
@@ -187,31 +232,31 @@ function ConfidenceIndicator({ confidence }: { confidence: Confidence }) {
   const n = levels[confidence];
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex gap-0.5 items-end">
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex gap-1 items-end">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
             className={cn(
-              "w-1.5 rounded-full",
+              "w-2 rounded-full transition-all",
               i <= n ? "bg-white" : "bg-white/30",
-              i === 1 ? "h-2" : i === 2 ? "h-3" : "h-4"
+              i === 1 ? "h-3" : i === 2 ? "h-4" : "h-5"
             )}
           />
         ))}
       </div>
-      <span className="text-[10px] text-white/70 font-medium uppercase">
-        {confidence}
+      <span className="text-[10px] text-white/90 font-bold uppercase tracking-wide">
+        {confidence} Conf.
       </span>
     </div>
   );
 }
 
 // ============================================================================
-// THESIS CARDS (Bull/Bear)
+// COMPONENT 2: THESIS SECTIONS
 // ============================================================================
 
-function ThesisCard({
+function ThesisSection({
   title,
   items,
   variant,
@@ -222,17 +267,15 @@ function ThesisCard({
 }) {
   const styles = {
     bull: {
-      border: "border-emerald-200",
-      bg: "bg-emerald-50/50",
       icon: TrendingUp,
       iconColor: "text-emerald-600",
+      bgBadge: "bg-emerald-50 text-emerald-700",
       bullet: "text-emerald-500",
     },
     bear: {
-      border: "border-rose-200",
-      bg: "bg-rose-50/50",
       icon: TrendingDown,
       iconColor: "text-rose-600",
+      bgBadge: "bg-rose-50 text-rose-700",
       bullet: "text-rose-500",
     },
   }[variant];
@@ -240,39 +283,30 @@ function ThesisCard({
   const Icon = styles.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 }}
-      className={cn("rounded-2xl border p-5", styles.border, styles.bg)}
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <Icon className={cn("h-4 w-4", styles.iconColor)} />
-        <h3 className="text-sm font-semibold text-neutral-800">{title}</h3>
+    <div className="p-6">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className={cn("p-1.5 rounded-lg", styles.bgBadge)}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <h4 className="text-sm font-bold text-neutral-800">{title}</h4>
       </div>
-      <ul className="space-y-2.5">
+      <ul className="space-y-3">
         {items.map((item, i) => (
-          <li key={i} className="flex gap-2 text-sm text-neutral-600">
-            <ChevronRight className={cn("h-4 w-4 mt-0.5 shrink-0", styles.bullet)} />
+          <li key={i} className="flex gap-3 text-sm text-neutral-600 leading-relaxed">
+            <ChevronRight
+              className={cn("h-4 w-4 mt-0.5 shrink-0", styles.bullet)}
+            />
             <span>{item}</span>
           </li>
         ))}
       </ul>
-    </motion.div>
+    </div>
   );
 }
 
 // ============================================================================
-// ASSESSMENT CARD
+// COMPONENT 3: ASSESSMENT CARDS (Inside Fundamentals)
 // ============================================================================
-
-function getAssessmentColor(assessment: Assessment) {
-  const positive = ["Cheap", "Strong", "Solid"];
-  const negative = ["Expensive", "Weak", "Concerning"];
-  if (positive.includes(assessment)) return "emerald";
-  if (negative.includes(assessment)) return "rose";
-  return "amber";
-}
 
 function AssessmentCard({
   title,
@@ -285,33 +319,41 @@ function AssessmentCard({
 }) {
   const color = getAssessmentColor(assessment);
   const colorClasses = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    rose: "bg-rose-100 text-rose-700",
-    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    rose: "bg-rose-100 text-rose-800 border-rose-200",
+    amber: "bg-amber-100 text-amber-800 border-amber-200",
   }[color];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="bg-white rounded-2xl border border-neutral-200 p-4"
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-          {title}
-        </span>
-        <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", colorClasses)}>
+    <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-neutral-500">{title}</span>
+        <span
+          className={cn(
+            "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+            colorClasses
+          )}
+        >
           {assessment}
         </span>
       </div>
-      <p className="text-sm text-neutral-600 leading-relaxed">{detail}</p>
-    </motion.div>
+      <p className="text-xs text-neutral-600 leading-relaxed line-clamp-3">
+        {detail}
+      </p>
+    </div>
   );
 }
 
+function getAssessmentColor(assessment: Assessment) {
+  const positive = ["Cheap", "Strong", "Solid"];
+  const negative = ["Expensive", "Weak", "Concerning"];
+  if (positive.includes(assessment)) return "emerald";
+  if (negative.includes(assessment)) return "rose";
+  return "amber";
+}
+
 // ============================================================================
-// MOMENTUM BADGE
+// COMPONENT 4: MOMENTUM BADGE
 // ============================================================================
 
 function MomentumBadge({
@@ -321,44 +363,54 @@ function MomentumBadge({
   value: string;
   type: "earnings" | "growth";
 }) {
-  const positive = type === "earnings" ? "Beating" : "Accelerating";
-  const negative = type === "earnings" ? "Missing" : "Decelerating";
+  // Broad matching logic for robustness
+  const valLower = value.toLowerCase();
+  const isPos =
+    valLower.includes("beat") ||
+    valLower.includes("accel") ||
+    valLower.includes("up") ||
+    valLower.includes("strong");
+  const isNeg =
+    valLower.includes("miss") ||
+    valLower.includes("decel") ||
+    valLower.includes("down") ||
+    valLower.includes("weak");
 
   let color = "amber";
   let Icon = Minus;
 
-  if (value === positive) {
+  if (isPos) {
     color = "emerald";
     Icon = TrendingUp;
-  } else if (value === negative) {
+  } else if (isNeg) {
     color = "rose";
     Icon = TrendingDown;
   }
 
   const colorClasses = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    rose: "bg-rose-100 text-rose-700",
-    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    rose: "bg-rose-50 text-rose-700 border-rose-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
   }[color];
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border",
         colorClasses
       )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-3.5 w-3.5" />
       {value}
     </span>
   );
 }
 
 // ============================================================================
-// SIMPLE LIST CARD
+// COMPONENT 5: SIMPLE LIST (For Outlook)
 // ============================================================================
 
-function SimpleListCard({
+function SimpleListSection({
   title,
   icon,
   items,
@@ -369,43 +421,36 @@ function SimpleListCard({
   items: string[];
   accentColor: "rose" | "amber";
 }) {
-  const bulletColor = accentColor === "rose" ? "text-rose-400" : "text-amber-400";
+  const bulletColor =
+    accentColor === "rose" ? "text-rose-400" : "text-amber-400";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
-      className="bg-white rounded-2xl border border-neutral-200 p-5"
-    >
+    <div className="p-6">
       <div className="flex items-center gap-2 mb-4">
         {icon}
-        <h3 className="text-sm font-semibold text-neutral-700">{title}</h3>
+        <h3 className="text-sm font-bold text-neutral-800">{title}</h3>
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-2.5">
         {items.map((item, i) => (
           <li key={i} className="flex gap-2 text-sm text-neutral-600">
-            <ChevronRight className={cn("h-4 w-4 mt-0.5 shrink-0", bulletColor)} />
-            <span>{item}</span>
+            <ChevronRight
+              className={cn("h-4 w-4 mt-0.5 shrink-0", bulletColor)}
+            />
+            <span className="leading-snug">{item}</span>
           </li>
         ))}
       </ul>
-    </motion.div>
+    </div>
   );
 }
 
 // ============================================================================
-// NOTE CARD
+// EXTRAS: NoteCard & DataGaps
 // ============================================================================
 
 function NoteCard({ title, content }: { title: string; content: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="bg-neutral-50 rounded-2xl border border-neutral-200 p-5"
-    >
+    <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-5">
       <div className="flex items-center gap-2 mb-2">
         <Target className="h-4 w-4 text-neutral-400" />
         <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
@@ -413,13 +458,9 @@ function NoteCard({ title, content }: { title: string; content: string }) {
         </h4>
       </div>
       <p className="text-sm text-neutral-600 leading-relaxed">{content}</p>
-    </motion.div>
+    </div>
   );
 }
-
-// ============================================================================
-// DATA GAPS
-// ============================================================================
 
 function DataGapsCard({ gaps }: { gaps: string[] }) {
   return (
@@ -437,5 +478,3 @@ function DataGapsCard({ gaps }: { gaps: string[] }) {
     </div>
   );
 }
-
-export default StockAnalysisCard;

@@ -6,23 +6,17 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Shield,
   AlertTriangle,
   Zap,
-  Target,
-  BarChart3,
-  DollarSign,
-  Activity,
   ChevronRight,
   Info,
-  ArrowUpRight,
-  ArrowDownRight,
+  Target,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   StockAnalysisResponse,
   AnalysisReport,
-  Verdict,
   Confidence,
   Assessment,
 } from "@/types/symbol_analysis";
@@ -40,68 +34,84 @@ export function StockAnalysisCard({ data, className }: StockAnalysisCardProps) {
   const { report, dataGaps } = data;
 
   return (
-    <div className={cn("space-y-5", className)}>
-      {/* Hero: Summary + Verdict */}
-      <SummaryHero report={report} />
+    <div className={cn("space-y-4", className)}>
+      {/* Verdict + Summary */}
+      <VerdictCard report={report} />
 
-      {/* Bull vs Bear Grid */}
+      {/* Bull vs Bear */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <CaseCard
+        <ThesisCard
           title="Bull Case"
-          icon={TrendingUp}
           items={report.bullCase}
           variant="bull"
         />
-        <CaseCard
+        <ThesisCard
           title="Bear Case"
-          icon={TrendingDown}
           items={report.bearCase}
           variant="bear"
         />
       </div>
 
-      {/* Metrics Row */}
+      {/* Assessment Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard
+        <AssessmentCard
           title="Valuation"
-          icon={DollarSign}
           assessment={report.valuation.assessment as Assessment}
-          reasoning={report.valuation.reasoning}
+          detail={report.valuation.reasoning}
         />
-        <MetricCard
+        <AssessmentCard
           title="Profitability"
-          icon={BarChart3}
           assessment={report.profitability.assessment as Assessment}
-          reasoning={report.profitability.reasoning}
+          detail={report.profitability.reasoning}
         />
-        <MetricCard
+        <AssessmentCard
           title="Financial Health"
-          icon={Shield}
           assessment={report.financialHealth.assessment as Assessment}
-          reasoning={report.financialHealth.reasoning}
+          detail={report.financialHealth.reasoning}
         />
       </div>
 
-      {/* Momentum Row */}
-      <MomentumRow momentum={report.momentum} />
+      {/* Momentum */}
+      <div className="bg-white rounded-2xl border border-neutral-200 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <LineChart className="h-4 w-4 text-neutral-400" />
+          <h3 className="text-sm font-semibold text-neutral-700">Momentum</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <p className="text-xs text-neutral-400 mb-2">Earnings Trend</p>
+            <MomentumBadge
+              value={report.momentum.earningsTrend}
+              type="earnings"
+            />
+          </div>
+          <div>
+            <p className="text-xs text-neutral-400 mb-2">Growth Trajectory</p>
+            <MomentumBadge
+              value={report.momentum.growthTrajectory}
+              type="growth"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Risks & Catalysts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ListCard
+        <SimpleListCard
           title="Key Risks"
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-rose-500" />}
           items={report.risks}
-          variant="risk"
+          accentColor="rose"
         />
-        <ListCard
+        <SimpleListCard
           title="Catalysts"
-          icon={Zap}
+          icon={<Zap className="h-4 w-4 text-amber-500" />}
           items={report.catalysts}
-          variant="catalyst"
+          accentColor="amber"
         />
       </div>
 
-      {/* Technical & Peer Notes */}
+      {/* Notes */}
       {(report.technicalNotes || report.peerComparison) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {report.technicalNotes && (
@@ -114,93 +124,83 @@ export function StockAnalysisCard({ data, className }: StockAnalysisCardProps) {
       )}
 
       {/* Data Gaps */}
-      {dataGaps.length > 0 && <DataGaps gaps={dataGaps} />}
+      {dataGaps.length > 0 && <DataGapsCard gaps={dataGaps} />}
     </div>
   );
 }
 
 // ============================================================================
-// SUMMARY HERO
+// VERDICT CARD
 // ============================================================================
 
-function SummaryHero({ report }: { report: AnalysisReport }) {
-  const verdictConfig = {
+function VerdictCard({ report }: { report: AnalysisReport }) {
+  const config = {
     Bullish: {
-      gradient: "from-emerald-500 to-teal-600",
-      bg: "bg-emerald-50",
-      text: "text-emerald-700",
+      bg: "bg-emerald-500",
       icon: TrendingUp,
+      label: "Bullish",
     },
     Bearish: {
-      gradient: "from-rose-500 to-red-600",
-      bg: "bg-rose-50",
-      text: "text-rose-700",
+      bg: "bg-rose-500",
       icon: TrendingDown,
+      label: "Bearish",
     },
     Neutral: {
-      gradient: "from-amber-500 to-orange-600",
-      bg: "bg-amber-50",
-      text: "text-amber-700",
+      bg: "bg-amber-500",
       icon: Minus,
+      label: "Neutral",
     },
   }[report.verdict];
 
-  const Icon = verdictConfig.icon;
+  const Icon = config.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-slate-200 rounded-2xl overflow-hidden"
+      className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
     >
-      {/* Verdict Banner */}
-      <div
-        className={cn(
-          "px-6 py-4 flex items-center justify-between",
-          `bg-gradient-to-r ${verdictConfig.gradient}`
-        )}
-      >
+      {/* Header Bar */}
+      <div className={cn("px-5 py-4 flex items-center justify-between", config.bg)}>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-            <Icon className="h-6 w-6 text-white" />
+          <div className="p-2 bg-white/20 rounded-xl">
+            <Icon className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-white/80 text-xs font-medium uppercase tracking-wider">
-              AI Verdict
-            </p>
-            <p className="text-white text-xl font-black">{report.verdict}</p>
+            <p className="text-xs text-white/70 font-medium">AI Verdict</p>
+            <p className="text-lg font-bold text-white">{config.label}</p>
           </div>
         </div>
-        <ConfidenceMeter confidence={report.confidence} />
+        <ConfidenceIndicator confidence={report.confidence} />
       </div>
 
-      {/* Summary Text */}
-      <div className="p-6">
-        <p className="text-slate-700 leading-relaxed">{report.summary}</p>
+      {/* Summary */}
+      <div className="p-5">
+        <p className="text-neutral-600 leading-relaxed">{report.summary}</p>
       </div>
     </motion.div>
   );
 }
 
-function ConfidenceMeter({ confidence }: { confidence: Confidence }) {
+function ConfidenceIndicator({ confidence }: { confidence: Confidence }) {
   const levels = { High: 3, Medium: 2, Low: 1 };
-  const level = levels[confidence];
+  const n = levels[confidence];
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex gap-1">
+      <div className="flex gap-0.5 items-end">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
             className={cn(
-              "w-2 rounded-full transition-all",
-              i <= level ? "bg-white" : "bg-white/30",
-              i === 1 ? "h-3" : i === 2 ? "h-4" : "h-5"
+              "w-1.5 rounded-full",
+              i <= n ? "bg-white" : "bg-white/30",
+              i === 1 ? "h-2" : i === 2 ? "h-3" : "h-4"
             )}
           />
         ))}
       </div>
-      <span className="text-white/80 text-[10px] font-medium uppercase">
+      <span className="text-[10px] text-white/70 font-medium uppercase">
         {confidence}
       </span>
     </div>
@@ -208,60 +208,53 @@ function ConfidenceMeter({ confidence }: { confidence: Confidence }) {
 }
 
 // ============================================================================
-// CASE CARDS (Bull/Bear)
+// THESIS CARDS (Bull/Bear)
 // ============================================================================
 
-function CaseCard({
+function ThesisCard({
   title,
-  icon: Icon,
   items,
   variant,
 }: {
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
   items: string[];
   variant: "bull" | "bear";
 }) {
-  const config = {
+  const styles = {
     bull: {
-      bg: "bg-gradient-to-br from-emerald-50 to-teal-50",
-      border: "border-emerald-100",
-      iconBg: "bg-emerald-100",
+      border: "border-emerald-200",
+      bg: "bg-emerald-50/50",
+      icon: TrendingUp,
       iconColor: "text-emerald-600",
-      bullet: "bg-emerald-500",
-      arrow: ArrowUpRight,
+      bullet: "text-emerald-500",
     },
     bear: {
-      bg: "bg-gradient-to-br from-rose-50 to-red-50",
-      border: "border-rose-100",
-      iconBg: "bg-rose-100",
+      border: "border-rose-200",
+      bg: "bg-rose-50/50",
+      icon: TrendingDown,
       iconColor: "text-rose-600",
-      bullet: "bg-rose-500",
-      arrow: ArrowDownRight,
+      bullet: "text-rose-500",
     },
   }[variant];
+
+  const Icon = styles.icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className={cn("rounded-2xl border p-5", config.bg, config.border)}
+      transition={{ delay: 0.05 }}
+      className={cn("rounded-2xl border p-5", styles.border, styles.bg)}
     >
-      <div className="flex items-center gap-2.5 mb-4">
-        <div className={cn("p-2 rounded-xl", config.iconBg)}>
-          <Icon className={cn("h-4 w-4", config.iconColor)} />
-        </div>
-        <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <Icon className={cn("h-4 w-4", styles.iconColor)} />
+        <h3 className="text-sm font-semibold text-neutral-800">{title}</h3>
       </div>
-
-      <ul className="space-y-3">
+      <ul className="space-y-2.5">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2.5">
-            <config.arrow
-              className={cn("h-4 w-4 mt-0.5 shrink-0", config.iconColor)}
-            />
-            <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
+          <li key={i} className="flex gap-2 text-sm text-neutral-600">
+            <ChevronRight className={cn("h-4 w-4 mt-0.5 shrink-0", styles.bullet)} />
+            <span>{item}</span>
           </li>
         ))}
       </ul>
@@ -270,158 +263,130 @@ function CaseCard({
 }
 
 // ============================================================================
-// METRIC CARD
+// ASSESSMENT CARD
 // ============================================================================
 
-function getAssessmentStyle(assessment: Assessment) {
+function getAssessmentColor(assessment: Assessment) {
   const positive = ["Cheap", "Strong", "Solid"];
   const negative = ["Expensive", "Weak", "Concerning"];
-
-  if (positive.includes(assessment)) {
-    return { pill: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" };
-  }
-  if (negative.includes(assessment)) {
-    return { pill: "bg-rose-100 text-rose-700", bar: "bg-rose-500" };
-  }
-  return { pill: "bg-amber-100 text-amber-700", bar: "bg-amber-500" };
+  if (positive.includes(assessment)) return "emerald";
+  if (negative.includes(assessment)) return "rose";
+  return "amber";
 }
 
-function MetricCard({
+function AssessmentCard({
   title,
-  icon: Icon,
   assessment,
-  reasoning,
+  detail,
 }: {
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
   assessment: Assessment;
-  reasoning: string;
+  detail: string;
 }) {
-  const style = getAssessmentStyle(assessment);
+  const color = getAssessmentColor(assessment);
+  const colorClasses = {
+    emerald: "bg-emerald-100 text-emerald-700",
+    rose: "bg-rose-100 text-rose-700",
+    amber: "bg-amber-100 text-amber-700",
+  }[color];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="bg-white rounded-2xl border border-neutral-200 p-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+          {title}
+        </span>
+        <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", colorClasses)}>
+          {assessment}
+        </span>
+      </div>
+      <p className="text-sm text-neutral-600 leading-relaxed">{detail}</p>
+    </motion.div>
+  );
+}
+
+// ============================================================================
+// MOMENTUM BADGE
+// ============================================================================
+
+function MomentumBadge({
+  value,
+  type,
+}: {
+  value: string;
+  type: "earnings" | "growth";
+}) {
+  const positive = type === "earnings" ? "Beating" : "Accelerating";
+  const negative = type === "earnings" ? "Missing" : "Decelerating";
+
+  let color = "amber";
+  let Icon = Minus;
+
+  if (value === positive) {
+    color = "emerald";
+    Icon = TrendingUp;
+  } else if (value === negative) {
+    color = "rose";
+    Icon = TrendingDown;
+  }
+
+  const colorClasses = {
+    emerald: "bg-emerald-100 text-emerald-700",
+    rose: "bg-rose-100 text-rose-700",
+    amber: "bg-amber-100 text-amber-700",
+  }[color];
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold",
+        colorClasses
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {value}
+    </span>
+  );
+}
+
+// ============================================================================
+// SIMPLE LIST CARD
+// ============================================================================
+
+function SimpleListCard({
+  title,
+  icon,
+  items,
+  accentColor,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+  accentColor: "rose" | "amber";
+}) {
+  const bulletColor = accentColor === "rose" ? "text-rose-400" : "text-amber-400";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="bg-white border border-slate-200 rounded-2xl p-4"
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            {title}
-          </span>
-        </div>
-        <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", style.pill)}>
-          {assessment}
-        </span>
-      </div>
-      <p className="text-sm text-slate-600 leading-relaxed">{reasoning}</p>
-    </motion.div>
-  );
-}
-
-// ============================================================================
-// MOMENTUM ROW
-// ============================================================================
-
-function MomentumRow({ momentum }: { momentum: AnalysisReport["momentum"] }) {
-  const earningsStyle = {
-    Beating: { bg: "bg-emerald-100", text: "text-emerald-700", icon: TrendingUp },
-    Mixed: { bg: "bg-amber-100", text: "text-amber-700", icon: Minus },
-    Missing: { bg: "bg-rose-100", text: "text-rose-700", icon: TrendingDown },
-  }[momentum.earningsTrend];
-
-  const growthStyle = {
-    Accelerating: { bg: "bg-emerald-100", text: "text-emerald-700", icon: TrendingUp },
-    Stable: { bg: "bg-amber-100", text: "text-amber-700", icon: Minus },
-    Decelerating: { bg: "bg-rose-100", text: "text-rose-700", icon: TrendingDown },
-  }[momentum.growthTrajectory];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="bg-white border border-slate-200 rounded-2xl p-5"
+      className="bg-white rounded-2xl border border-neutral-200 p-5"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Activity className="h-4 w-4 text-slate-400" />
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Momentum
-        </span>
+        {icon}
+        <h3 className="text-sm font-semibold text-neutral-700">{title}</h3>
       </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <p className="text-xs text-slate-500 font-medium mb-2">Earnings Trend</p>
-          <div
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm",
-              earningsStyle.bg,
-              earningsStyle.text
-            )}
-          >
-            <earningsStyle.icon className="h-4 w-4" />
-            {momentum.earningsTrend}
-          </div>
-        </div>
-        <div>
-          <p className="text-xs text-slate-500 font-medium mb-2">Growth Trajectory</p>
-          <div
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-sm",
-              growthStyle.bg,
-              growthStyle.text
-            )}
-          >
-            <growthStyle.icon className="h-4 w-4" />
-            {momentum.growthTrajectory}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ============================================================================
-// LIST CARD
-// ============================================================================
-
-function ListCard({
-  title,
-  icon: Icon,
-  items,
-  variant,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: string[];
-  variant: "risk" | "catalyst";
-}) {
-  const config = {
-    risk: { iconColor: "text-rose-500", bulletColor: "text-rose-400" },
-    catalyst: { iconColor: "text-amber-500", bulletColor: "text-amber-400" },
-  }[variant];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25 }}
-      className="bg-white border border-slate-200 rounded-2xl p-5"
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <Icon className={cn("h-4 w-4", config.iconColor)} />
-        <h3 className="text-sm font-bold text-slate-800">{title}</h3>
-      </div>
-
-      <ul className="space-y-2.5">
+      <ul className="space-y-2">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <ChevronRight className={cn("h-4 w-4 mt-0.5 shrink-0", config.bulletColor)} />
-            <span className="text-sm text-slate-700">{item}</span>
+          <li key={i} className="flex gap-2 text-sm text-neutral-600">
+            <ChevronRight className={cn("h-4 w-4 mt-0.5 shrink-0", bulletColor)} />
+            <span>{item}</span>
           </li>
         ))}
       </ul>
@@ -438,13 +403,16 @@ function NoteCard({ title, content }: { title: string; content: string }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="bg-slate-50 border border-slate-200 rounded-2xl p-5"
+      transition={{ delay: 0.2 }}
+      className="bg-neutral-50 rounded-2xl border border-neutral-200 p-5"
     >
-      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-        {title}
-      </h4>
-      <p className="text-sm text-slate-700 leading-relaxed">{content}</p>
+      <div className="flex items-center gap-2 mb-2">
+        <Target className="h-4 w-4 text-neutral-400" />
+        <h4 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+          {title}
+        </h4>
+      </div>
+      <p className="text-sm text-neutral-600 leading-relaxed">{content}</p>
     </motion.div>
   );
 }
@@ -453,22 +421,18 @@ function NoteCard({ title, content }: { title: string; content: string }) {
 // DATA GAPS
 // ============================================================================
 
-function DataGaps({ gaps }: { gaps: string[] }) {
+function DataGapsCard({ gaps }: { gaps: string[] }) {
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-      <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-      <div>
-        <p className="text-sm font-semibold text-amber-800 mb-1">
-          Some data was unavailable
+    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+      <Info className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+      <div className="flex-1">
+        <p className="text-sm font-medium text-amber-800">
+          Some data unavailable
         </p>
-        <ul className="text-xs text-amber-700 space-y-0.5">
-          {gaps.slice(0, 3).map((gap, i) => (
-            <li key={i}>• {gap}</li>
-          ))}
-          {gaps.length > 3 && (
-            <li className="text-amber-600 font-medium">+{gaps.length - 3} more</li>
-          )}
-        </ul>
+        <p className="text-xs text-amber-600 mt-0.5">
+          {gaps.slice(0, 2).join(" • ")}
+          {gaps.length > 2 && ` +${gaps.length - 2} more`}
+        </p>
       </div>
     </div>
   );

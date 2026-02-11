@@ -1,12 +1,74 @@
 // utils/aiService.ts
 
 import type {
-  PortfolioAnalysisResponse,
-  PerSymbolMetrics,
-  CatalystItem,
-  LatestDevelopmentItem,
-} from "@/types/portfolio-ai";
+  StockAnalysisResponse,
+  InlineInsights,
+  QuickSummaryResponse,
+} from "@/types/symbol_analysis";
 import { authedFetch } from "@/utils/authService";
+
+// ============================================================================
+// SYMBOL ANALYSIS (NEW)
+// ============================================================================
+
+/**
+ * Get full AI analysis for a symbol.
+ * Includes report + inline insights.
+ */
+export async function getFullAnalysis(
+  symbol: string,
+  includeInline: boolean = true
+): Promise<StockAnalysisResponse> {
+  const url = `/api/analyze/symbol/full/${symbol}?include_inline=${includeInline}`;
+  
+  const res = await authedFetch(url, { method: "GET" });
+  
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Analysis failed: ${error}`);
+  }
+  
+  return res.json();
+}
+
+/**
+ * Get only inline insights (faster, cheaper).
+ * Use for badges/callouts on the page.
+ */
+export async function getInlineInsights(
+  symbol: string
+): Promise<InlineInsights> {
+  const res = await authedFetch(`/api/analyze/symbol/inline/${symbol}`, {
+    method: "GET",
+  });
+  
+  if (!res.ok) {
+    throw new Error(`Inline insights failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+/**
+ * Get quick summary only (fastest option).
+ */
+export async function getQuickSummary(
+  symbol: string
+): Promise<QuickSummaryResponse> {
+  const res = await authedFetch(`/api/analyze/summary/${symbol}`, {
+    method: "GET",
+  });
+  
+  if (!res.ok) {
+    throw new Error(`Summary failed: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
+// ============================================================================
+// LEGACY POLLING API (if you still need it)
+// ============================================================================
 
 type TaskResp = { task_id: string; status: string };
 type StatusResp =
@@ -16,8 +78,12 @@ type StatusResp =
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function getAiInsightSymbol(symbol: string) {
-  const startRes = await authedFetch(`/api/v2/ai/analyze/${symbol}`, {
+/**
+ * Legacy polling-based analysis (if backend still uses task queue).
+ * Consider migrating to getFullAnalysis() for simpler flow.
+ */
+export async function getAiInsightSymbolPolling(symbol: string) {
+  const startRes = await authedFetch(`/api/analyze/${symbol}`, {
     method: "POST",
   });
 
@@ -25,7 +91,7 @@ export async function getAiInsightSymbol(symbol: string) {
   const startData = (await startRes.json()) as TaskResp;
 
   const taskId = startData.task_id;
-  const maxWaitMs = 60_000; // 60s
+  const maxWaitMs = 60_000;
   const intervalMs = 1200;
   const t0 = Date.now();
 
@@ -38,7 +104,7 @@ export async function getAiInsightSymbol(symbol: string) {
     const statusData = (await statusRes.json()) as StatusResp;
 
     if (statusData.status === "complete") {
-      return statusData.data.report; // <-- your AnalysisReport JSON
+      return statusData.data.report;
     }
     if (statusData.status === "failed") {
       throw new Error(statusData.data.error || "Analysis failed");
@@ -49,6 +115,17 @@ export async function getAiInsightSymbol(symbol: string) {
 
   throw new Error("Timed out waiting for analysis");
 }
+
+// ============================================================================
+// PORTFOLIO ANALYSIS (existing)
+// ============================================================================
+
+import type {
+  PortfolioAnalysisResponse,
+  PerSymbolMetrics,
+  CatalystItem,
+  LatestDevelopmentItem,
+} from "@/types/portfolio-ai";
 
 export function safeParseAnalysis(
   raw: unknown

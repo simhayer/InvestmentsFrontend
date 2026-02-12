@@ -15,9 +15,10 @@ import type {
 
 async function getFullPortfolioAnalysis(
   currency: string = "USD",
-  includeInline: boolean = true
+  includeInline: boolean = true,
+  forceRefresh: boolean = false
 ): Promise<PortfolioAnalysisResponse> {
-  const url = `/api/portfolio/analysis/full?currency=${currency}&include_inline=${includeInline}`;
+  const url = `/api/portfolio/analysis/full?currency=${currency}&include_inline=${includeInline}&force_refresh=${forceRefresh}`;
   const res = await authedFetch(url, { method: "GET" });
   
   if (!res.ok) {
@@ -71,7 +72,7 @@ interface UsePortfolioAnalysisReturn {
   
   // Shared
   error: string | null;
-  fetchFullAnalysis: () => Promise<void>;
+  fetchFullAnalysis: (forceRefresh?: boolean) => Promise<void>;
   refreshInline: () => Promise<void>;
   reset: () => void;
 }
@@ -111,13 +112,15 @@ export function usePortfolioAnalysis(
     }
   }, [autoFetchInline, refreshInline]);
 
-  // Fetch full analysis
-  const fetchFullAnalysis = useCallback(async () => {
+  // Fetch full analysis (pass forceRefresh=true to bypass server cache)
+  // NOTE: wrapped to ignore React event args when used as onClick handler
+  const fetchFullAnalysis = useCallback(async (forceRefresh?: boolean | unknown) => {
+    const refresh = forceRefresh === true;  // only accept explicit `true`
     setAnalysisLoading(true);
     setError(null);
 
     try {
-      const res = await getFullPortfolioAnalysis(currency, true);
+      const res = await getFullPortfolioAnalysis(currency, true, refresh);
       setAnalysis(res);
       // Update inline with full response's inline data
       if (res.inline) {

@@ -90,6 +90,8 @@ export interface PortfolioAnalysisResponse {
   portfolioSummary: PortfolioSummary;
   riskMetrics?: PortfolioRiskMetrics | null;
   dataGaps: string[];
+  cached?: boolean | null;
+  lastAnalyzedAt?: string | null;
 }
 
 export interface QuickPortfolioSummary {

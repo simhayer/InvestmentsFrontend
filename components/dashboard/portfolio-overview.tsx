@@ -2,58 +2,70 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { 
-  Activity, 
-  RefreshCw, 
-  Sparkles, 
-  TrendingUp, 
-} from "lucide-react";
-
 import {
-  getPortfolioHealthScore,
-  getPortfolioHealthExplain,
-  type PortfolioHealthScore,
-  type PortfolioHealthExplainResponse,
-} from "@/utils/portfolioService";
-import { keysToCamel, fmtCurrency, fmtPct } from "@/utils/format";
-import { toast } from "@/components/ui/use-toast";
-
-import { TopHoldings } from "@/components/holdings/top-holdings";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { PortfolioSummary } from "@/types/portfolio-summary";
-import { getPortfolioSummary } from "@/utils/portfolioService";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+  Sparkles,
+  RefreshCcw,
+  TrendingUp,
+  TrendingDown,
+  ChevronRight,
+  Zap,
+  X,
+  PieChart,
+  Wallet,
+  AlertCircle,
+  BarChart3,
+  ExternalLink,
+  Plus,
+  Activity,
+  ShieldAlert,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { keysToCamel, fmtCurrency, fmtPct } from "@/utils/format";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import { Page } from "@/components/layout/Page";
-import { StackedBar } from "./_bits";
-import { AnalysisSummaryCard } from "./ai-summary-card";
+import { TopHoldings } from "@/components/holdings/top-holdings";
 import ProviderAvatar from "../layout/ProviderAvatar";
-import { PortfolioExplainCard} from './portfolio-health-card'
- 
+import { PortfolioAnalysisCard } from "@/components/analytics/portfolio-analysis-card";
+
+import { getPortfolioSummary } from "@/utils/portfolioService";
+import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
+import type { PortfolioSummary } from "@/types/portfolio-summary";
+
 export function PortfolioOverview() {
   const [data, setData] = React.useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  // Risk / Health State
-  const [healthScore, setHealthScore] = React.useState<PortfolioHealthScore | null>(null);
-  const [healthExplain, setHealthExplain] = React.useState<PortfolioHealthExplainResponse | null>(null);
-  const [healthLoading, setHealthLoading] = React.useState(false);
-  const [explainLoading, setExplainLoading] = React.useState(false);
+  // AI Analysis
+  const {
+    inlineLoading,
+    inline,
+    analysisLoading,
+    analysis,
+    error: aiError,
+    fetchFullAnalysis,
+    reset: resetAi,
+  } = usePortfolioAnalysis(data?.currency || "USD", true);
 
-  const load = React.useCallback(async (signal?: AbortSignal, opts?: { silent?: boolean }) => {
-    if (!opts?.silent) setLoading(true);
+  // Auto-scroll ref
+  const analysisRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (analysis && analysisRef.current) {
+      analysisRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [analysis]);
+
+  const load = React.useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
     try {
       const raw = await getPortfolioSummary({ signal });
       const summary = keysToCamel(raw) as unknown as PortfolioSummary;
       setData(summary);
-
-      // Load score in parallel (silent fail ok)
-      getPortfolioHealthScore({ signal })
-        .then(setHealthScore)
-        .catch(() => console.warn("Failed to load initial health score"));
-        
     } catch (err: any) {
       if (err?.name === "AbortError") return;
       toast({
@@ -62,36 +74,9 @@ export function PortfolioOverview() {
         variant: "destructive",
       });
     } finally {
-      if (!opts?.silent) setLoading(false);
+      setLoading(false);
     }
   }, []);
-
-  const explainHealth = React.useCallback(
-    async (signal?: AbortSignal) => {
-      setExplainLoading(true);
-      try {
-        // Ensure we have a score first
-        const score = healthScore ?? (await getPortfolioHealthScore({ signal }));
-        if (!healthScore) setHealthScore(score);
-
-        const explain = await getPortfolioHealthExplain({
-          healthScore: score,
-          signal,
-        });
-        setHealthExplain(explain);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        toast({
-          title: "Error",
-          description: "Failed to generate explanation.",
-          variant: "destructive",
-        });
-      } finally {
-        setExplainLoading(false);
-      }
-    },
-    [healthScore]
-  );
 
   React.useEffect(() => {
     const ac = new AbortController();
@@ -104,397 +89,630 @@ export function PortfolioOverview() {
   if (!data) {
     return (
       <Page>
-        <EmptyState
-          title="Portfolio Overview"
-          description="We couldn't load your portfolio right now."
-          actionLabel="Retry"
-          onAction={() => load(undefined)}
-        />
+        <EmptyState onRetry={() => load()} />
       </Page>
     );
   }
 
-  const ccy = (data as any).currency || "USD";
+  const ccy = data.currency || "USD";
+  const totalReturn = data.unrealizedPl ?? 0;
+  const totalReturnPct = data.unrealizedPlPct ?? 0;
+  const dayReturn = data.dayPl ?? 0;
+  const dayReturnPct = data.dayPlPct ?? 0;
+  const isPositive = totalReturn >= 0;
+  const isDayPositive = dayReturn >= 0;
 
   return (
     <Page className="space-y-6">
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[2.1fr_0.9fr]">
-        {/* Main Column */}
-        <div className="flex flex-col gap-6 min-w-0">
-          
-          {/* ✅ Combined Hero + Health Card */}
-          <PortfolioSummaryHero 
-            data={data} 
-            ccy={ccy}
-            healthScore={healthScore}
-            healthExplain={healthExplain}
-            healthLoading={healthLoading}
-            explainLoading={explainLoading}
-            onExplainHealth={() => explainHealth()}
-          />
+      {/* ================================================================ */}
+      {/* HERO: Value + Quick Stats + AI Button */}
+      {/* ================================================================ */}
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+        <div className="p-6 lg:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left: Value */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <Wallet className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                    Portfolio Value
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {data.positionsCount} positions
+                  </p>
+                </div>
+              </div>
 
-          <AnalysisSummaryCard />
+              <div className="flex items-baseline gap-4">
+                <span className="text-4xl font-bold tracking-tight text-neutral-900">
+                  {fmtCurrency(data.marketValue, ccy)}
+                </span>
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-sm font-bold px-2.5 py-1 rounded-lg",
+                    isPositive ? "text-emerald-700 bg-emerald-50 border border-emerald-100" : "text-rose-700 bg-rose-50 border border-rose-100"
+                  )}
+                >
+                  {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                  {fmtPct(totalReturnPct)}
+                </span>
+              </div>
+
+              {/* Mini Stats */}
+              <div className="flex items-center gap-6 pt-1">
+                <MiniStat
+                  label="Total Return"
+                  value={fmtCurrency(totalReturn, ccy)}
+                  delta={fmtPct(totalReturnPct)}
+                  positive={isPositive}
+                />
+                <div className="h-8 w-px bg-neutral-200" />
+                <MiniStat
+                  label="Today"
+                  value={fmtCurrency(dayReturn, ccy)}
+                  delta={fmtPct(dayReturnPct)}
+                  positive={isDayPositive}
+                />
+              </div>
+            </div>
+
+            {/* Right: AI Button */}
+            <div className="flex flex-col items-start lg:items-end gap-3">
+              <Button
+                onClick={fetchFullAnalysis}
+                disabled={analysisLoading}
+                size="lg"
+                className={cn(
+                  "h-12 px-6 rounded-xl font-semibold transition-all",
+                  analysis
+                    ? "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-200"
+                    : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200"
+                )}
+              >
+                {analysisLoading ? (
+                  <>
+                    <RefreshCcw className="h-4 w-4 animate-spin mr-2" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {analysis ? "Refresh Analysis" : "AI Portfolio Analysis"}
+                  </>
+                )}
+              </Button>
+
+              {analysis && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center gap-2"
+                >
+                  <HealthBadge health={analysis.report.health} />
+                  <span className="text-xs text-neutral-500">
+                    {analysis.report.riskLevel} Risk
+                  </span>
+                </motion.div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Sidebar Rail */}
-        <div className="flex flex-col gap-6">
-          <ConnectionsCard connections={(data as any).connections} compact />
-          <TopHoldings holdings={(data as any).topPositions} loading={loading} currency={ccy} />
-          
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">
-              Portfolio Allocation
-            </h3>
-            <AllocationSection allocations={(data as any).allocations} />
+        {/* Quick Insights Strip */}
+        <div className="border-t border-neutral-100 bg-neutral-50/30">
+          <div className="flex items-center justify-between px-6 pt-4 pb-2 lg:px-8">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-neutral-100 rounded-lg">
+                <Activity className="h-3.5 w-3.5 text-neutral-600" />
+              </div>
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                Quick Insights
+              </span>
+              {inline && (
+                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  Live
+                </span>
+              )}
+            </div>
           </div>
+
+          <div className="px-6 pb-5 lg:px-8">
+            <AnimatePresence mode="wait">
+              {inlineLoading && !inline ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"
+                >
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-[72px] bg-neutral-100 border border-neutral-200 rounded-xl animate-pulse" />
+                  ))}
+                </motion.div>
+              ) : inline ? (
+                <motion.div
+                  key="insights"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"
+                >
+                  <InsightPill icon={PieChart} label="Health" value={inline.healthBadge} iconColor="text-indigo-500" />
+                  <InsightPill icon={TrendingUp} label="Performance" value={inline.performanceNote} iconColor="text-emerald-500" />
+                  <InsightPill icon={BarChart3} label="Top Performer" value={inline.topPerformer} iconColor="text-violet-500" />
+                  {inline.riskFlag && (
+                    <InsightPill icon={ShieldAlert} label="Risk Alert" value={inline.riskFlag} variant="risk" />
+                  )}
+                  {inline.actionNeeded && (
+                    <InsightPill icon={Zap} label="Action Needed" value={inline.actionNeeded} variant="action" />
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-4 text-neutral-400"
+                >
+                  <p className="text-sm">Loading insights...</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* MAIN GRID */}
+      {/* ================================================================ */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+        {/* Left Column */}
+        <div className="space-y-6 min-w-0">
+          {/* AI Analysis Section */}
+          <div ref={analysisRef}>
+            <AnimatePresence mode="wait">
+              {/* Error */}
+              {aiError && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-5 w-5 text-rose-500" />
+                    <div>
+                      <p className="text-sm font-semibold text-rose-800">Analysis failed</p>
+                      <p className="text-xs text-rose-600">{aiError}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={resetAi}
+                    className="p-1.5 hover:bg-rose-100 rounded-lg text-rose-500 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Loading */}
+              {analysisLoading && !analysis && (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="bg-white border border-neutral-200 rounded-2xl p-12 flex flex-col items-center justify-center shadow-sm"
+                >
+                  <div className="relative mb-5">
+                    <div className="h-16 w-16 rounded-full border-[3px] border-neutral-100 border-t-indigo-600 animate-spin" />
+                    <Sparkles className="h-6 w-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  </div>
+                  <p className="text-base font-semibold text-neutral-800">
+                    Analyzing your portfolio
+                  </p>
+                  <p className="text-sm text-neutral-400 mt-1">
+                    Reviewing {data.positionsCount} positions...
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Analysis Result */}
+              {analysis && (
+                <motion.div
+                  key="analysis"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <Sparkles className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-neutral-900">Portfolio Analysis</h2>
+                        <p className="text-xs text-neutral-500">AI-powered insights & recommendations</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={fetchFullAnalysis}
+                        variant="outline"
+                        size="sm"
+                        disabled={analysisLoading}
+                        className="h-9 text-xs font-medium rounded-lg bg-white"
+                      >
+                        <RefreshCcw className={cn("h-3.5 w-3.5 mr-2", analysisLoading && "animate-spin")} />
+                        Regenerate
+                      </Button>
+                      <button
+                        onClick={resetAi}
+                        className="h-9 w-9 flex items-center justify-center hover:bg-neutral-100 rounded-lg transition-colors text-neutral-400 hover:text-neutral-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <PortfolioAnalysisCard data={analysis} />
+                </motion.div>
+              )}
+
+              {/* CTA when no analysis */}
+              {!analysis && !analysisLoading && !aiError && (
+                <motion.div
+                  key="cta"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100/50 rounded-2xl p-8"
+                >
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-start gap-5 max-w-xl">
+                      <div className="p-4 bg-white rounded-2xl shadow-sm border border-indigo-50 shrink-0">
+                        <Sparkles className="h-8 w-8 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-neutral-900 mb-2">
+                          AI Portfolio Analysis
+                        </h3>
+                        <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                          Get AI-powered insights on diversification, risk exposure, and optimization opportunities.
+                        </p>
+
+                        {/* Feature Pills */}
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-[10px] font-semibold text-neutral-500 uppercase tracking-wide">
+                            <PieChart className="h-3 w-3 mr-1.5 text-indigo-500" />
+                            Allocation
+                          </span>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-[10px] font-semibold text-neutral-500 uppercase tracking-wide">
+                            <ShieldAlert className="h-3 w-3 mr-1.5 text-rose-500" />
+                            Risk Check
+                          </span>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-neutral-200 text-[10px] font-semibold text-neutral-500 uppercase tracking-wide">
+                            <Zap className="h-3 w-3 mr-1.5 text-amber-500" />
+                            Action Items
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={fetchFullAnalysis}
+                      size="lg"
+                      className="w-full md:w-auto shrink-0 h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 transition-all"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Analyze Portfolio
+                      <ChevronRight className="h-4 w-4 ml-1 opacity-70" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Top Holdings (full width on mobile, here on desktop) */}
+          <div className="xl:hidden">
+            <TopHoldings 
+              holdings={data.topPositions} 
+              loading={loading} 
+              currency={ccy} 
+            />
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Connections */}
+          <ConnectionsCard connections={data.connections} />
+
+          {/* Top Holdings (desktop only) */}
+          <div className="hidden xl:block">
+            <TopHoldings 
+              holdings={data.topPositions} 
+              loading={loading} 
+              currency={ccy} 
+            />
+          </div>
+
+          {/* Allocations */}
+          <AllocationSection allocations={data.allocations} />
         </div>
       </div>
     </Page>
   );
 }
 
-/* -------------------- Updated Hero Component -------------------- */
+// ============================================================================
+// SUB-COMPONENTS
+// ============================================================================
 
-interface HeroProps {
-  data: PortfolioSummary;
-  ccy: string;
-  healthScore: PortfolioHealthScore | null;
-  healthExplain: PortfolioHealthExplainResponse | null;
-  healthLoading: boolean;
-  explainLoading: boolean;
-  onExplainHealth: () => void;
-}
-
-function PortfolioSummaryHero({ 
-  data, 
-  ccy, 
-  healthScore, 
-  healthExplain, 
-  healthLoading, 
-  explainLoading,
-  onExplainHealth
-}: HeroProps) {
-  const [showExplanation, setShowExplanation] = React.useState(false);
-
-  // Financial Data
-  const totalReturn = (data as any).unrealizedPl ?? 0;
-  const totalReturnPct = (data as any).unrealizedPlPct;
-  const dayReturn = (data as any).dayPl ?? 0;
-  const dayReturnPct = (data as any).dayPlPct;
-
-  const toneClass = (v?: number | null) => {
-    if (v == null) return "text-neutral-600";
-    if (v > 0) return "text-emerald-700";
-    if (v < 0) return "text-rose-700";
-    return "text-neutral-700";
-  };
-
-  // Health Data
-  const scoreVal = healthScore?.score || 0;
-  const riskLabel = healthScore ? getRiskLabel(scoreVal) : "Unknown";
-  const riskColor = healthScore ? getRiskColor(scoreVal) : "text-neutral-400";
-
-  const handleToggleExplain = () => {
-    if (!showExplanation && !healthExplain) {
-      onExplainHealth();
-    }
-    setShowExplanation(!showExplanation);
-  };
-
+function MiniStat({
+  label,
+  value,
+  delta,
+  positive,
+}: {
+  label: string;
+  value: string;
+  delta: string;
+  positive: boolean;
+}) {
   return (
-    <Card className="relative overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm transition-all">
-      <CardContent className="p-0">
-        <div className="flex flex-col lg:flex-row">
-          
-          {/* --- LEFT: Financials --- */}
-          <div className="flex-1 p-6 lg:border-r lg:border-neutral-100">
-            <div className="flex flex-col gap-6">
-              <div>
-                <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-                  Total Value
-                </div>
-                <div className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-                  {fmtCurrency((data as any).marketValue, ccy)}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6">
-                <MiniStat 
-                  label="Total return" 
-                  value={fmtCurrency(totalReturn, ccy)} 
-                  delta={fmtPct(totalReturnPct)} 
-                  deltaClass={toneClass(totalReturn)} 
-                />
-                <div className="h-8 w-px bg-neutral-200/50" />
-                <MiniStat 
-                  label="Today's Change" 
-                  value={fmtCurrency(dayReturn, ccy)} 
-                  delta={fmtPct(dayReturnPct)} 
-                  deltaClass={toneClass(dayReturn)} 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* --- RIGHT: Health Score --- */}
-          <div className="bg-neutral-50/50 p-6 lg:w-[280px] lg:bg-transparent xl:w-[320px]">
-            <div className="flex h-full flex-col justify-between gap-4">
-              
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-                    <Activity className="h-3.5 w-3.5" />
-                    Health Score
-                  </div>
-                  {healthScore ? (
-                     <div className="mt-2 flex items-baseline gap-2">
-                       <span className={cn("text-3xl font-bold", riskColor)}>{scoreVal}</span>
-                       <span className="text-sm font-medium text-neutral-600">/ 100</span>
-                     </div>
-                  ) : (
-                    <Skeleton className="mt-2 h-9 w-24 rounded-lg" />
-                  )}
-                </div>
-                
-                {/* Donut Chart */}
-                <div className="relative flex h-14 w-14 items-center justify-center">
-                   <ScoreDonut score={scoreVal} loading={!healthScore || healthLoading} />
-                   <div className="absolute inset-0 flex items-center justify-center">
-                     {healthLoading ? (
-                       <RefreshCw className="h-4 w-4 animate-spin text-neutral-400" />
-                     ) : (
-                       <TrendingUp className={cn("h-5 w-5", riskColor)} />
-                     )}
-                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {/* Risk Badge */}
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-                  <span className="text-xs font-medium text-neutral-500">Risk Level</span>
-                  {healthScore ? (
-                    <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full bg-white border border-neutral-200 shadow-sm", riskColor)}>
-                      {riskLabel}
-                    </span>
-                  ) : (
-                    <Skeleton className="h-5 w-20" />
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                   <Button 
-                      size="sm" 
-                      variant={showExplanation ? "secondary" : "default"}
-                      className={cn("h-8 flex-1 gap-1.5 rounded-xl text-xs", showExplanation && "bg-neutral-200 text-neutral-900")}
-                      onClick={handleToggleExplain}
-                      disabled={!healthScore || explainLoading}
-                   >
-                      {explainLoading ? "Analyzing..." : <><Sparkles className="h-3 w-3" /> Analyze my score</>}
-                   </Button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {/* --- EXPANDABLE: Rich Explanation --- */}
-        {showExplanation && healthExplain && (
-          <PortfolioExplainCard 
-            healthExplain={healthExplain} 
-            explainLoading={explainLoading}
-          />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/* -------------------- Sub-Components -------------------- */
-
-
-function MiniStat({ label, value, delta, deltaClass }: any) {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{label}</div>
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+        {label}
+      </p>
       <div className="flex items-baseline gap-2">
-        <div className="text-lg font-semibold text-neutral-900">{value}</div>
-        {delta && <div className={cn("text-xs font-bold", deltaClass)}>{delta}</div>}
+        <span className="text-lg font-semibold text-neutral-900">{value}</span>
+        <span
+          className={cn(
+            "text-xs font-bold",
+            positive ? "text-emerald-600" : "text-rose-600"
+          )}
+        >
+          {delta}
+        </span>
       </div>
     </div>
   );
 }
 
-function ScoreDonut({ score, loading }: { score: number; loading: boolean }) {
-  const radius = 22;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  
-  // Color determination based on score
-  let strokeColor = "text-rose-500";
-  if (score >= 40) strokeColor = "text-amber-400";
-  if (score >= 70) strokeColor = "text-emerald-500";
-  if (score >= 85) strokeColor = "text-emerald-600";
-  if (loading) strokeColor = "text-neutral-200";
+function InsightPill({
+  icon: Icon,
+  label,
+  value,
+  iconColor,
+  variant = "default",
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  iconColor?: string;
+  variant?: "default" | "risk" | "action";
+}) {
+  if (!value) return null;
+
+  const styles = {
+    default: "bg-neutral-50 border-neutral-200",
+    risk: "bg-rose-50 border-rose-100",
+    action: "bg-amber-50 border-amber-100",
+  }[variant];
+
+  const finalIconColor = iconColor || {
+    default: "text-neutral-500",
+    risk: "text-rose-500",
+    action: "text-amber-600",
+  }[variant];
 
   return (
-    <svg className="h-full w-full -rotate-90" viewBox="0 0 50 50">
-      {/* Background Circle */}
-      <circle
-        cx="25"
-        cy="25"
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        className="text-neutral-100"
-      />
-      {/* Progress Circle */}
-      <circle
-        cx="25"
-        cy="25"
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeDasharray={circumference}
-        strokeDashoffset={loading ? circumference : offset}
-        strokeLinecap="round"
-        className={cn("transition-all duration-1000 ease-out", strokeColor)}
-      />
-    </svg>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={cn("p-3.5 rounded-xl border flex flex-col justify-between h-full min-h-[72px]", styles)}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className={cn("h-4 w-4", finalIconColor)} />
+        <span className={cn(
+          "text-[10px] font-bold uppercase tracking-wider",
+          variant === "risk" ? "text-rose-400" :
+          variant === "action" ? "text-amber-500" :
+          "text-neutral-400"
+        )}>
+          {label}
+        </span>
+      </div>
+      <p className={cn(
+        "text-sm font-semibold leading-tight line-clamp-2",
+        variant === "risk" ? "text-rose-900" :
+        variant === "action" ? "text-amber-900" :
+        "text-neutral-900"
+      )}>
+        {value}
+      </p>
+    </motion.div>
   );
 }
 
-/* -------------------- Helpers -------------------- */
+function HealthBadge({ health }: { health: string }) {
+  const config = {
+    Excellent: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+    Good: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+    Fair: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+    "Needs Attention": { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  }[health] || { bg: "bg-neutral-50", text: "text-neutral-700", border: "border-neutral-200" };
 
-function getRiskLabel(score: number) {
-  if (score >= 80) return "Low Risk";
-  if (score >= 60) return "Moderate Risk";
-  return "High Risk";
-}
-
-function getRiskColor(score: number) {
-  if (score >= 80) return "text-emerald-700";
-  if (score >= 60) return "text-amber-600";
-  return "text-rose-700";
-}
-
-// ... Keep existing AllocationSection, ConnectionsCard, AllocCard, LoadingShell etc. below ...
-// (I will assume these exist unchanged from your original code or can be pasted here if needed)
-
-function AllocationSection({ allocations }: any) {
-  const byType = allocations?.byType ?? [];
-  const byAccount = allocations?.byAccount ?? [];
   return (
-    <div className="grid gap-4 lg:grid-cols-1">
-      <AllocCard title="By Asset Type" items={byType} />
-      <AllocCard title="By Account" items={byAccount} />
+    <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full border", config.bg, config.text, config.border)}>
+      {health}
+    </span>
+  );
+}
+
+function ConnectionsCard({ connections }: { connections?: any[] }) {
+  const hasConnections = (connections?.length ?? 0) > 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+          Connections
+        </h3>
+        <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+          <Link href="/connections">
+            Manage
+            <ExternalLink className="h-3 w-3 ml-1" />
+          </Link>
+        </Button>
+      </div>
+
+      <div className="p-4 space-y-2">
+        {!hasConnections ? (
+          <Button asChild variant="outline" className="w-full rounded-xl border-dashed h-12">
+            <Link href="/connections" className="text-sm gap-2">
+              <Plus className="h-4 w-4" />
+              Connect Account
+            </Link>
+          </Button>
+        ) : (
+          connections?.slice(0, 3).map((c: any) => (
+            <div
+              key={c.id}
+              className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 p-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <ProviderAvatar name={c.institutionName} className="h-9 w-9" />
+                <span className="text-sm font-medium text-neutral-700 truncate">
+                  {c.institutionName}
+                </span>
+              </div>
+              <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
-function AllocCard({ title, items }: any) {
-  const hasData = (items?.length ?? 0) > 0;
+function AllocationSection({ allocations }: { allocations?: any }) {
+  const byType = allocations?.byType ?? [];
+  const byAccount = allocations?.byAccount ?? [];
+
+  if (!byType.length && !byAccount.length) return null;
+
   return (
-    <Card className="rounded-3xl border-neutral-200/70 bg-white shadow-sm">
-      <CardContent className="p-5">
-        <p className="text-sm font-semibold text-neutral-900 mb-3">{title}</p>
-        {hasData ? (
-          <>
-            <StackedBar items={items.map((i: any) => ({ key: i.key, weight: i.weight }))} height={10} />
-            <div className="mt-3 space-y-1.5">
-              {items.slice(0, 3).map((i: any) => (
-                <div key={i.key} className="flex justify-between text-xs">
-                  <span className="text-neutral-500">{i.key}</span>
-                  <span className="font-medium text-neutral-900">{i.weight.toFixed(1)}%</span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="text-xs text-neutral-400 italic">No data available</div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">
+        Allocation
+      </h3>
+      
+      {byType.length > 0 && (
+        <AllocationCard title="By Asset Type" items={byType} />
+      )}
+      
+      {byAccount.length > 0 && (
+        <AllocationCard title="By Account" items={byAccount} />
+      )}
+    </div>
   );
 }
 
-function ConnectionsCard({ connections, compact }: any) {
-  const hasConnections = (connections?.length ?? 0) > 0;
+function AllocationCard({ title, items }: { title: string; items: any[] }) {
+  const colors = [
+    "bg-indigo-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-amber-500",
+    "bg-emerald-500",
+    "bg-cyan-500",
+  ];
+
   return (
-    <Card className="rounded-3xl border-neutral-200/70 bg-white shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-bold uppercase tracking-wider text-neutral-500">
-            Connections
-          </CardTitle>
-          <Button asChild size="sm" variant="ghost" className="h-8 text-xs">
-            <Link href="/connections">Manage</Link>
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {!hasConnections && (
-          <Button asChild variant="outline" className="w-full rounded-xl border-dashed">
-            <Link href="/connections" className="text-xs">
-              Connect Account
-            </Link>
-          </Button>
-        )}
-        {connections?.slice(0, 2).map((c: any) => (
+    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4">
+      <p className="text-sm font-semibold text-neutral-800 mb-3">{title}</p>
+      
+      {/* Stacked Bar */}
+      <div className="h-2 rounded-full bg-neutral-100 overflow-hidden flex">
+        {items.map((item: any, i: number) => (
           <div
-            key={c.id}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-100 bg-neutral-50/50 p-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <ProviderAvatar name={c.institutionName} className="h-10 w-10" />
-              <div className="truncate text-sm font-medium text-neutral-700">{c.institutionName}</div>
+            key={item.key || item.label || i}
+            className={cn("h-full", colors[i % colors.length])}
+            style={{ width: `${item.weight || item.percentage || 0}%` }}
+          />
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-3 space-y-1.5">
+        {items.slice(0, 4).map((item: any, i: number) => (
+          <div key={item.key || item.label || i} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <div className={cn("h-2 w-2 rounded-full", colors[i % colors.length])} />
+              <span className="text-neutral-600">{item.key || item.label}</span>
             </div>
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="font-semibold text-neutral-900 tabular-nums">
+              {(item.weight || item.percentage || 0).toFixed(1)}%
+            </span>
           </div>
         ))}
-      </CardContent>
-    </Card>
+        {items.length > 4 && (
+          <p className="text-[10px] text-neutral-400 pt-1">
+            +{items.length - 4} more
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
 function LoadingShell() {
   return (
     <Page className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2.1fr_0.9fr]">
+      <Skeleton className="h-56 w-full rounded-2xl" />
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
         <div className="space-y-6">
-          <Skeleton className="h-48 w-full rounded-3xl" />
-          <Skeleton className="h-[220px] w-full rounded-3xl" />
-          <Skeleton className="h-[400px] w-full rounded-3xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
         <div className="space-y-6">
-          <Skeleton className="h-32 w-full rounded-3xl" />
-          <Skeleton className="h-64 w-full rounded-3xl" />
-          <Skeleton className="h-64 w-full rounded-3xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
         </div>
       </div>
     </Page>
   );
 }
 
-function EmptyState({ title, description, actionLabel, onAction }: any) {
+function EmptyState({ onRetry }: { onRetry: () => void }) {
   return (
-    <Card className="rounded-3xl border-neutral-200/70 bg-white shadow-sm">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
-        <CardDescription className="text-sm text-neutral-600">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-wrap items-center gap-3">
-        <Button onClick={onAction} className="rounded-xl">
-          {actionLabel}
+    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-8 text-center">
+      <div className="p-4 bg-neutral-100 rounded-2xl w-fit mx-auto mb-4">
+        <Wallet className="h-8 w-8 text-neutral-400" />
+      </div>
+      <h2 className="text-xl font-bold text-neutral-900 mb-2">
+        Couldn't load portfolio
+      </h2>
+      <p className="text-neutral-500 mb-6">
+        We had trouble loading your portfolio data. Please try again.
+      </p>
+      <div className="flex items-center justify-center gap-3">
+        <Button onClick={onRetry} className="rounded-xl">
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Retry
         </Button>
-        <Button asChild variant="outline" className="rounded-xl bg-white">
+        <Button asChild variant="outline" className="rounded-xl">
           <Link href="/connections">Go to Connections</Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
+
+export default PortfolioOverview;

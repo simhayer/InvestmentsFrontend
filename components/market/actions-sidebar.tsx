@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionItem } from "@/types/portfolio-ai";
+import { ActionItem } from "@/types/portfolio-analysis";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ArrowUpRight, Clock } from "lucide-react";
 

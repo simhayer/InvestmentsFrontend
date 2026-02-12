@@ -17,6 +17,12 @@ export interface PositionInsight {
   issue?: string;
 }
 
+export interface ActionItem {
+  action: "reduce" | "add" | "hold" | "sell" | "buy";
+  symbol?: string;
+  reasoning: string;
+}
+
 export interface PortfolioReport {
   summary: string;
   health: PortfolioHealth;
@@ -31,7 +37,7 @@ export interface PortfolioReport {
   opportunities: string[];
   risks: string[];
   rebalancingSuggestions: string[];
-  actionItems: string[];
+  actionItems: ActionItem[];
 }
 
 export interface PortfolioInlineInsights {
@@ -51,10 +57,38 @@ export interface PortfolioSummary {
   currency: string;
 }
 
+export interface BenchmarkMetrics {
+  symbol: string;
+  annualized_return?: number | null;
+  volatility?: number | null;
+  max_drawdown?: number | null;
+  sharpe_ratio?: number | null;
+}
+
+export interface SymbolRiskMetrics {
+  volatility_annualized?: number | null;
+  max_drawdown?: number | null;
+  sharpe_ratio?: number | null;
+  sortino_ratio?: number | null;
+  beta?: number | null;
+  trading_days?: number | null;
+}
+
+export interface PortfolioRiskMetrics {
+  portfolio_beta?: number | null;
+  portfolio_volatility_weighted?: number | null;
+  hhi_concentration?: number | null;
+  avg_correlation_top_holdings?: number | null;
+  symbols_analyzed?: number | null;
+  per_symbol?: Record<string, SymbolRiskMetrics> | null;
+  benchmark?: BenchmarkMetrics | null;
+}
+
 export interface PortfolioAnalysisResponse {
   report: PortfolioReport;
   inline?: PortfolioInlineInsights;
   portfolioSummary: PortfolioSummary;
+  riskMetrics?: PortfolioRiskMetrics | null;
   dataGaps: string[];
 }
 

@@ -20,7 +20,9 @@ import { cn } from "@/lib/utils";
 import type {
   PortfolioAnalysisResponse,
   PortfolioHealth,
+  PortfolioRiskMetrics,
   RiskLevel,
+  ActionItem,
 } from "@/types/portfolio-analysis";
 
 // ============================================================================
@@ -33,7 +35,7 @@ interface PortfolioAnalysisCardProps {
 }
 
 export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCardProps) {
-  const { report, portfolioSummary, dataGaps } = data;
+  const { report, portfolioSummary, riskMetrics, dataGaps } = data;
 
   // Check if we have urgent actions to highlight
   const hasActions = report.rebalancingSuggestions.length > 0 || report.actionItems.length > 0;
@@ -48,15 +50,17 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
         portfolioSummary={portfolioSummary}
       />
 
-      {/* 2. STRATEGY: Action Plan (If applicable) */}
+      {/* 2. RISK DASHBOARD: Quantitative metrics + benchmark */}
+      {riskMetrics && <RiskDashboard metrics={riskMetrics} />}
+
+      {/* 3. STRATEGY: Action Plan (If applicable) */}
       {hasActions && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {report.actionItems.length > 0 && (
-            <ActionSection
+            <StructuredActionSection
               title="Priority Actions"
               icon={Zap}
               items={report.actionItems}
-              variant="primary"
             />
           )}
           {report.rebalancingSuggestions.length > 0 && (
@@ -70,7 +74,7 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
         </div>
       )}
 
-      {/* 3. FUNDAMENTALS: Assessment Grid with Visual Meters */}
+      {/* 4. FUNDAMENTALS: Assessment Grid with Visual Meters */}
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50">
           <h3 className="text-sm font-semibold text-neutral-900">Portfolio Fundamentals</h3>
@@ -97,7 +101,7 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
         </div>
       </div>
 
-      {/* 4. DEEP DIVE: Unified SWOT Matrix */}
+      {/* 5. DEEP DIVE: Unified SWOT Matrix */}
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50">
           <h3 className="text-sm font-semibold text-neutral-900">Deep Dive Analysis</h3>
@@ -130,7 +134,7 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
         </div>
       </div>
 
-      {/* 5. SPECIFICS: Position Insights */}
+      {/* 6. SPECIFICS: Position Insights */}
       {(report.topConviction.length > 0 || report.concerns.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {report.topConviction.length > 0 && (
@@ -150,7 +154,7 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
         </div>
       )}
 
-      {/* 6. FOOTER: Data Gaps */}
+      {/* 7. FOOTER: Data Gaps */}
       {dataGaps.length > 0 && <DataGapsCard gaps={dataGaps} />}
     </div>
   );
@@ -446,6 +450,218 @@ function PositionList({
         </div>
     )
 }
+
+// ============================================================================
+// COMPONENT: RISK DASHBOARD (Quantitative metrics + benchmark)
+// ============================================================================
+
+function RiskDashboard({ metrics }: { metrics: PortfolioRiskMetrics }) {
+  const bench = metrics.benchmark;
+  const perSymbol = metrics.per_symbol || {};
+  const symbolEntries = Object.entries(perSymbol).slice(0, 6);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05 }}
+      className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm"
+    >
+      <div className="px-5 py-4 border-b border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Shield className="h-4 w-4 text-indigo-500" />
+          <h3 className="text-sm font-semibold text-neutral-900">Risk & Benchmark Dashboard</h3>
+        </div>
+        <span className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">Trailing 1Y</span>
+      </div>
+
+      {/* Portfolio-level metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-100 border-b border-neutral-100">
+        <RiskStat
+          label="Portfolio Beta"
+          value={metrics.portfolio_beta != null ? metrics.portfolio_beta.toFixed(2) : "—"}
+          sub={metrics.portfolio_beta != null ? (metrics.portfolio_beta > 1.2 ? "Above market" : metrics.portfolio_beta < 0.8 ? "Defensive" : "Near market") : undefined}
+          color={metrics.portfolio_beta != null ? (metrics.portfolio_beta > 1.3 ? "rose" : metrics.portfolio_beta < 0.8 ? "emerald" : "neutral") : "neutral"}
+        />
+        <RiskStat
+          label="Volatility"
+          value={metrics.portfolio_volatility_weighted != null ? `${(metrics.portfolio_volatility_weighted * 100).toFixed(1)}%` : "—"}
+          sub="Weighted annual"
+        />
+        <RiskStat
+          label="HHI Concentration"
+          value={metrics.hhi_concentration != null ? metrics.hhi_concentration.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "—"}
+          sub={metrics.hhi_concentration != null ? (metrics.hhi_concentration > 2500 ? "Concentrated" : metrics.hhi_concentration > 1500 ? "Moderate" : "Diversified") : undefined}
+          color={metrics.hhi_concentration != null ? (metrics.hhi_concentration > 2500 ? "rose" : metrics.hhi_concentration > 1500 ? "amber" : "emerald") : "neutral"}
+        />
+        <RiskStat
+          label="Avg Correlation"
+          value={metrics.avg_correlation_top_holdings != null ? metrics.avg_correlation_top_holdings.toFixed(2) : "—"}
+          sub={metrics.avg_correlation_top_holdings != null ? (metrics.avg_correlation_top_holdings > 0.7 ? "High — low diversification" : metrics.avg_correlation_top_holdings > 0.4 ? "Moderate" : "Low — well diversified") : undefined}
+          color={metrics.avg_correlation_top_holdings != null ? (metrics.avg_correlation_top_holdings > 0.7 ? "rose" : metrics.avg_correlation_top_holdings > 0.4 ? "amber" : "emerald") : "neutral"}
+        />
+      </div>
+
+      {/* Benchmark comparison */}
+      {bench && (
+        <div className="px-5 py-4 border-b border-neutral-100 bg-indigo-50/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="h-3.5 w-3.5 text-indigo-500" />
+            <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">vs S&P 500 (SPY)</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {bench.annualized_return != null && (
+              <BenchmarkStat label="SPY Return" value={`${(bench.annualized_return * 100).toFixed(1)}%`} />
+            )}
+            {bench.volatility != null && (
+              <BenchmarkStat label="SPY Volatility" value={`${(bench.volatility * 100).toFixed(1)}%`} />
+            )}
+            {bench.max_drawdown != null && (
+              <BenchmarkStat label="SPY Max Drawdown" value={`${(bench.max_drawdown * 100).toFixed(1)}%`} />
+            )}
+            {bench.sharpe_ratio != null && (
+              <BenchmarkStat label="SPY Sharpe" value={bench.sharpe_ratio.toFixed(2)} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Per-symbol risk table */}
+      {symbolEntries.length > 0 && (
+        <div className="px-5 py-4">
+          <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Per-Holding Risk</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-neutral-400 font-medium uppercase tracking-wider border-b border-neutral-100">
+                  <th className="text-left pb-2 pr-3">Symbol</th>
+                  <th className="text-right pb-2 px-2">Beta</th>
+                  <th className="text-right pb-2 px-2">Volatility</th>
+                  <th className="text-right pb-2 px-2">Max DD</th>
+                  <th className="text-right pb-2 px-2">Sharpe</th>
+                  <th className="text-right pb-2 pl-2">Sortino</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-50">
+                {symbolEntries.map(([sym, m]) => (
+                  <tr key={sym} className="text-neutral-600 hover:bg-neutral-50/50 transition-colors">
+                    <td className="py-2 pr-3 font-bold text-neutral-900">{sym}</td>
+                    <td className="py-2 px-2 text-right tabular-nums">{m.beta != null ? m.beta.toFixed(2) : "—"}</td>
+                    <td className="py-2 px-2 text-right tabular-nums">{m.volatility_annualized != null ? `${(m.volatility_annualized * 100).toFixed(1)}%` : "—"}</td>
+                    <td className={cn("py-2 px-2 text-right tabular-nums", m.max_drawdown != null && m.max_drawdown < -0.3 ? "text-rose-600 font-medium" : "")}>
+                      {m.max_drawdown != null ? `${(m.max_drawdown * 100).toFixed(1)}%` : "—"}
+                    </td>
+                    <td className={cn("py-2 px-2 text-right tabular-nums", m.sharpe_ratio != null && m.sharpe_ratio > 1 ? "text-emerald-600 font-medium" : "")}>
+                      {m.sharpe_ratio != null ? m.sharpe_ratio.toFixed(2) : "—"}
+                    </td>
+                    <td className="py-2 pl-2 text-right tabular-nums">{m.sortino_ratio != null ? m.sortino_ratio.toFixed(2) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function RiskStat({
+  label,
+  value,
+  sub,
+  color = "neutral",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: "emerald" | "rose" | "amber" | "neutral";
+}) {
+  const subColor = {
+    emerald: "text-emerald-600",
+    rose: "text-rose-600",
+    amber: "text-amber-600",
+    neutral: "text-neutral-400",
+  }[color];
+
+  return (
+    <div className="p-4 flex flex-col items-center text-center">
+      <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">{label}</span>
+      <span className="text-lg font-bold text-neutral-900 tabular-nums">{value}</span>
+      {sub && <span className={cn("text-[10px] mt-0.5", subColor)}>{sub}</span>}
+    </div>
+  );
+}
+
+function BenchmarkStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white rounded-lg px-3 py-2 border border-indigo-100/60">
+      <span className="text-[10px] text-indigo-400 font-medium block mb-0.5">{label}</span>
+      <span className="text-sm font-bold text-indigo-900 tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// COMPONENT: STRUCTURED ACTION ITEMS
+// ============================================================================
+
+const ACTION_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
+  reduce: { bg: "bg-amber-50 border-amber-100", text: "text-amber-700", label: "REDUCE" },
+  sell: { bg: "bg-rose-50 border-rose-100", text: "text-rose-700", label: "SELL" },
+  add: { bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-700", label: "ADD" },
+  buy: { bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-700", label: "BUY" },
+  hold: { bg: "bg-blue-50 border-blue-100", text: "text-blue-700", label: "HOLD" },
+};
+
+function StructuredActionSection({
+  title,
+  icon: Icon,
+  items,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: ActionItem[];
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="rounded-2xl border bg-indigo-50 border-indigo-100 p-5"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <div className="p-1.5 rounded-lg bg-indigo-100">
+          <Icon className="h-4 w-4 text-indigo-600" />
+        </div>
+        <h3 className="text-sm font-bold text-indigo-900">{title}</h3>
+      </div>
+
+      <ul className="space-y-3">
+        {items.map((item, i) => {
+          const config = ACTION_CONFIG[item.action] || ACTION_CONFIG.hold;
+          return (
+            <li key={i} className="flex gap-3 text-sm items-start">
+              <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold border", config.bg, config.text)}>
+                  {config.label}
+                </span>
+                {item.symbol && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white border border-neutral-200 text-neutral-800">
+                    {item.symbol}
+                  </span>
+                )}
+              </div>
+              <span className="text-indigo-800 leading-snug">{item.reasoning}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </motion.div>
+  );
+}
+
 
 // ============================================================================
 // COMPONENT: DATA GAPS

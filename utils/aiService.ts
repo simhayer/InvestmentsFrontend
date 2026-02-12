@@ -125,7 +125,7 @@ import type {
   PerSymbolMetrics,
   CatalystItem,
   LatestDevelopmentItem,
-} from "@/types/portfolio-ai";
+} from "@/types/portfolio-analysis";
 
 export function safeParseAnalysis(
   raw: unknown

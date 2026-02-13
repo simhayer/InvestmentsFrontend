@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { register as apiRegister } from "@/utils/authService";
+import { analytics } from "@/lib/posthog";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -69,6 +70,8 @@ export function RegisterForm() {
 
       const nextParam = searchParams.get("next");
       const next = isSafeRedirect(nextParam) ? nextParam! : "/dashboard";
+
+      analytics.capture("signed_up");
 
       if (session) {
         toast({

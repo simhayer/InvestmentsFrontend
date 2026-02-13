@@ -53,8 +53,7 @@ export async function exchangePublicToken(
     throw new Error("Failed to sync investments");
   }
 
-  const data = await syncRes.json();
-  console.log("Synced holdings:", data.count);
+  await syncRes.json();
 }
 
 export async function getPlaidInvestments() {

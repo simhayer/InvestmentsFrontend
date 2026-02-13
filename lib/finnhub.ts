@@ -16,8 +16,6 @@ export async function fetchLivePricesForList(
   const filteredSymbols = symbols.filter((s) => s); // Remove any empty symbols
   const filteredTypes = types.filter((_, idx) => symbols[idx]); // Keep types in sync
 
-  console.log("Fetching live prices for symbols:", filteredSymbols);
-
   const path = `/prices`;
   const res = await authedFetch(path, {
     method: "POST",

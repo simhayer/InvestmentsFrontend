@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { authedFetch } from "@/utils/authService";
+import { analytics } from "@/lib/posthog";
 import type {
   PortfolioAnalysisResponse,
   PortfolioInlineInsights,
@@ -154,11 +155,13 @@ export function usePortfolioAnalysis(
     analysisInFlightRef.current = true;
     setAnalysisLoading(true);
     setError(null);
+    analytics.capture("portfolio_analysis_started", { currency: currencyRef.current, forceRefresh: refresh });
 
     try {
       const res = await getFullPortfolioAnalysis(currencyRef.current, true, refresh);
       setAnalysis(res);
       if (res.inline) setInline(res.inline);
+      analytics.capture("portfolio_analysis_completed", { currency: currencyRef.current });
     } catch (e) {
       console.error("Portfolio analysis error:", e);
       setError(e instanceof Error ? e.message : "Failed to analyze portfolio.");

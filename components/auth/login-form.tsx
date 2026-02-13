@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { login } from "@/utils/authService";
 import { supabase } from "@/utils/supabaseClient";
+import { analytics } from "@/lib/posthog";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -59,6 +60,8 @@ export function LoginForm() {
       // 3) Trigger AuthProvider's SWR (/me) to refetch right away
       // AuthProvider uses key like ["app:/me", access_token]
       await mutate((key) => Array.isArray(key) && key[0] === "app:/me");
+
+      analytics.capture("logged_in");
 
       toast({
         title: "Welcome back!",

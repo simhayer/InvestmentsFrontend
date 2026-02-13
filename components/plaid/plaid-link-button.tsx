@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { createLinkToken, exchangePublicToken } from "@/utils/plaidService";
+import { analytics } from "@/lib/posthog";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,10 @@ export function PlaidLinkButton({
           user_id: userId,
           institution_id: metadata.institution?.institution_id || null,
           institution_name: metadata.institution?.name || null,
+        });
+
+        analytics.capture("brokerage_connected", {
+          institution: metadata.institution?.name ?? "unknown",
         });
 
         onSuccess?.();

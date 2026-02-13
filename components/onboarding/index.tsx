@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/lib/posthog";
 
 import {
   getOnboarding,
@@ -134,6 +135,7 @@ export default function OnboardingWizard() {
     try {
       await syncProgress({ ...formRef.current, current_step: TOTAL_STEPS - 1 });
       await completeOnboarding();
+      analytics.capture("onboarding_completed");
       router.replace("/dashboard");
     } catch {
       toast({ title: "Couldn't finish", description: "Try again.", variant: "destructive" });

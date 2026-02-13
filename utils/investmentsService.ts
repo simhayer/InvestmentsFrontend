@@ -37,6 +37,22 @@ export const getHoldings = async () => {
   }
 };
 
+export const updateHolding = async (holdingId: string, data: Record<string, unknown>) => {
+  const path = `/holdings/${holdingId}`;
+
+  const res = await authedFetch(path, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to update holding" }));
+    throw new Error(err.detail || "Failed to update holding");
+  }
+
+  return res.json();
+};
+
 export const deleteHolding = async (holdingId: string) => {
   const path = `/holdings/${holdingId}`;
 

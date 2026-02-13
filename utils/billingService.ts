@@ -26,3 +26,19 @@ export async function createPortalSession() {
   });
   return res.json() as Promise<{ url: string }>;
 }
+
+export type UsageLimitItem = {
+  feature: string;
+  used: number;
+  limit: number; // -1 = unlimited
+};
+
+export type UsageOut = {
+  plan: string;
+  usage: UsageLimitItem[];
+};
+
+export async function getMyUsage(): Promise<UsageOut> {
+  const res = await authedFetch("/api/billing/usage", { method: "GET" });
+  return res.json();
+}

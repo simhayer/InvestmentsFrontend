@@ -36,6 +36,7 @@ import { NewsTab } from "./tabs/news-tab";
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
 import { CryptoAnalysisCard } from "@/components/ai/CryptoAnalysis";
+import { UpgradeGate } from "@/components/upgrade-gate";
 import SymbolLogo from "@/components/layout/SymbolLogo";
 import type { StockAnalysisResponse } from "@/types/symbol_analysis";
 import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
@@ -63,6 +64,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
     analysisLoading,
     analysis,
     error: aiError,
+    tierError,
     fetchFullAnalysis,
     reset: resetAi,
   } = useAiInsightSymbol(symbol, isCrypto);
@@ -313,8 +315,25 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         {/* ============================================================== */}
         <div ref={analysisRef} className="scroll-mt-20">
           <AnimatePresence mode="wait">
+            {/* Tier Limit State */}
+            {tierError && (
+              <motion.div
+                key="tier-error"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6"
+              >
+                <UpgradeGate
+                  feature={isCrypto ? "Crypto Analysis" : "Stock Analysis"}
+                  plan={tierError.plan}
+                  message={tierError.message}
+                />
+              </motion.div>
+            )}
+
             {/* Error State */}
-            {aiError && (
+            {aiError && !tierError && (
               <motion.div
                 key="error"
                 initial={{ opacity: 0, y: 10 }}

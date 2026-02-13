@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
 import { useHolding } from "@/hooks/use-holdings";
 import { PortfolioAnalysisCard } from "@/components/analytics/portfolio-analysis-card";
+import { UpgradeGate } from "@/components/upgrade-gate";
 import { Page } from "@/components/layout/Page";
 
 interface PortfolioAnalysisTabProps {
@@ -46,6 +47,7 @@ export function PortfolioAnalysisTab({
     analysisLoading,
     analysis,
     error: aiError,
+    tierError,
     fetchFullAnalysis,
     refreshInline,
     reset: resetAi,
@@ -215,8 +217,24 @@ export function PortfolioAnalysisTab({
       {/* SECTION 2: FULL ANALYSIS */}
       {/* ================================================================== */}
       <AnimatePresence mode="wait">
+        {/* Tier Limit State */}
+        {tierError && (
+          <motion.div
+            key="tier-error"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <UpgradeGate
+              feature="Portfolio Analysis"
+              plan={tierError.plan}
+              message={tierError.message}
+            />
+          </motion.div>
+        )}
+
         {/* Error State */}
-        {aiError && (
+        {aiError && !tierError && (
           <motion.div
             key="error"
             initial={{ opacity: 0, y: 10 }}

@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { getFullAnalysis, getInlineInsights, getFullCryptoAnalysis, getCryptoInlineInsights } from "@/utils/aiService";
 import type { StockAnalysisResponse, InlineInsights } from "@/types/symbol_analysis";
 import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
+import type { TierError } from "@/hooks/use-portfolio-ai";
 
 // Union type for inline insights (stock vs crypto)
 type AnyInline = InlineInsights | CryptoInlineInsights;
@@ -21,6 +22,7 @@ interface UseAiInsightSymbolReturn {
   
   // Shared
   error: string | null;
+  tierError: TierError | null;
   isCrypto: boolean;
   fetchFullAnalysis: () => Promise<void>;
   reset: () => void;
@@ -39,6 +41,7 @@ export function useAiInsightSymbol(
   const [analysis, setAnalysis] = useState<AnyAnalysis | null>(null);
   
   const [error, setError] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<TierError | null>(null);
 
   // Dedup guard
   const inlineInFlightRef = useRef(false);
@@ -90,6 +93,7 @@ export function useAiInsightSymbol(
 
     setAnalysisLoading(true);
     setError(null);
+    setTierError(null);
 
     try {
       if (isCrypto) {
@@ -105,9 +109,16 @@ export function useAiInsightSymbol(
           setInline(res.inline);
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("AI analysis error:", e);
-      setError(e instanceof Error ? e.message : "Failed to fetch AI insight.");
+      // FastAPI wraps in {detail: ...}, and ApiError stores the parsed body
+      const tierDetail = e?.detail?.detail ?? e?.detail;
+      if (typeof tierDetail === "object" && tierDetail?.code === "TIER_LIMIT") {
+        setTierError(tierDetail as TierError);
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed to fetch AI insight.");
+      }
       setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
@@ -118,6 +129,7 @@ export function useAiInsightSymbol(
   const reset = useCallback(() => {
     setAnalysis(null);
     setError(null);
+    setTierError(null);
     // Keep inline insights visible
   }, []);
 
@@ -127,6 +139,7 @@ export function useAiInsightSymbol(
     analysisLoading,
     analysis,
     error,
+    tierError,
     isCrypto,
     fetchFullAnalysis,
     reset,

@@ -47,6 +47,28 @@ export async function getMe(): Promise<Me> {
  * For calling your FastAPI endpoints that require auth.
  * Sends Supabase access token as Bearer token.
  */
+/**
+ * Custom error that carries the parsed JSON body from the backend.
+ * Used by the tier-gating system so the UI can show upgrade prompts.
+ */
+export class ApiError extends Error {
+  status: number;
+  detail: unknown;
+
+  constructor(status: number, detail: unknown) {
+    const msg =
+      typeof detail === "string"
+        ? detail
+        : typeof detail === "object" && detail && "message" in detail
+        ? String((detail as any).message)
+        : `Request failed: ${status}`;
+    super(msg);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 export async function authedFetch(path: string, init?: RequestInit) {
   const {
     data: { session },
@@ -65,7 +87,17 @@ export async function authedFetch(path: string, init?: RequestInit) {
     },
   });
 
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  if (!res.ok) {
+    let detail: unknown = `Request failed: ${res.status}`;
+    try {
+      detail = await res.json();
+    } catch {
+      // body wasn't JSON — use the status text
+      detail = { message: `Request failed: ${res.status}` };
+    }
+    throw new ApiError(res.status, detail);
+  }
+
   return res;
 }
 

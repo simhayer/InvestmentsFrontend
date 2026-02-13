@@ -31,6 +31,7 @@ export default function LandingPage() {
       <HowItWorksSection />
       <ProductPreviewSection />
       <TrustSection />
+      <PricingTeaser />
       <CTASection />
       <Footer />
     </div>
@@ -654,6 +655,101 @@ function TrustSection() {
   );
 }
 
+/* ── Pricing teaser ──────────────────────────────────────────── */
+
+function PricingTeaser() {
+  const plans = [
+    {
+      name: "Free",
+      price: "$0",
+      desc: "Get started with basics.",
+      highlights: ["1 brokerage", "1 portfolio analysis/week", "3 stock analyses/day"],
+    },
+    {
+      name: "Plus",
+      price: "$20",
+      desc: "Deeper analysis for active investors.",
+      highlights: [
+        "3 brokerages",
+        "15 stock analyses/day",
+        "Crypto analysis",
+        "Unlimited insights",
+      ],
+      popular: true,
+    },
+    {
+      name: "Pro",
+      price: "$60",
+      desc: "Unlimited everything.",
+      highlights: [
+        "Unlimited connections",
+        "Unlimited analyses",
+        "Priority support",
+        "Early access",
+      ],
+    },
+  ];
+
+  return (
+    <section className="text-center">
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 mb-2">
+        Simple, transparent pricing
+      </h2>
+      <p className="text-neutral-500 mb-10 max-w-md mx-auto">
+        Start free, upgrade when you need more.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+        {plans.map((p) => (
+          <div
+            key={p.name}
+            className={`rounded-2xl border p-6 text-left transition-all ${
+              p.popular
+                ? "border-neutral-900 bg-white shadow-lg ring-1 ring-neutral-900/5"
+                : "border-neutral-200 bg-white"
+            }`}
+          >
+            {p.popular && (
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-white bg-neutral-900 px-2 py-0.5 rounded-full mb-3">
+                Most popular
+              </span>
+            )}
+            <h3 className="text-lg font-bold text-neutral-900">{p.name}</h3>
+            <div className="flex items-baseline gap-0.5 mt-1 mb-2">
+              <span className="text-2xl font-bold text-neutral-900">{p.price}</span>
+              {p.price !== "$0" && (
+                <span className="text-sm text-neutral-400">/mo</span>
+              )}
+            </div>
+            <p className="text-sm text-neutral-500 mb-4">{p.desc}</p>
+            <ul className="space-y-1.5 text-sm text-neutral-600">
+              {p.highlights.map((h) => (
+                <li key={h} className="flex items-center gap-2">
+                  <div className="h-1 w-1 rounded-full bg-neutral-400" />
+                  {h}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8">
+        <Button
+          asChild
+          variant="outline"
+          className="rounded-xl border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+        >
+          <Link href="/pricing">
+            View full pricing details
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 /* ── CTA ──────────────────────────────────────────────────────── */
 
 function CTASection() {
@@ -718,6 +814,7 @@ function Footer() {
             <ul className="space-y-1.5 text-neutral-500">
               <li><Link href="/register" className="hover:text-neutral-700 transition-colors">Get started</Link></li>
               <li><Link href="/login" className="hover:text-neutral-700 transition-colors">Sign in</Link></li>
+              <li><Link href="/pricing" className="hover:text-neutral-700 transition-colors">Pricing</Link></li>
               <li><Link href="/market" className="hover:text-neutral-700 transition-colors">Market</Link></li>
             </ul>
           </div>

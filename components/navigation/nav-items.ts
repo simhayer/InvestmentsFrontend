@@ -17,4 +17,5 @@ export const NAV_ITEMS_AUTHED: NavItem[] = [
 
 export const NAV_ITEMS_PUBLIC: NavItem[] = [
   { name: "Market Overview", href: "/market", icon: Home },
+  { name: "Pricing", href: "/pricing", icon: BarChart3 },
 ];

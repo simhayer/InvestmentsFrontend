@@ -1,7 +1,7 @@
 // app/(protected)/layout.tsx
-import { AuthProvider } from "@/lib/auth-provider";
+// NOTE: AuthProvider lives in app/layout.tsx (root) — do NOT duplicate it here.
 import { ProtectedGate } from "./protected-shell";
-import { ChatProvider } from "@/components/chat/ChatContext"; // Import your provider
+import { ChatProvider } from "@/components/chat/ChatContext";
 
 export default function ProtectedLayout({
   children,
@@ -9,12 +9,10 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <ChatProvider>
-        <ProtectedGate>
-          {children}
-        </ProtectedGate>
-      </ChatProvider>
-    </AuthProvider>
+    <ChatProvider>
+      <ProtectedGate>
+        {children}
+      </ProtectedGate>
+    </ChatProvider>
   );
 }

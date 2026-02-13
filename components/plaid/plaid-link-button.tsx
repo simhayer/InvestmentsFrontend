@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { createLinkToken, exchangePublicToken } from "@/utils/plaidService";
 import { Button, type ButtonProps } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface PlaidLinkButtonProps {
   size?: ButtonProps["size"];
   className?: string;
   fullWidth?: boolean;
+  /** Pass a pre-fetched link token to avoid duplicate createLinkToken calls. */
+  linkToken?: string | null;
 }
 
 export function PlaidLinkButton({
@@ -26,24 +28,33 @@ export function PlaidLinkButton({
   size = "default",
   className,
   fullWidth,
+  linkToken: externalToken,
 }: PlaidLinkButtonProps) {
-  const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [internalToken, setInternalToken] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
 
+  // Only fetch a token if one wasn't provided externally
   useEffect(() => {
+    if (externalToken !== undefined) return;        // parent controls the token
+    if (fetchedRef.current) return;                  // already fetched
+    fetchedRef.current = true;
+
     const fetchToken = async () => {
       try {
         const token = await createLinkToken(userId);
-        setLinkToken(token);
+        setInternalToken(token);
       } catch (err) {
         console.error("Failed to fetch link token:", err);
       }
     };
 
     fetchToken();
-  }, [userId]);
+  }, [userId, externalToken]);
+
+  const resolvedToken = externalToken ?? internalToken;
 
   const { open, ready } = usePlaidLink({
-    token: linkToken || "",
+    token: resolvedToken || "",
     onSuccess: async (public_token, metadata) => {
       try {
         await exchangePublicToken({

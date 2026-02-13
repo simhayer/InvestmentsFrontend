@@ -16,6 +16,9 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
   const [gateReady, setGateReady] = React.useState(false);
   const hideHeader = pathname.startsWith("/onboarding");
 
+  // Dedup ref — once onboarding has been checked, don't unmount children again
+  const onboardingCheckedRef = React.useRef(false);
+
   // Auth gate
   React.useEffect(() => {
     if (!sessionReady || isLoading) return;
@@ -29,15 +32,19 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
     if (!sessionReady || isLoading) return;
     if (!hasSession) return;
 
+    // If we've already resolved the gate, don't reset it — prevents
+    // unmounting children on auth state transitions.
+    if (onboardingCheckedRef.current) return;
+
     let cancelled = false;
 
     async function run() {
       try {
-        setGateReady(false);
-
         const data = await getOnboarding();
         const completed = !!data.completed;
         const isOnboardingRoute = pathname.startsWith("/onboarding");
+
+        if (cancelled) return;
 
         if (!completed && !isOnboardingRoute) {
           router.replace("/onboarding");
@@ -49,10 +56,14 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        if (!cancelled) setGateReady(true);
+        onboardingCheckedRef.current = true;
+        setGateReady(true);
       } catch {
         // If onboarding fetch fails, do not brick the app
-        if (!cancelled) setGateReady(true);
+        if (!cancelled) {
+          onboardingCheckedRef.current = true;
+          setGateReady(true);
+        }
       }
     }
 
@@ -80,7 +91,7 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </main>
-        <ChatPanel />
+        {/* <ChatPanel /> */}
       </div>
     </div>
   );

@@ -332,12 +332,12 @@ export function PortfolioAnalysisTab({
             key="cta"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100/50 rounded-2xl p-8"
+            className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100/50 rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="flex items-start gap-5 max-w-xl">
-                <div className="p-4 bg-white rounded-2xl shadow-sm border border-indigo-50 shrink-0">
-                  <Sparkles className="h-8 w-8 text-indigo-600" />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+              <div className="flex items-start gap-4 sm:gap-5 max-w-xl">
+                <div className="p-3 sm:p-4 bg-white rounded-2xl shadow-sm border border-indigo-50 shrink-0">
+                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-indigo-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-neutral-900 mb-2">

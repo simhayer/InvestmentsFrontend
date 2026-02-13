@@ -125,7 +125,7 @@ export function PortfolioOverview() {
       {/* HERO: Value + Quick Stats + AI Button */}
       {/* ================================================================ */}
       <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-        <div className="p-6 lg:p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             {/* Left: Value */}
             <div className="space-y-4">
@@ -143,8 +143,8 @@ export function PortfolioOverview() {
                 </div>
               </div>
 
-              <div className="flex items-baseline gap-4">
-                <span className="text-4xl font-bold tracking-tight text-neutral-900">
+              <div className="flex items-baseline gap-3 sm:gap-4 flex-wrap">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-neutral-900">
                   {fmtCurrency(data.marketValue, ccy)}
                 </span>
                 <span
@@ -159,7 +159,7 @@ export function PortfolioOverview() {
               </div>
 
               {/* Mini Stats */}
-              <div className="flex items-center gap-6 pt-1">
+              <div className="flex items-center gap-4 sm:gap-6 pt-1 flex-wrap">
                 <MiniStat
                   label="Total Return"
                   value={fmtCurrency(totalReturn, ccy)}
@@ -403,7 +403,7 @@ export function PortfolioOverview() {
                   key="cta"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100/50 rounded-2xl p-8"
+                  className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border border-indigo-100/50 rounded-2xl p-4 sm:p-6 lg:p-8"
                 >
                   <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="flex items-start gap-5 max-w-xl">
@@ -754,7 +754,7 @@ function WelcomeState({ hasConnections }: { hasConnections: boolean }) {
     <div className="max-w-2xl mx-auto space-y-6 pt-4">
       {/* Hero */}
       <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-        <div className="px-8 py-12 text-center">
+        <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
           <div className="relative mx-auto mb-6 w-fit">
             <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-100 opacity-40 blur-xl" />
             <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 mx-auto">
@@ -825,7 +825,7 @@ function WelcomeState({ hasConnections }: { hasConnections: boolean }) {
         <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">
           What you&apos;ll unlock
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { icon: <BarChart3 className="h-4 w-4" />, label: "Portfolio Analytics", desc: "P/L tracking, allocation breakdowns" },
             { icon: <Sparkles className="h-4 w-4" />, label: "AI Analysis", desc: "Personalized insights and recommendations" },

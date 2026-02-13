@@ -388,7 +388,7 @@ export function AddEditHoldingDialog({
           </div>
 
           {/* Row: Quantity + Purchase Price */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label
                 htmlFor="quantity"
@@ -428,7 +428,7 @@ export function AddEditHoldingDialog({
           </div>
 
           {/* Currency */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                 Currency

@@ -168,7 +168,7 @@ export function Holdings() {
       <header className="flex flex-col gap-6 mb-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
               Holdings
             </h1>
             <div className="flex items-center gap-2">
@@ -228,16 +228,16 @@ export function Holdings() {
       <Card className="overflow-hidden rounded-[32px] border-neutral-200/60 shadow-xl shadow-neutral-200/40 bg-white">
         {/* TOP STATS BAR */}
         {!loading && filteredHoldings.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-100 border-b border-neutral-100 bg-neutral-50/30">
-            <div className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x divide-neutral-100 border-b border-neutral-100 bg-neutral-50/30">
+            <div className="p-4 sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
                 Portfolio Value
               </p>
-              <p className="text-2xl font-bold text-neutral-900">
+              <p className="text-xl sm:text-2xl font-bold text-neutral-900">
                 {fmtCurrency(stats.totalValue, currency)}
               </p>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
                 Total Returns
               </p>
@@ -328,19 +328,20 @@ export function Holdings() {
                 <thead className="sticky top-0 z-20 bg-neutral-50/90 backdrop-blur-md text-neutral-500">
                   <tr>
                     {[
-                      ["Asset", "text-left"],
-                      ["Quantity", "text-right"],
-                      ["Total Value", "text-right"],
-                      ["Current Price", "text-right"],
-                      ["7D Trend", "text-center"],
-                      ["Returns", "text-right"],
-                      ["", "w-10"],
-                    ].map(([label, align]) => (
+                      ["Asset", "text-left", ""],
+                      ["Quantity", "text-right", "hidden sm:table-cell"],
+                      ["Total Value", "text-right", ""],
+                      ["Current Price", "text-right", "hidden lg:table-cell"],
+                      ["7D Trend", "text-center", "hidden md:table-cell"],
+                      ["Returns", "text-right", ""],
+                      ["", "w-10", ""],
+                    ].map(([label, align, visibility]) => (
                       <th
-                        key={label}
+                        key={label || "edit"}
                         className={cn(
-                          "px-6 py-4 text-[10px] font-bold uppercase tracking-widest",
-                          align
+                          "px-4 sm:px-6 py-4 text-[10px] font-bold uppercase tracking-widest",
+                          align,
+                          visibility
                         )}
                       >
                         {label}
@@ -365,43 +366,43 @@ export function Holdings() {
                         onClick={() => handleRowClick(h)}
                         className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
                       >
-                        <td className="px-6 py-5">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5">
                           <div className="flex items-center gap-3">
                             <SymbolLogo
                               symbol={h.symbol}
                               isCrypto={h.type === "cryptocurrency"}
-                              className="h-10 w-10 rounded-xl shadow-sm transition-transform group-hover:scale-110"
+                              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shadow-sm transition-transform group-hover:scale-110"
                             />
                             <div className="min-w-0">
-                              <div className="font-bold text-neutral-900 leading-none mb-1">
+                              <div className="font-bold text-neutral-900 leading-none mb-1 text-sm">
                                 {h.symbol}
                               </div>
-                              <div className="truncate text-xs text-neutral-400 max-w-[120px]">
+                              <div className="truncate text-xs text-neutral-400 max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]">
                                 {h.name}
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        <td className="px-6 py-5 text-right font-medium text-neutral-600">
+                        <td className="hidden sm:table-cell px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-600">
                           {fmtNumber(h.quantity)}
                         </td>
 
-                        <td className="px-6 py-5 text-right font-bold text-neutral-900">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-bold text-neutral-900">
                           {fmtCurrency(h.currentValue ?? null, currency)}
                         </td>
 
-                        <td className="px-6 py-5 text-right text-neutral-600">
+                        <td className="hidden lg:table-cell px-4 sm:px-6 py-4 sm:py-5 text-right text-neutral-600">
                           {fmtCurrency(h.currentPrice ?? null, currency)}
                         </td>
 
-                        <td className="px-6 py-5">
+                        <td className="hidden md:table-cell px-4 sm:px-6 py-4 sm:py-5">
                           <div className="flex justify-center items-center opacity-70 group-hover:opacity-100 transition-opacity">
                             <Sparkline data={mockTrend} color={sparkColor} />
                           </div>
                         </td>
 
-                        <td className="px-6 py-5 text-right">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right">
                           <div className="flex flex-col items-end gap-1">
                             <Badge
                               className={cn(

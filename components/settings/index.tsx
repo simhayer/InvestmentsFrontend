@@ -316,11 +316,11 @@ export function Settings() {
               </div>
             )}
 
-            <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-2.5 text-xs text-neutral-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-neutral-50 px-4 py-2.5 text-xs text-neutral-500">
               <span>Cancel anytime from the billing portal.</span>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1 font-semibold text-neutral-700 hover:text-neutral-900 underline underline-offset-2"
+                className="inline-flex items-center gap-1 font-semibold text-neutral-700 hover:text-neutral-900 underline underline-offset-2 shrink-0"
               >
                 Compare plans <ExternalLink className="h-3 w-3" />
               </Link>
@@ -336,9 +336,9 @@ export function Settings() {
         {!user ? (
           <Skeleton className="h-14 w-full rounded-xl" />
         ) : (
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl border border-neutral-200 bg-white px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600">
                 <BadgeDollarSign className="h-4 w-4" />
               </div>
               <div>
@@ -350,7 +350,7 @@ export function Settings() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 self-end sm:self-auto">
               <Label className="text-xs font-medium text-neutral-500">
                 USD
               </Label>

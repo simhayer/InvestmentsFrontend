@@ -230,7 +230,7 @@ function HealthOverviewCard({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-100 bg-neutral-50/50">
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x divide-neutral-100 bg-neutral-50/50">
         <StatBox
           label="Market Value"
           value={`$${portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -476,7 +476,7 @@ function RiskDashboard({ metrics }: { metrics: PortfolioRiskMetrics }) {
       </div>
 
       {/* Portfolio-level metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-neutral-100 border-b border-neutral-100">
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x divide-neutral-100 border-b border-neutral-100">
         <RiskStat
           label="Portfolio Beta"
           value={metrics.portfolio_beta != null ? metrics.portfolio_beta.toFixed(2) : "—"}

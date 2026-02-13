@@ -15,7 +15,7 @@ export default function LoginClient() {
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-4">
       <div className="mx-auto w-full max-w-5xl">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+        <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-20">
           {/* Left column */}
           <div className="hidden lg:block space-y-8">
             <div className="space-y-4">

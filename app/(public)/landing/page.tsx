@@ -175,7 +175,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section className="bg-white rounded-2xl border border-neutral-200 p-8 sm:p-12">
+    <section className="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-8 lg:p-12">
       <div className="text-center mb-10">
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
           How it works
@@ -185,7 +185,7 @@ function HowItWorksSection() {
         </p>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-3">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((step) => (
           <div key={step.number} className="text-center">
             <div className="mx-auto h-14 w-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4 relative">
@@ -334,7 +334,7 @@ function ProductPreviewSection() {
                   Your portfolio is well-diversified across 14 positions with solid returns beating the S&P 500 by 2.1%. Technology remains your strongest sector but is approaching concentration limits at 38%. Consider trimming NVDA gains and rotating into defensive sectors.
                 </p>
               </div>
-              <div className="grid grid-cols-4 divide-x divide-neutral-100 bg-neutral-50/50">
+              <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-neutral-100 bg-neutral-50/50">
                 {[
                   { label: "Market Value", value: "$127,844" },
                   { label: "Positions", value: "14" },
@@ -360,7 +360,7 @@ function ProductPreviewSection() {
                     <span className="text-xs font-semibold text-neutral-900">Risk & Benchmark Dashboard</span>
                     <span className="text-[9px] text-neutral-400 font-medium uppercase tracking-wider ml-auto">Trailing 1Y</span>
                   </div>
-                  <div className="grid grid-cols-4 divide-x divide-neutral-100 border-b border-neutral-100">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-neutral-100 border-b border-neutral-100">
                     {[
                       { label: "Portfolio Beta", value: "1.08", sub: "Near market", color: "text-neutral-400" },
                       { label: "Volatility", value: "16.2%", sub: "Weighted annual", color: "text-neutral-400" },
@@ -379,7 +379,7 @@ function ProductPreviewSection() {
                       <Activity className="h-3 w-3 text-indigo-500" />
                       <span className="text-[9px] font-bold text-indigo-900 uppercase tracking-wider">vs S&P 500 (SPY)</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
                         { label: "SPY Return", value: "10.3%" },
                         { label: "SPY Volatility", value: "14.8%" },
@@ -452,7 +452,7 @@ function ProductPreviewSection() {
                   <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/50">
                     <span className="text-xs font-semibold text-neutral-900">Portfolio Fundamentals</span>
                   </div>
-                  <div className="grid grid-cols-3 divide-x divide-neutral-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-neutral-100">
                     {[
                       { title: "Diversification", icon: <PieChart className="h-3.5 w-3.5 text-neutral-400" />, assessment: "Well Balanced", meter: "85%", meterColor: "bg-emerald-500", trackColor: "bg-emerald-100", detail: "14 holdings across 8 sectors with no single position above 15%." },
                       { title: "Performance", icon: <TrendingUp className="h-3.5 w-3.5 text-neutral-400" />, assessment: "Strong", meter: "90%", meterColor: "bg-emerald-500", trackColor: "bg-emerald-100", detail: "Outperforming S&P 500 by 2.1% with a Sharpe ratio of 1.12." },
@@ -754,7 +754,7 @@ function PricingTeaser() {
 
 function CTASection() {
   return (
-    <section className="bg-neutral-900 rounded-2xl p-10 sm:p-16 text-center">
+    <section className="bg-neutral-900 rounded-2xl p-6 sm:p-10 lg:p-16 text-center">
       <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
         Ready to see your portfolio clearly?
       </h2>
@@ -808,7 +808,7 @@ function Footer() {
           </p>
         </div>
 
-        <div className="flex gap-12 text-sm">
+        <div className="flex flex-col sm:flex-row gap-6 sm:gap-12 text-sm">
           <div className="space-y-2.5">
             <h4 className="text-xs font-semibold text-neutral-900">Product</h4>
             <ul className="space-y-1.5 text-neutral-500">

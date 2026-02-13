@@ -133,13 +133,13 @@ export function Connections({ onRemove }: ConnectionsProps) {
   return (
     <Page>
       {/* --- HEADER --- */}
-      <header className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div className="space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text">
             Assets & Institutions
           </p>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
               Connections
             </h1>
             {!loading && (
@@ -257,9 +257,9 @@ export function Connections({ onRemove }: ConnectionsProps) {
           </div>
 
           {/* Security Footer */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-neutral-100 bg-neutral-50/50 p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 rounded-[24px] border border-neutral-100 bg-neutral-50/50 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm shrink-0">
                 <ShieldCheck className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
@@ -271,7 +271,7 @@ export function Connections({ onRemove }: ConnectionsProps) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-tighter">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-tighter sm:shrink-0">
               Powered by <span className="text-neutral-900">Plaid</span>
             </div>
           </div>

@@ -469,13 +469,13 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             <h3 className="text-sm font-semibold text-neutral-700">
               Price Chart
             </h3>
-            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg overflow-x-auto scrollbar-hide">
               {RANGE_PRESETS.map((p) => (
                 <button
                   key={p.label}
                   onClick={() => setR(p)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                    "px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap shrink-0",
                     r.label === p.label
                       ? "bg-white text-neutral-900 shadow-sm"
                       : "text-neutral-500 hover:text-neutral-700"
@@ -487,7 +487,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             </div>
           </div>
 
-          <div className="relative min-h-[400px] p-4">
+          <div className="relative min-h-[280px] sm:min-h-[350px] lg:min-h-[400px] p-3 sm:p-4">
             {loadingH && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm">
                 <RefreshCcw className="h-6 w-6 animate-spin text-neutral-300" />
@@ -495,7 +495,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             )}
             <PriceChartCard
               candles={history?.points || []}
-              height={380}
+              height={320}
               r={r}
               setR={setR}
               hideRangeControls

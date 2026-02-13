@@ -37,6 +37,7 @@ import {
 } from "../navigation/nav-items";
 import { logout } from "@/utils/authService";
 import { cn } from "@/lib/utils";
+import { WLogo } from "@/components/ui/w-logo";
 
 function isActive(pathname: string, href: string, exact?: boolean) {
   return exact
@@ -75,9 +76,7 @@ export function Header() {
             {/* ── Left: Logo + Desktop Nav ───────────────────────── */}
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2 group shrink-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 font-serif text-lg font-bold text-white transition-transform group-hover:scale-105">
-                  W
-                </div>
+                <WLogo size={32} className="transition-transform group-hover:scale-105" />
                 <span className="hidden font-bold tracking-tight text-neutral-900 sm:block text-sm">
                   WallStreetAI
                 </span>
@@ -243,9 +242,7 @@ export function Header() {
                 onClick={closeMobileNav}
                 className="flex items-center gap-2"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 font-serif text-sm font-bold text-white">
-                  W
-                </div>
+                <WLogo size={28} />
                 <span className="font-bold text-sm text-neutral-900">
                   WallStreetAI
                 </span>

@@ -67,6 +67,62 @@ export async function getQuickSummary(
 }
 
 // ============================================================================
+// CRYPTO ANALYSIS
+// ============================================================================
+
+import type {
+  CryptoAnalysisResponse,
+  CryptoInlineInsights,
+} from "@/types/crypto_analysis";
+
+/**
+ * Get full AI analysis for a crypto asset.
+ * Includes report + inline insights + risk metrics + market data.
+ */
+export async function getFullCryptoAnalysis(
+  symbol: string,
+  includeInline: boolean = true,
+  forceRefresh: boolean = false
+): Promise<CryptoAnalysisResponse> {
+  const params = new URLSearchParams({
+    include_inline: String(includeInline),
+    force_refresh: String(forceRefresh),
+  });
+  const url = `/api/analyze/crypto/full/${symbol}?${params}`;
+
+  const res = await authedFetch(url, { method: "GET" });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Crypto analysis failed: ${error}`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Get only inline insights for a crypto asset (faster, cheaper).
+ */
+export async function getCryptoInlineInsights(
+  symbol: string,
+  forceRefresh: boolean = false
+): Promise<CryptoInlineInsights> {
+  const params = new URLSearchParams({
+    force_refresh: String(forceRefresh),
+  });
+  const res = await authedFetch(
+    `/api/analyze/crypto/inline/${symbol}?${params}`,
+    { method: "GET" }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Crypto inline insights failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// ============================================================================
 // LEGACY POLLING API (if you still need it)
 // ============================================================================
 

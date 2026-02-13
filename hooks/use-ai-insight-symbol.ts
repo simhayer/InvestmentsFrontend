@@ -2,32 +2,41 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { getFullAnalysis, getInlineInsights } from "@/utils/aiService";
+import { getFullAnalysis, getInlineInsights, getFullCryptoAnalysis, getCryptoInlineInsights } from "@/utils/aiService";
 import type { StockAnalysisResponse, InlineInsights } from "@/types/symbol_analysis";
+import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
+
+// Union type for inline insights (stock vs crypto)
+type AnyInline = InlineInsights | CryptoInlineInsights;
+type AnyAnalysis = StockAnalysisResponse | CryptoAnalysisResponse;
 
 interface UseAiInsightSymbolReturn {
   // Inline insights (auto-fetched)
   inlineLoading: boolean;
-  inline: InlineInsights | null;
+  inline: AnyInline | null;
   
   // Full analysis (on-demand)
   analysisLoading: boolean;
-  analysis: StockAnalysisResponse | null;
+  analysis: AnyAnalysis | null;
   
   // Shared
   error: string | null;
+  isCrypto: boolean;
   fetchFullAnalysis: () => Promise<void>;
   reset: () => void;
 }
 
-export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
+export function useAiInsightSymbol(
+  symbol: string,
+  isCrypto: boolean = false,
+): UseAiInsightSymbolReturn {
   // Inline insights state (lightweight, auto-fetched)
   const [inlineLoading, setInlineLoading] = useState(false);
-  const [inline, setInline] = useState<InlineInsights | null>(null);
+  const [inline, setInline] = useState<AnyInline | null>(null);
   
   // Full analysis state (heavier, on-demand)
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<StockAnalysisResponse | null>(null);
+  const [analysis, setAnalysis] = useState<AnyAnalysis | null>(null);
   
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +49,9 @@ export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
     const fetchInline = async () => {
       setInlineLoading(true);
       try {
-        const res = await getInlineInsights(symbol);
+        const res = isCrypto
+          ? await getCryptoInlineInsights(symbol)
+          : await getInlineInsights(symbol);
         if (!cancelled) {
           setInline(res);
         }
@@ -59,7 +70,7 @@ export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
     return () => {
       cancelled = true;
     };
-  }, [symbol]);
+  }, [symbol, isCrypto]);
 
   // Full analysis fetch (manual trigger)
   const fetchFullAnalysis = useCallback(async () => {
@@ -72,11 +83,18 @@ export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
     setError(null);
 
     try {
-      const res = await getFullAnalysis(symbol, true);
-      setAnalysis(res);
-      // Update inline with the full response's inline data
-      if (res.inline) {
-        setInline(res.inline);
+      if (isCrypto) {
+        const res = await getFullCryptoAnalysis(symbol, true);
+        setAnalysis(res);
+        if (res.inline) {
+          setInline(res.inline);
+        }
+      } else {
+        const res = await getFullAnalysis(symbol, true);
+        setAnalysis(res);
+        if (res.inline) {
+          setInline(res.inline);
+        }
       }
     } catch (e) {
       console.error("AI analysis error:", e);
@@ -85,7 +103,7 @@ export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
     } finally {
       setAnalysisLoading(false);
     }
-  }, [symbol]);
+  }, [symbol, isCrypto]);
 
   const reset = useCallback(() => {
     setAnalysis(null);
@@ -99,6 +117,7 @@ export function useAiInsightSymbol(symbol: string): UseAiInsightSymbolReturn {
     analysisLoading,
     analysis,
     error,
+    isCrypto,
     fetchFullAnalysis,
     reset,
   };

@@ -37,6 +37,7 @@ import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
 import { CryptoAnalysisCard } from "@/components/ai/CryptoAnalysis";
 import { UpgradeGate } from "@/components/upgrade-gate";
+import { AnalysisLoader } from "@/components/ui/analysis-loader";
 import SymbolLogo from "@/components/layout/SymbolLogo";
 import type { StockAnalysisResponse } from "@/types/symbol_analysis";
 import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
@@ -366,20 +367,12 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-white border border-neutral-200 rounded-2xl p-10 flex flex-col items-center justify-center mb-6"
+                className="mb-6"
               >
-                <div className="relative mb-5">
-                  <div className="h-14 w-14 rounded-full border-[3px] border-neutral-100 border-t-indigo-600 animate-spin" />
-                  <Sparkles className="h-5 w-5 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                </div>
-                <p className="text-base font-semibold text-neutral-800">
-                  Analyzing {symbol}
-                </p>
-                <p className="text-sm text-neutral-400 mt-1">
-                  {isCrypto
-                    ? "Analyzing price action, risk metrics, and market data..."
-                    : "Crunching fundamentals, news, and technicals..."}
-                </p>
+                <AnalysisLoader
+                  variant={isCrypto ? "crypto" : "stock"}
+                  subject={symbol}
+                />
               </motion.div>
             )}
 

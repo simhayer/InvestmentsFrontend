@@ -32,6 +32,7 @@ import { TopHoldings } from "@/components/holdings/top-holdings";
 import ProviderAvatar from "../layout/ProviderAvatar";
 import { PortfolioAnalysisCard } from "@/components/analytics/portfolio-analysis-card";
 import { UpgradeGate } from "@/components/upgrade-gate";
+import { AnalysisLoader } from "@/components/ui/analysis-loader";
 
 import { getPortfolioSummary } from "@/utils/portfolioService";
 import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
@@ -339,18 +340,11 @@ export function PortfolioOverview() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="bg-white border border-neutral-200 rounded-2xl p-12 flex flex-col items-center justify-center shadow-sm"
                 >
-                  <div className="relative mb-5">
-                    <div className="h-16 w-16 rounded-full border-[3px] border-neutral-100 border-t-indigo-600 animate-spin" />
-                    <Sparkles className="h-6 w-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                  </div>
-                  <p className="text-base font-semibold text-neutral-800">
-                    Analyzing your portfolio
-                  </p>
-                  <p className="text-sm text-neutral-400 mt-1">
-                    Reviewing {data.positionsCount} positions...
-                  </p>
+                  <AnalysisLoader
+                    variant="portfolio"
+                    subject={`${data.positionsCount} positions`}
+                  />
                 </motion.div>
               )}
 

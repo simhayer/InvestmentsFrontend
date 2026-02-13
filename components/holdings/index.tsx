@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Newspaper,
   ChevronRight,
+  Plus,
+  Pencil,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fmtCurrency, fmtNumber, fmtPct } from "@/utils/format";
 import { Page } from "@/components/layout/Page";
 import SymbolLogo from "@/components/layout/SymbolLogo";
+import { AddEditHoldingDialog } from "@/components/holdings/add-edit-holding-dialog";
 
 /**
  * UTILS
@@ -84,14 +87,26 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
  * MAIN COMPONENT
  */
 export function Holdings() {
-  const { holdings, loading } = useHolding() as {
-    holdings: Holding[];
-    loading: boolean;
-  };
+  const { holdings, loading, reloadHoldings } = useHolding();
 
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState<string>("all");
+
+  // Add/Edit dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingHolding, setEditingHolding] = useState<Holding | null>(null);
+
+  const openAddDialog = () => {
+    setEditingHolding(null);
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (h: Holding, e: React.MouseEvent) => {
+    e.stopPropagation(); // don't navigate to symbol page
+    setEditingHolding(h);
+    setDialogOpen(true);
+  };
 
   const currency = holdings?.[0]?.currency || "USD";
   const positionsCount = holdings?.length ?? 0;
@@ -199,6 +214,13 @@ export function Holdings() {
                 className="rounded-xl border-neutral-200 pl-10 focus-visible:ring-emerald-500 shadow-sm"
               />
             </div>
+            <Button
+              onClick={openAddDialog}
+              className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Holding</span>
+            </Button>
           </div>
         </div>
       </header>
@@ -252,18 +274,31 @@ export function Holdings() {
                 No holdings found
               </h3>
               <p className="text-sm text-neutral-500 max-w-xs mt-1">
-                Adjust filters or connect more accounts to see your assets.
+                {search || accountFilter !== "all"
+                  ? "Adjust filters or connect more accounts to see your assets."
+                  : "Add your first holding manually or connect a brokerage."}
               </p>
-              <Button
-                onClick={() => {
-                  setSearch("");
-                  setAccountFilter("all");
-                }}
-                variant="link"
-                className="mt-2 text-emerald-600"
-              >
-                Clear search
-              </Button>
+              <div className="flex items-center gap-3 mt-4">
+                {(search || accountFilter !== "all") && (
+                  <Button
+                    onClick={() => {
+                      setSearch("");
+                      setAccountFilter("all");
+                    }}
+                    variant="link"
+                    className="text-emerald-600"
+                  >
+                    Clear search
+                  </Button>
+                )}
+                <Button
+                  onClick={openAddDialog}
+                  className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Holding
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -277,6 +312,7 @@ export function Holdings() {
                       ["Current Price", "text-right"],
                       ["7D Trend", "text-center"],
                       ["Returns", "text-right"],
+                      ["", "w-10"],
                     ].map(([label, align]) => (
                       <th
                         key={label}
@@ -358,6 +394,18 @@ export function Holdings() {
                             </span>
                           </div>
                         </td>
+
+                        <td className="px-2 py-5">
+                          {h.source === "manual" && (
+                            <button
+                              onClick={(e) => openEditDialog(h, e)}
+                              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 group-hover:opacity-100 transition-all"
+                              title="Edit holding"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -367,6 +415,14 @@ export function Holdings() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add/Edit Dialog */}
+      <AddEditHoldingDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        holding={editingHolding}
+        onSuccess={reloadHoldings}
+      />
     </Page>
   );
 }

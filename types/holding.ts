@@ -35,6 +35,9 @@ export interface Holding {
   currency: string;
   price_status?: "live" | "stale" | "unavailable" | "unrequested";
 
+  // Source tracking
+  source?: "plaid" | "manual" | string;
+
   // Optional ids from Plaid mapping
   externalId?: string;
   accountId?: string;

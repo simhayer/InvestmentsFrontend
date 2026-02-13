@@ -149,6 +149,12 @@ export function Header() {
                   >
                     <Settings className="h-4 w-4" /> Settings
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/pricing")}
+                    className="rounded-lg gap-2 cursor-pointer"
+                  >
+                    <CreditCard className="h-4 w-4" /> Pricing
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="mx-1" />
                   <DropdownMenuItem
                     onClick={handleLogout}

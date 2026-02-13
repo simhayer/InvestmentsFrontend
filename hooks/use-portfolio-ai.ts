@@ -21,12 +21,6 @@ async function getFullPortfolioAnalysis(
 ): Promise<PortfolioAnalysisResponse> {
   const url = `/api/portfolio/analysis/full?currency=${currency}&include_inline=${includeInline}&force_refresh=${forceRefresh}`;
   const res = await authedFetch(url, { method: "GET" });
-  
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Analysis failed: ${error}`);
-  }
-  
   return res.json();
 }
 
@@ -36,11 +30,6 @@ async function getPortfolioInlineInsights(
   const res = await authedFetch(`/api/portfolio/analysis/inline?currency=${currency}`, {
     method: "GET",
   });
-  
-  if (!res.ok) {
-    throw new Error(`Inline insights failed: ${res.status}`);
-  }
-  
   return res.json();
 }
 
@@ -50,17 +39,21 @@ async function getPortfolioQuickSummary(
   const res = await authedFetch(`/api/portfolio/analysis/summary?currency=${currency}`, {
     method: "GET",
   });
-  
-  if (!res.ok) {
-    throw new Error(`Summary failed: ${res.status}`);
-  }
-  
   return res.json();
 }
 
 // ============================================================================
 // MAIN HOOK
 // ============================================================================
+
+export type TierError = {
+  code: string;
+  plan: string;
+  feature: string;
+  limit: number;
+  used: number;
+  message: string;
+};
 
 interface UsePortfolioAnalysisReturn {
   // Inline insights (auto-fetched)
@@ -73,6 +66,7 @@ interface UsePortfolioAnalysisReturn {
   
   // Shared
   error: string | null;
+  tierError: TierError | null;
   fetchFullAnalysis: (forceRefresh?: boolean | unknown) => Promise<void>;
   refreshInline: () => Promise<void>;
   reset: () => void;
@@ -91,6 +85,7 @@ export function usePortfolioAnalysis(
   const [analysis, setAnalysis] = useState<PortfolioAnalysisResponse | null>(null);
   
   const [error, setError] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<TierError | null>(null);
 
   // ─── Refs to prevent duplicate fetches ──────────────────────────
   const currencyRef = useRef(currency);
@@ -155,6 +150,7 @@ export function usePortfolioAnalysis(
     analysisInFlightRef.current = true;
     setAnalysisLoading(true);
     setError(null);
+    setTierError(null);
     analytics.capture("portfolio_analysis_started", { currency: currencyRef.current, forceRefresh: refresh });
 
     try {
@@ -162,9 +158,17 @@ export function usePortfolioAnalysis(
       setAnalysis(res);
       if (res.inline) setInline(res.inline);
       analytics.capture("portfolio_analysis_completed", { currency: currencyRef.current });
-    } catch (e) {
+    } catch (e: any) {
       console.error("Portfolio analysis error:", e);
-      setError(e instanceof Error ? e.message : "Failed to analyze portfolio.");
+      // Check for tier limit error (403 with TIER_LIMIT code)
+      // FastAPI wraps in {detail: ...}, and ApiError stores the parsed body
+      const tierDetail = e?.detail?.detail ?? e?.detail;
+      if (typeof tierDetail === "object" && tierDetail?.code === "TIER_LIMIT") {
+        setTierError(tierDetail as TierError);
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed to analyze portfolio.");
+      }
       setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
@@ -175,6 +179,7 @@ export function usePortfolioAnalysis(
   const reset = useCallback(() => {
     setAnalysis(null);
     setError(null);
+    setTierError(null);
   }, []);
 
   return {
@@ -182,6 +187,7 @@ export function usePortfolioAnalysis(
     inline,
     analysisLoading,
     analysis,
+    tierError,
     error,
     fetchFullAnalysis,
     refreshInline,

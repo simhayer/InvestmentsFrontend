@@ -8,4 +8,5 @@ export type AppUser = {
   supabase_user_id: string;
   email: string;
   base_currency: "USD" | "CAD";
+  plan: "free" | "premium" | "pro";
 };

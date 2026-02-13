@@ -20,14 +20,7 @@ export async function getFullAnalysis(
   includeInline: boolean = true
 ): Promise<StockAnalysisResponse> {
   const url = `/api/analyze/symbol/full/${symbol}?include_inline=${includeInline}`;
-  
   const res = await authedFetch(url, { method: "GET" });
-  
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Analysis failed: ${error}`);
-  }
-  
   return res.json();
 }
 
@@ -41,11 +34,6 @@ export async function getInlineInsights(
   const res = await authedFetch(`/api/analyze/symbol/inline/${symbol}`, {
     method: "GET",
   });
-  
-  if (!res.ok) {
-    throw new Error(`Inline insights failed: ${res.status}`);
-  }
-  
   return res.json();
 }
 
@@ -58,11 +46,6 @@ export async function getQuickSummary(
   const res = await authedFetch(`/api/analyze/summary/${symbol}`, {
     method: "GET",
   });
-  
-  if (!res.ok) {
-    throw new Error(`Summary failed: ${res.status}`);
-  }
-  
   return res.json();
 }
 
@@ -91,12 +74,6 @@ export async function getFullCryptoAnalysis(
   const url = `/api/analyze/crypto/full/${symbol}?${params}`;
 
   const res = await authedFetch(url, { method: "GET" });
-
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`Crypto analysis failed: ${error}`);
-  }
-
   return res.json();
 }
 
@@ -114,11 +91,6 @@ export async function getCryptoInlineInsights(
     `/api/analyze/crypto/inline/${symbol}?${params}`,
     { method: "GET" }
   );
-
-  if (!res.ok) {
-    throw new Error(`Crypto inline insights failed: ${res.status}`);
-  }
-
   return res.json();
 }
 

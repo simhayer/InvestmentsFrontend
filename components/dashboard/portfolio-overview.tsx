@@ -31,6 +31,7 @@ import { Page } from "@/components/layout/Page";
 import { TopHoldings } from "@/components/holdings/top-holdings";
 import ProviderAvatar from "../layout/ProviderAvatar";
 import { PortfolioAnalysisCard } from "@/components/analytics/portfolio-analysis-card";
+import { UpgradeGate } from "@/components/upgrade-gate";
 
 import { getPortfolioSummary } from "@/utils/portfolioService";
 import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
@@ -47,6 +48,7 @@ export function PortfolioOverview() {
     analysisLoading,
     analysis,
     error: aiError,
+    tierError,
     fetchFullAnalysis,
     reset: resetAi,
   } = usePortfolioAnalysis(data?.currency || "USD", !!data);
@@ -289,8 +291,24 @@ export function PortfolioOverview() {
           {/* AI Analysis Section */}
           <div ref={analysisRef}>
             <AnimatePresence mode="wait">
+              {/* Tier Limit */}
+              {tierError && (
+                <motion.div
+                  key="tier-error"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <UpgradeGate
+                    feature="Portfolio Analysis"
+                    plan={tierError.plan}
+                    message={tierError.message}
+                  />
+                </motion.div>
+              )}
+
               {/* Error */}
-              {aiError && (
+              {aiError && !tierError && (
                 <motion.div
                   key="error"
                   initial={{ opacity: 0, y: 10 }}

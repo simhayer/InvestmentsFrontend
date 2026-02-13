@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,11 +11,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { BadgeDollarSign, Mail, ShieldCheck, Crown, Zap } from "lucide-react";
+import { BadgeDollarSign, Mail, ShieldCheck, Crown, Zap, ExternalLink } from "lucide-react";
 
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth-provider";
 import { updateCurrency } from "@/utils/userService";
+import Link from "next/link";
 import { Page } from "@/components/layout/Page";
 
 import {
@@ -39,6 +41,26 @@ function fmtDate(d?: string | null) {
 
 export function Settings() {
   const { user, refresh } = useAuth() as any;
+  const searchParams = useSearchParams();
+
+  // Handle checkout redirect query params
+  useEffect(() => {
+    const checkoutStatus = searchParams.get("checkout");
+    if (checkoutStatus === "success") {
+      toast({
+        title: "Subscription activated!",
+        description: "Your plan has been upgraded. Welcome aboard!",
+      });
+      // Clean up the URL
+      window.history.replaceState({}, "", "/settings");
+    } else if (checkoutStatus === "cancel") {
+      toast({
+        title: "Checkout cancelled",
+        description: "No changes were made to your plan.",
+      });
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, [searchParams]);
 
   // ----------------------------
   // Currency
@@ -352,9 +374,14 @@ export function Settings() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-neutral-50/70 px-4 py-3 text-xs text-neutral-600">
-                You can cancel anytime. If your status doesn’t update right
-                away, press Refresh.
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-neutral-50/70 px-4 py-3 text-xs text-neutral-600">
+                <span>
+                  You can cancel anytime. If your status doesn&apos;t update right
+                  away, press Refresh.
+                </span>
+                <Link href="/pricing" className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 underline underline-offset-2">
+                  Compare plans <ExternalLink className="h-3 w-3" />
+                </Link>
               </div>
             </>
           )}

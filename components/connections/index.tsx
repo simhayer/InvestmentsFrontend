@@ -24,14 +24,23 @@ import { Badge } from "@/components/ui/badge";
 
 import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import { ConnectionItem } from "./connection-item";
+import { UpgradeGate } from "@/components/upgrade-gate";
 
 import { getPlaidInvestments, createLinkToken } from "@/utils/plaidService";
 import { getInstitutions } from "@/utils/investmentsService";
 import { keysToCamel } from "@/utils/format";
 import { useAuth } from "@/lib/auth-provider";
+import type { AppUser } from "@/types/user";
 import type { Connection } from "@/types/connection";
 import { Page } from "@/components/layout/Page";
 import { cn } from "@/lib/utils";
+
+// Connection limits per plan (must match backend PLAN_LIMITS)
+const CONNECTION_LIMITS: Record<string, number> = {
+  free: 1,
+  premium: 3,
+  pro: -1, // unlimited
+};
 
 type ConnectionsProps = {
   onRemove?: (id: string) => void;
@@ -58,6 +67,9 @@ export function Connections({ onRemove }: ConnectionsProps) {
   }, [userId]);
 
   const hasConnections = connections.length > 0;
+  const plan = (user as AppUser)?.plan ?? "free";
+  const connectionLimit = CONNECTION_LIMITS[plan] ?? 1;
+  const atConnectionLimit = connectionLimit !== -1 && connections.length >= connectionLimit;
 
   // ─── Load connections with dedup guard ────────────────────────────
   const connectionsInFlightRef = useRef(false);
@@ -155,18 +167,32 @@ export function Connections({ onRemove }: ConnectionsProps) {
             {refreshing ? "Syncing..." : "Sync All"}
           </Button>
 
-          <PlaidLinkButton
-            userId={userId}
-            onSuccess={handlePlaidSuccess}
-            linkToken={sharedLinkToken}
-            variant="default"
-            className="h-10 rounded-xl bg-neutral-900 px-4 text-sm font-semibold text-white shadow-lg hover:bg-neutral-800"
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Account
-          </PlaidLinkButton>
+          {!loading && !atConnectionLimit && (
+            <PlaidLinkButton
+              userId={userId}
+              onSuccess={handlePlaidSuccess}
+              linkToken={sharedLinkToken}
+              variant="default"
+              className="h-10 rounded-xl bg-neutral-900 px-4 text-sm font-semibold text-white shadow-lg hover:bg-neutral-800"
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add Account
+            </PlaidLinkButton>
+          )}
         </div>
       </header>
+
+      {/* --- CONNECTION LIMIT BANNER --- */}
+      {!loading && atConnectionLimit && hasConnections && (
+        <div className="mb-6">
+          <UpgradeGate
+            compact
+            feature="Brokerage Connections"
+            plan={plan}
+            message={`Your ${plan === "free" ? "Free" : "Plus"} plan supports ${connectionLimit} connection${connectionLimit === 1 ? "" : "s"}. Upgrade to add more.`}
+          />
+        </div>
+      )}
 
       {/* --- CONTENT --- */}
       {loading ? (

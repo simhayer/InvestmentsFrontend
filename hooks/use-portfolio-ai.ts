@@ -1,7 +1,7 @@
 // hooks/use-portfolio-analysis.ts
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { authedFetch } from "@/utils/authService";
 import type {
   PortfolioAnalysisResponse,
@@ -72,7 +72,7 @@ interface UsePortfolioAnalysisReturn {
   
   // Shared
   error: string | null;
-  fetchFullAnalysis: (forceRefresh?: boolean) => Promise<void>;
+  fetchFullAnalysis: (forceRefresh?: boolean | unknown) => Promise<void>;
   refreshInline: () => Promise<void>;
   reset: () => void;
 }
@@ -91,49 +91,83 @@ export function usePortfolioAnalysis(
   
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch inline insights
+  // ─── Refs to prevent duplicate fetches ──────────────────────────
+  const currencyRef = useRef(currency);
+  currencyRef.current = currency;
+
+  const inlineInFlightRef = useRef(false);
+  const analysisInFlightRef = useRef(false);
+
+  // Fetch inline insights — stable reference (no currency in deps)
   const refreshInline = useCallback(async () => {
+    if (inlineInFlightRef.current) return;           // dedup
+    inlineInFlightRef.current = true;
     setInlineLoading(true);
     try {
-      const res = await getPortfolioInlineInsights(currency);
+      const res = await getPortfolioInlineInsights(currencyRef.current);
       setInline(res);
     } catch (e) {
       console.error("Portfolio inline insights error:", e);
-      // Don't set error for inline - it's optional/background
     } finally {
       setInlineLoading(false);
+      inlineInFlightRef.current = false;
     }
-  }, [currency]);
+  }, []); // stable — reads currency from ref
 
-  // Auto-fetch inline on mount
+  // Auto-fetch inline on mount (fires once when autoFetchInline becomes true)
+  const hasFetchedInlineRef = useRef(false);
+
   useEffect(() => {
-    if (autoFetchInline) {
-      refreshInline();
+    if (!autoFetchInline) {
+      // Reset the guard so we re-fetch if autoFetchInline toggles off→on
+      hasFetchedInlineRef.current = false;
+      return;
     }
-  }, [autoFetchInline, refreshInline]);
+    if (hasFetchedInlineRef.current) return;         // already fetched this lifecycle
 
-  // Fetch full analysis (pass forceRefresh=true to bypass server cache)
-  // NOTE: wrapped to ignore React event args when used as onClick handler
+    hasFetchedInlineRef.current = true;
+
+    let cancelled = false;
+
+    (async () => {
+      if (inlineInFlightRef.current) return;
+      inlineInFlightRef.current = true;
+      setInlineLoading(true);
+      try {
+        const res = await getPortfolioInlineInsights(currencyRef.current);
+        if (!cancelled) setInline(res);
+      } catch (e) {
+        if (!cancelled) console.error("Portfolio inline insights error:", e);
+      } finally {
+        if (!cancelled) setInlineLoading(false);
+        inlineInFlightRef.current = false;
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [autoFetchInline]);
+
+  // Fetch full analysis — stable reference
   const fetchFullAnalysis = useCallback(async (forceRefresh?: boolean | unknown) => {
-    const refresh = forceRefresh === true;  // only accept explicit `true`
+    const refresh = forceRefresh === true;
+    if (analysisInFlightRef.current) return;         // dedup
+    analysisInFlightRef.current = true;
     setAnalysisLoading(true);
     setError(null);
 
     try {
-      const res = await getFullPortfolioAnalysis(currency, true, refresh);
+      const res = await getFullPortfolioAnalysis(currencyRef.current, true, refresh);
       setAnalysis(res);
-      // Update inline with full response's inline data
-      if (res.inline) {
-        setInline(res.inline);
-      }
+      if (res.inline) setInline(res.inline);
     } catch (e) {
       console.error("Portfolio analysis error:", e);
       setError(e instanceof Error ? e.message : "Failed to analyze portfolio.");
       setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
+      analysisInFlightRef.current = false;
     }
-  }, [currency]);
+  }, []); // stable — reads currency from ref
 
   const reset = useCallback(() => {
     setAnalysis(null);
@@ -161,25 +195,37 @@ export function usePortfolioInline(currency: string = "USD", autoFetch: boolean 
   const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<PortfolioInlineInsights | null>(null);
 
+  const currencyRef = useRef(currency);
+  currencyRef.current = currency;
+  const inFlightRef = useRef(false);
+  const hasFetchedRef = useRef(false);
+
   const fetch = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      const res = await getPortfolioInlineInsights(currency);
+      const res = await getPortfolioInlineInsights(currencyRef.current);
       setInsights(res);
     } catch (e) {
       console.error("Portfolio inline error:", e);
       setError(e instanceof Error ? e.message : "Failed to fetch insights.");
     } finally {
       setLoading(false);
+      inFlightRef.current = false;
     }
-  }, [currency]);
+  }, []);
 
   useEffect(() => {
-    if (autoFetch) {
-      fetch();
+    if (!autoFetch) {
+      hasFetchedRef.current = false;
+      return;
     }
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    fetch();
   }, [autoFetch, fetch]);
 
   return { loading, error, insights, fetch };

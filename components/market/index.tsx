@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useMarketOverview } from "@/hooks/use-market-overview";
-import { usePortfolioAi } from "@/hooks/use-portfolio-ai";
 import MarketOverviewGrid from "./market-overview-grid";
 import { TodayAiReadCard } from "./today-ai-read-card";
 import { ActionsSidebar } from "./actions-sidebar";
@@ -40,7 +39,11 @@ export default function MarketOverviewPage() {
     summaryMeta,
   } = useMarketOverview();
 
-  const { layers, loading: aiLoading, error: aiError } = usePortfolioAi();
+  // Legacy `usePortfolioAi` hook was removed; stub out its data until
+  // the market page is rebuilt on the new analysis system.
+  const layers: any = null;
+  const aiLoading = false;
+  const aiError: string | null = null;
 
   useEffect(() => {
     fetchOverview();

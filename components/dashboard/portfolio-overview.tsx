@@ -49,7 +49,7 @@ export function PortfolioOverview() {
     error: aiError,
     fetchFullAnalysis,
     reset: resetAi,
-  } = usePortfolioAnalysis(data?.currency || "USD", true);
+  } = usePortfolioAnalysis(data?.currency || "USD", !!data);
 
   // Auto-scroll ref
   const analysisRef = React.useRef<HTMLDivElement>(null);
@@ -60,7 +60,12 @@ export function PortfolioOverview() {
     }
   }, [analysis]);
 
+  // Dedup guard — prevent overlapping summary fetches
+  const summaryInFlightRef = React.useRef(false);
+
   const load = React.useCallback(async (signal?: AbortSignal) => {
+    if (summaryInFlightRef.current) return;
+    summaryInFlightRef.current = true;
     setLoading(true);
     try {
       const raw = await getPortfolioSummary({ signal });
@@ -75,6 +80,7 @@ export function PortfolioOverview() {
       });
     } finally {
       setLoading(false);
+      summaryInFlightRef.current = false;
     }
   }, []);
 

@@ -1,7 +1,7 @@
 // hooks/use-ai-insight-symbol.ts
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { getFullAnalysis, getInlineInsights, getFullCryptoAnalysis, getCryptoInlineInsights } from "@/utils/aiService";
 import type { StockAnalysisResponse, InlineInsights } from "@/types/symbol_analysis";
 import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
@@ -40,11 +40,17 @@ export function useAiInsightSymbol(
   
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-fetch inline insights on mount
+  // Dedup guard
+  const inlineInFlightRef = useRef(false);
+  const analysisInFlightRef = useRef(false);
+
+  // Auto-fetch inline insights on mount (once per symbol)
   useEffect(() => {
     if (!symbol) return;
+    if (inlineInFlightRef.current) return;
 
     let cancelled = false;
+    inlineInFlightRef.current = true;
 
     const fetchInline = async () => {
       setInlineLoading(true);
@@ -62,6 +68,7 @@ export function useAiInsightSymbol(
         if (!cancelled) {
           setInlineLoading(false);
         }
+        inlineInFlightRef.current = false;
       }
     };
 
@@ -78,6 +85,8 @@ export function useAiInsightSymbol(
       setError("No symbol provided");
       return;
     }
+    if (analysisInFlightRef.current) return;          // dedup
+    analysisInFlightRef.current = true;
 
     setAnalysisLoading(true);
     setError(null);
@@ -102,6 +111,7 @@ export function useAiInsightSymbol(
       setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
+      analysisInFlightRef.current = false;
     }
   }, [symbol, isCrypto]);
 
@@ -128,9 +138,12 @@ export function useInlineInsights(symbol: string, autoFetch: boolean = true) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<InlineInsights | null>(null);
+  const inFlightRef = useRef(false);
+  const hasFetchedRef = useRef(false);
 
   const fetch = useCallback(async () => {
-    if (!symbol) return;
+    if (!symbol || inFlightRef.current) return;
+    inFlightRef.current = true;
 
     setLoading(true);
     setError(null);
@@ -143,13 +156,18 @@ export function useInlineInsights(symbol: string, autoFetch: boolean = true) {
       setError(e instanceof Error ? e.message : "Failed to fetch insights.");
     } finally {
       setLoading(false);
+      inFlightRef.current = false;
     }
   }, [symbol]);
 
   useEffect(() => {
-    if (autoFetch && symbol) {
-      fetch();
+    if (!autoFetch || !symbol) {
+      hasFetchedRef.current = false;
+      return;
     }
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    fetch();
   }, [autoFetch, symbol, fetch]);
 
   return { loading, error, insights, fetch };

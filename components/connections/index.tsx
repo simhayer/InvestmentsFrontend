@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Link2,
   RefreshCcw,
@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import { ConnectionItem } from "./connection-item";
 
-import { getPlaidInvestments } from "@/utils/plaidService";
+import { getPlaidInvestments, createLinkToken } from "@/utils/plaidService";
 import { getInstitutions } from "@/utils/investmentsService";
 import { keysToCamel } from "@/utils/format";
 import { useAuth } from "@/lib/auth-provider";
@@ -45,9 +45,26 @@ export function Connections({ onRemove }: ConnectionsProps) {
   const { user } = useAuth();
   const userId = String(user?.id || "");
 
+  // ─── Fetch Plaid link token ONCE and share across all buttons ─────
+  const [sharedLinkToken, setSharedLinkToken] = useState<string | null>(null);
+  const tokenFetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!userId || tokenFetchedRef.current) return;
+    tokenFetchedRef.current = true;
+    createLinkToken(userId)
+      .then(setSharedLinkToken)
+      .catch((err) => console.error("Failed to fetch link token:", err));
+  }, [userId]);
+
   const hasConnections = connections.length > 0;
 
+  // ─── Load connections with dedup guard ────────────────────────────
+  const connectionsInFlightRef = useRef(false);
+
   const loadConnections = useCallback(async () => {
+    if (connectionsInFlightRef.current) return;
+    connectionsInFlightRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -57,11 +74,12 @@ export function Connections({ onRemove }: ConnectionsProps) {
     } catch (e: any) {
       if (e?.name !== "AbortError") {
         console.error("Failed to fetch connections:", e);
-        setError("Couldn’t load your connections. Please try again.");
+        setError("Couldn't load your connections. Please try again.");
         setConnections([]);
       }
     } finally {
       setLoading(false);
+      connectionsInFlightRef.current = false;
     }
   }, []);
 
@@ -140,6 +158,7 @@ export function Connections({ onRemove }: ConnectionsProps) {
           <PlaidLinkButton
             userId={userId}
             onSuccess={handlePlaidSuccess}
+            linkToken={sharedLinkToken}
             variant="default"
             className="h-10 rounded-xl bg-neutral-900 px-4 text-sm font-semibold text-white shadow-lg hover:bg-neutral-800"
           >
@@ -192,6 +211,7 @@ export function Connections({ onRemove }: ConnectionsProps) {
               <PlaidLinkButton
                 userId={userId}
                 onSuccess={handlePlaidSuccess}
+                linkToken={sharedLinkToken}
                 className="w-full rounded-2xl h-12 bg-neutral-900 text-base font-bold text-white shadow-xl"
               />
               <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">

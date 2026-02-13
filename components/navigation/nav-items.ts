@@ -8,7 +8,7 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS_AUTHED: NavItem[] = [
-  { name: "Market Overview", href: "/dashboard/market", icon: Home },
+  // { name: "Market Overview", href: "/dashboard/market", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: Home, exact: true },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Holdings", href: "/holdings", icon: BarChart2 },
@@ -16,6 +16,6 @@ export const NAV_ITEMS_AUTHED: NavItem[] = [
 ];
 
 export const NAV_ITEMS_PUBLIC: NavItem[] = [
-  { name: "Market Overview", href: "/market", icon: Home },
+  // { name: "Market Overview", href: "/market", icon: Home },
   { name: "Pricing", href: "/pricing", icon: BarChart3 },
 ];

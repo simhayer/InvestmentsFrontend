@@ -1,20 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
   Mountain,
-  Zap,
+  Shield,
   Target,
-  ShieldCheck,
-  Sparkles,
-  Clock3,
+  Clock,
   Rocket,
+  GraduationCap,
+  Sprout,
+  BarChart3,
+  PiggyBank,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import type { OnboardingState } from "@/utils/onboardingService";
 
 type Props = {
@@ -24,138 +24,169 @@ type Props = {
   saving: boolean;
 };
 
-export function StepProfile({ value, onChange, onBlurSave, saving }: Props) {
-  const horizons = [
-    { id: "short", label: "Short", icon: Clock3, desc: "< 2 years" },
-    { id: "medium", label: "Balanced", icon: Target, desc: "2-7 years" },
-    { id: "long", label: "Legacy", icon: Mountain, desc: "7+ years" },
+export function StepProfile({ value, onChange }: Props) {
+  /* ── Goal ────────────────────────────────────────────── */
+  const goals = [
+    { id: "growth", label: "Grow wealth", desc: "Long-term capital appreciation", icon: TrendingUp },
+    { id: "income", label: "Earn income", desc: "Dividends & interest", icon: Wallet },
+    { id: "preserve", label: "Preserve capital", desc: "Protect what I have", icon: Shield },
+    { id: "save_for_goal", label: "Save for a goal", desc: "House, education, etc.", icon: PiggyBank },
   ];
 
+  /* ── Time horizon ────────────────────────────────────── */
+  const horizons = [
+    { id: "short", label: "Short-term", desc: "Under 2 years", icon: Clock },
+    { id: "medium", label: "Medium", desc: "2–7 years", icon: Target },
+    { id: "long", label: "Long-term", desc: "7+ years", icon: Mountain },
+  ];
+
+  /* ── Risk ─────────────────────────────────────────────── */
   const risks = [
-    {
-      id: "low",
-      label: "Preserve",
-      icon: ShieldCheck,
-      color: "text-emerald-500",
-    },
-    { id: "medium", label: "Steady", icon: TrendingUp, color: "text-blue-500" },
-    { id: "high", label: "Aggressive", icon: Rocket, color: "text-orange-500" },
+    { id: "low", label: "Conservative", desc: "Minimize losses", color: "emerald" },
+    { id: "medium", label: "Moderate", desc: "Balanced approach", color: "blue" },
+    { id: "high", label: "Aggressive", desc: "Maximize growth", color: "orange" },
+  ];
+
+  /* ── Experience ───────────────────────────────────────── */
+  const levels = [
+    { id: "beginner", label: "Beginner", desc: "Just getting started", icon: Sprout },
+    { id: "intermediate", label: "Intermediate", desc: "Some experience", icon: BarChart3 },
+    { id: "advanced", label: "Advanced", desc: "Seasoned investor", icon: GraduationCap },
   ];
 
   return (
-    <div className="space-y-10">
-      {/* Time Horizon - Horizontal Pill selection */}
-      <section className="space-y-4">
-        <Label className="text-xs uppercase tracking-[0.2em] text-neutral-400 font-black px-1">
-          Investment Horizon
-        </Label>
+    <div className="space-y-8">
+      {/* Primary Goal */}
+      <OptionSection label="What's your main goal?">
+        <div className="grid grid-cols-2 gap-3">
+          {goals.map((g) => (
+            <OptionCard
+              key={g.id}
+              active={value.primary_goal === g.id}
+              onClick={() => onChange({ primary_goal: g.id as any })}
+              icon={<g.icon className="h-5 w-5" />}
+              label={g.label}
+              desc={g.desc}
+            />
+          ))}
+        </div>
+      </OptionSection>
+
+      {/* Time Horizon */}
+      <OptionSection label="Investment timeline">
         <div className="grid grid-cols-3 gap-3">
           {horizons.map((h) => (
-            <button
+            <OptionCard
               key={h.id}
+              active={value.time_horizon === h.id}
               onClick={() => onChange({ time_horizon: h.id as any })}
-              className={cn(
-                "group relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300",
-                value.time_horizon === h.id
-                  ? "bg-white dark:bg-neutral-800 border-primary shadow-lg scale-[1.02] z-10"
-                  : "bg-neutral-50 dark:bg-neutral-900 border-transparent hover:border-neutral-200 opacity-60 hover:opacity-100"
-              )}
-            >
-              <h.icon
-                className={cn(
-                  "h-5 w-5 mb-2 transition-colors",
-                  value.time_horizon === h.id
-                    ? "text-primary"
-                    : "text-neutral-400"
-                )}
-              />
-              <span className="text-xs font-bold">{h.label}</span>
-              <span className="text-[10px] text-neutral-400 mt-0.5">
-                {h.desc}
-              </span>
-            </button>
+              icon={<h.icon className="h-5 w-5" />}
+              label={h.label}
+              desc={h.desc}
+              compact
+            />
           ))}
         </div>
-      </section>
+      </OptionSection>
 
-      {/* Risk Level - High Visual Impact */}
-      <section className="space-y-4">
-        <Label className="text-xs uppercase tracking-[0.2em] text-neutral-400 font-black px-1">
-          Risk Tolerance
-        </Label>
+      {/* Risk Tolerance */}
+      <OptionSection label="Risk comfort level">
         <div className="flex gap-2">
-          {risks.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => onChange({ risk_level: r.id as any })}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl border-2 transition-all",
-                value.risk_level === r.id
-                  ? "border-primary bg-primary/5 text-primary ring-4 ring-primary/10"
-                  : "border-neutral-100 dark:border-neutral-800 text-neutral-400 hover:bg-neutral-50"
-              )}
-            >
-              <r.icon
+          {risks.map((r) => {
+            const active = value.risk_level === r.id;
+            const ringColor =
+              r.color === "emerald" ? "ring-emerald-200" :
+              r.color === "blue" ? "ring-blue-200" : "ring-orange-200";
+            const dotColor =
+              r.color === "emerald" ? "bg-emerald-500" :
+              r.color === "blue" ? "bg-blue-500" : "bg-orange-500";
+            return (
+              <button
+                key={r.id}
+                onClick={() => onChange({ risk_level: r.id as any })}
                 className={cn(
-                  "h-4 w-4",
-                  value.risk_level === r.id ? r.color : "text-neutral-300"
+                  "flex-1 flex flex-col items-center gap-1 py-4 rounded-xl border transition-all",
+                  active
+                    ? `border-neutral-300 bg-white shadow-sm ring-2 ${ringColor}`
+                    : "border-neutral-100 bg-neutral-50 hover:bg-white hover:border-neutral-200"
                 )}
-              />
-              <span className="text-xs font-bold">{r.label}</span>
-            </button>
+              >
+                <span className={cn("h-2 w-2 rounded-full mb-1", active ? dotColor : "bg-neutral-300")} />
+                <span className="text-xs font-semibold text-neutral-800">{r.label}</span>
+                <span className="text-[11px] text-neutral-400">{r.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </OptionSection>
+
+      {/* Experience Level */}
+      <OptionSection label="Your experience">
+        <div className="grid grid-cols-3 gap-3">
+          {levels.map((l) => (
+            <OptionCard
+              key={l.id}
+              active={value.experience_level === l.id}
+              onClick={() => onChange({ experience_level: l.id as any })}
+              icon={<l.icon className="h-5 w-5" />}
+              label={l.label}
+              desc={l.desc}
+              compact
+            />
           ))}
         </div>
-      </section>
-
-      {/* Dynamic AI Feedback - The "Magic" Element */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={value.risk_level}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="p-5 rounded-[2rem] bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/10 relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <Sparkles className="h-12 w-12 text-indigo-500" />
-          </div>
-          <div className="flex gap-4 items-start relative z-10">
-            <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-200">
-                AI Calibration Strategy
-              </h4>
-              <p className="text-xs text-indigo-700/70 dark:text-indigo-400/70 leading-relaxed">
-                {value.risk_level === "high"
-                  ? "Configuring high-volatility scanners. I will focus on sector breakouts and high-beta assets while ignoring standard safe-haven alerts."
-                  : "Prioritizing capital preservation. I'll filter for low-beta securities and high-quality dividend payers with a 10-year stability score."}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Optional Notes - Minimalist Textarea */}
-      <section className="space-y-4">
-        <Label className="text-xs uppercase tracking-[0.2em] text-neutral-400 font-black px-1">
-          Special Constraints
-        </Label>
-        <div className="group relative">
-          <Textarea
-            value={value.notes ?? ""}
-            onChange={(e) => onChange({ notes: e.target.value })}
-            onBlur={onBlurSave}
-            placeholder="e.g. 'Exclude tobacco stocks', 'Focus on renewable energy'..."
-            className="min-h-[100px] rounded-[1.5rem] border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 focus:bg-white transition-all resize-none p-4 text-sm"
-          />
-          <div className="absolute bottom-3 right-3 opacity-0 group-focus-within:opacity-100 transition-opacity">
-            <span className="text-[10px] text-neutral-400 font-medium">
-              AI is listening...
-            </span>
-          </div>
-        </div>
-      </section>
+      </OptionSection>
     </div>
+  );
+}
+
+/* ── Shared components ──────────────────────────────────── */
+
+function OptionSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <h3 className="text-sm font-semibold text-neutral-700">{label}</h3>
+      {children}
+    </section>
+  );
+}
+
+function OptionCard({
+  active,
+  onClick,
+  icon,
+  label,
+  desc,
+  compact,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-start text-left rounded-xl border transition-all",
+        compact ? "p-3" : "p-4",
+        active
+          ? "border-neutral-900 bg-neutral-900/[0.03] shadow-sm ring-1 ring-neutral-900/10"
+          : "border-neutral-100 bg-neutral-50 hover:bg-white hover:border-neutral-200"
+      )}
+    >
+      <span
+        className={cn(
+          "mb-2 transition-colors",
+          active ? "text-neutral-900" : "text-neutral-400"
+        )}
+      >
+        {icon}
+      </span>
+      <span className="text-xs font-semibold text-neutral-800 leading-tight">{label}</span>
+      <span className="text-[11px] text-neutral-400 leading-tight mt-0.5">{desc}</span>
+    </button>
   );
 }

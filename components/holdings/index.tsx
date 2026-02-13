@@ -266,39 +266,61 @@ export function Holdings() {
               ))}
             </div>
           ) : filteredHoldings.length === 0 ? (
-            <div className="py-20 flex flex-col items-center text-center">
-              <div className="h-16 w-16 bg-neutral-50 rounded-full flex items-center justify-center mb-4 ring-1 ring-neutral-100">
-                <Wallet2 className="h-8 w-8 text-neutral-300" />
-              </div>
-              <h3 className="text-lg font-semibold text-neutral-900">
-                No holdings found
-              </h3>
-              <p className="text-sm text-neutral-500 max-w-xs mt-1">
-                {search || accountFilter !== "all"
-                  ? "Adjust filters or connect more accounts to see your assets."
-                  : "Add your first holding manually or connect a brokerage."}
-              </p>
-              <div className="flex items-center gap-3 mt-4">
-                {(search || accountFilter !== "all") && (
+            <div className="py-16 px-6 flex flex-col items-center text-center">
+              {search || accountFilter !== "all" ? (
+                /* ── Filter produced no results ── */
+                <>
+                  <div className="h-14 w-14 bg-neutral-50 rounded-full flex items-center justify-center mb-4 ring-1 ring-neutral-100">
+                    <Search className="h-6 w-6 text-neutral-300" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900">
+                    No matches
+                  </h3>
+                  <p className="text-sm text-neutral-500 max-w-xs mt-1">
+                    No holdings match your current filters. Try broadening your
+                    search or clearing filters.
+                  </p>
                   <Button
-                    onClick={() => {
-                      setSearch("");
-                      setAccountFilter("all");
-                    }}
-                    variant="link"
-                    className="text-emerald-600"
+                    onClick={() => { setSearch(""); setAccountFilter("all"); }}
+                    variant="outline"
+                    className="mt-4 rounded-xl"
                   >
-                    Clear search
+                    Clear filters
                   </Button>
-                )}
-                <Button
-                  onClick={openAddDialog}
-                  className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Holding
-                </Button>
-              </div>
+                </>
+              ) : (
+                /* ── Truly no holdings ── */
+                <>
+                  <div className="relative mb-5">
+                    <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-100 opacity-30 blur-lg" />
+                    <div className="relative h-16 w-16 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full flex items-center justify-center ring-1 ring-indigo-100">
+                      <Wallet2 className="h-7 w-7 text-indigo-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-neutral-900">
+                    No holdings yet
+                  </h3>
+                  <p className="text-sm text-neutral-500 max-w-sm mt-1 leading-relaxed">
+                    Get started by connecting your brokerage to import holdings automatically,
+                    or add them manually by searching for a ticker.
+                  </p>
+                  <div className="flex items-center gap-3 mt-5">
+                    <Button
+                      onClick={openAddDialog}
+                      className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5 shadow-lg"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Holding
+                    </Button>
+                    <Button asChild variant="outline" className="rounded-xl gap-1.5">
+                      <Link href="/connections">
+                        Connect Account
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

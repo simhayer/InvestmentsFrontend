@@ -16,11 +16,15 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(email: string, password: string) {
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/auth/callback`
+      : undefined;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    // optional: email redirect after confirmation
-    // options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    options: { emailRedirectTo: redirectTo },
   });
   if (error) throw new Error(error.message);
   return { ok: true as const, data };

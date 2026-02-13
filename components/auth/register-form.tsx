@@ -81,14 +81,9 @@ export function RegisterForm() {
         return;
       }
 
-      // Email confirm flow
-      toast({
-        title: "Check your email",
-        description:
-          "We sent you a verification link. Verify your email, then sign in.",
-      });
-
-      router.replace("/login");
+      // Email confirm flow — redirect to a dedicated page
+      const verifyUrl = `/verify-email?email=${encodeURIComponent(email.trim())}`;
+      router.replace(verifyUrl);
     } catch (err: any) {
       const msg = err?.message ?? "Failed to create account. Please try again.";
       setInlineError(msg);
@@ -104,95 +99,88 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="name"
-          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
-        >
-          Full Name
+      <div className="space-y-2">
+        <Label htmlFor="name" className="text-sm font-medium text-neutral-700">
+          Full name
         </Label>
         <Input
           id="name"
-          placeholder="Warren Buffett"
+          placeholder="Your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={isLoading}
-          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="email"
-          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
-        >
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
           Email
         </Label>
         <Input
           id="email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
-          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="password"
-          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
-        >
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-sm font-medium text-neutral-700">
           Password
         </Label>
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
+            autoComplete="new-password"
+            placeholder="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
-            className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+            className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 text-sm focus:bg-white"
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
             className="absolute inset-y-0 right-0 px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Confirm Password - Optional: Only show if password length > 0 to keep UI clean */}
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="confirmPassword"
-          className="text-xs font-bold uppercase tracking-wider text-neutral-500 ml-1"
-        >
-          Confirm Password
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword" className="text-sm font-medium text-neutral-700">
+          Confirm password
         </Label>
         <Input
           id="confirmPassword"
           type={showPassword ? "text" : "password"}
-          placeholder="••••••••"
+          autoComplete="new-password"
+          placeholder="Re-enter your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={isLoading}
-          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
         />
       </div>
 
+      {inlineError && (
+        <p role="alert" className="text-sm text-destructive">
+          {inlineError}
+        </p>
+      )}
+
       <Button
         type="submit"
-        size="lg"
-        className="h-12 w-full mt-2 rounded-xl bg-neutral-900 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg active:scale-[0.98]"
+        className="h-11 w-full rounded-xl bg-neutral-900 text-sm font-semibold text-white hover:bg-neutral-800 mt-1"
         disabled={isLoading}
       >
         {isLoading ? (
@@ -201,7 +189,7 @@ export function RegisterForm() {
             Creating account...
           </div>
         ) : (
-          "Create Account"
+          "Create account"
         )}
       </Button>
     </form>

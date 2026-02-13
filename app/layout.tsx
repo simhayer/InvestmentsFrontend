@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NProgressProvider } from "@/app/nprogress-provider";
 import { AuthProvider } from "@/lib/auth-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Suspense } from "react";
 import { inter } from "@/lib/fonts";
 
@@ -39,19 +40,21 @@ export default function RootLayout({
       <body
         className={`${inter.variable} min-h-screen bg-background text-foreground antialiased`}
       >
-        <Suspense fallback={null}>
-          <AuthProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              enableSystem={false}
-              disableTransitionOnChange
-            >
-              <NProgressProvider />
-              {children}
-            </ThemeProvider>
-          </AuthProvider>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <AuthProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="light"
+                enableSystem={false}
+                disableTransitionOnChange
+              >
+                <NProgressProvider />
+                {children}
+              </ThemeProvider>
+            </AuthProvider>
+          </Suspense>
+        </ErrorBoundary>
       </body>
     </html>
   );

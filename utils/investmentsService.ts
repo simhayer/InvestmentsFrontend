@@ -1,4 +1,5 @@
 import { authedFetch } from "@/utils/authService";
+import { analytics } from "@/lib/posthog";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -14,12 +15,12 @@ export const addHolding = async (data: any) => {
     throw new Error("Failed to add holding");
   }
 
+  analytics.capture("holding_added", { symbol: data?.symbol, type: data?.type });
   return res.json();
 };
 
 export const getHoldings = async () => {
   try {
-    console.log("getting holdings");
     const query = `/holdings?includePrices=true`;
 
     const res = await authedFetch(query, {
@@ -64,6 +65,7 @@ export const deleteHolding = async (holdingId: string) => {
     throw new Error("Failed to delete holding");
   }
 
+  analytics.capture("holding_deleted", { holdingId });
   return res.json();
 };
 

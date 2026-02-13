@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { login } from "@/utils/authService";
 import { supabase } from "@/utils/supabaseClient";
+import { analytics } from "@/lib/posthog";
 
 function isSafeRedirect(next: string | null) {
   if (!next) return false;
@@ -60,6 +61,8 @@ export function LoginForm() {
       // AuthProvider uses key like ["app:/me", access_token]
       await mutate((key) => Array.isArray(key) && key[0] === "app:/me");
 
+      analytics.capture("logged_in");
+
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
@@ -83,8 +86,8 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
-      <div className="space-y-2.5">
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-neutral-700">
           Email
         </Label>
@@ -93,56 +96,50 @@ export function LoginForm() {
           type="email"
           inputMode="email"
           autoComplete="email"
+          placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={isLoading}
-          aria-invalid={inlineError ? true : false}
-          className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+          aria-invalid={!!inlineError}
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
         />
       </div>
 
-      <div className="space-y-2.5">
-        <Label
-          htmlFor="password"
-          className="text-sm font-medium text-neutral-700"
-        >
-          Password
-        </Label>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password" className="text-sm font-medium text-neutral-700">
+            Password
+          </Label>
+          <Link
+            href="/forgot-password"
+            className="text-xs font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            aria-invalid={inlineError ? true : false}
-            className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
+            aria-invalid={!!inlineError}
+            className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 text-sm focus:bg-white"
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="absolute inset-y-0 right-0 grid place-items-center px-3 text-muted-foreground transition hover:text-foreground"
+            className="absolute inset-y-0 right-0 px-3 text-neutral-400 hover:text-neutral-600 transition-colors"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
-        </div>
-
-        <div className="flex items-center justify-end text-sm">
-          <Link
-            href="/forget-password"
-            className="font-medium text-neutral-800 underline-offset-4 hover:text-neutral-950 hover:underline"
-          >
-            Forgot password?
-          </Link>
         </div>
       </div>
 
@@ -154,8 +151,7 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        size="lg"
-        className="h-12 w-full rounded-xl bg-neutral-900 text-sm font-bold text-white transition-all hover:bg-neutral-800 hover:shadow-lg active:scale-[0.98]"
+        className="h-11 w-full rounded-xl bg-neutral-900 text-sm font-semibold text-white hover:bg-neutral-800"
         disabled={isLoading}
       >
         {isLoading ? (
@@ -164,7 +160,7 @@ export function LoginForm() {
             Signing in...
           </div>
         ) : (
-          "Sign In"
+          "Sign in"
         )}
       </Button>
     </form>

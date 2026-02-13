@@ -27,7 +27,6 @@ export function usePortfolioSummary() {
         method: "POST",
       });
 
-      console.log("fetchSummary response:", res);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const js = await res.json();
       setData(js);

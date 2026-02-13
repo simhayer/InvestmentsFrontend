@@ -5,6 +5,7 @@ import React, { createContext, useContext } from "react";
 import type { AppUser } from "@/types/user";
 import { getAppMe, logout } from "@/utils/authService";
 import { supabase } from "@/utils/supabaseClient";
+import { analytics } from "@/lib/posthog";
 import type { Session } from "@supabase/supabase-js";
 
 type AuthContextValue = {
@@ -86,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await logout();
     } catch {}
+    analytics.capture("logged_out");
+    analytics.reset();
     setSession(null);
     await mutate({ user: null }, false);
   }, [mutate]);

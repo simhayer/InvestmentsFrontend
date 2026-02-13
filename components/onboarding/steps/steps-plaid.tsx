@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Landmark } from "lucide-react";
+import { ShieldCheck, Landmark, ArrowRight, Building2 } from "lucide-react";
 
 import { PlaidLinkButton } from "@/components/plaid/plaid-link-button";
 import { useAuth } from "@/lib/auth-provider";
@@ -22,73 +21,62 @@ export function StepPlaid({ saving, onSkip }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card className="relative overflow-hidden p-8 rounded-[2rem] border-none bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-950 shadow-xl">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400">
-            <Landmark className="h-10 w-10" />
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-2xl font-bold tracking-tight">
-              Sync your Portfolio
-            </h3>
-            <p className="text-sm text-neutral-500 max-w-[280px] mx-auto">
-              Link your brokerage to unlock personalized AI risk analysis and
-              fee detection.
-            </p>
-          </div>
-
-          <div className="w-full pt-6 flex flex-col gap-3">
-            <PlaidLinkButton
-              userId={userId}
-              onSuccess={onSkip}
-              label="Connect secure bank link"
-              variant="default"
-              size="lg"
-              fullWidth
-              className="w-full rounded-2xl bg-indigo-600 hover:bg-indigo-700 h-14 text-base font-bold shadow-lg shadow-indigo-200 dark:shadow-none"
-            />
-
-            <Button
-              variant="ghost"
-              onClick={onSkip}
-              disabled={saving}
-              className="text-neutral-400 hover:text-neutral-900"
-            >
-              I&apos;ll do this later
-            </Button>
-
-            {!userId ? (
-              <p className="text-[11px] text-neutral-500">
-                Loading your account…
-              </p>
-            ) : null}
-          </div>
+      {/* Main card */}
+      <div className="flex flex-col items-center text-center py-4">
+        <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-5">
+          <Landmark className="h-7 w-7" />
         </div>
 
-        {/* Bank Trust Banner */}
-        <div className="mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-800">
-          <p className="text-[10px] text-center uppercase tracking-widest text-neutral-400 font-bold mb-4">
-            Supported Institutions
-          </p>
-          <div className="flex justify-center items-center gap-6 grayscale opacity-40">
-            <span className="text-xs font-black italic">CHASE</span>
-            <span className="text-xs font-black italic">Fidelity</span>
-            <span className="text-xs font-black italic">Charles SCHWAB</span>
-          </div>
-        </div>
-      </Card>
+        <h3 className="text-lg font-bold text-neutral-900 mb-1.5">
+          Sync your portfolio automatically
+        </h3>
+        <p className="text-sm text-neutral-500 max-w-sm">
+          Connect your brokerage or bank to import your holdings.
+          We&apos;ll use this to give you personalized insights.
+        </p>
 
-      {/* Security Footer */}
-      <div className="flex items-start gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
-        <ShieldCheck className="h-5 w-5 text-emerald-600 mt-0.5" />
-        <div className="space-y-1">
-          <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400">
-            Bank-Grade Security
-          </p>
-          <p className="text-[10px] text-emerald-700/70 dark:text-emerald-500/70 leading-relaxed">
-            We never see your login credentials. Your data is read-only and
-            encrypted using AES-256 standards.
+        <div className="w-full max-w-sm mt-6 space-y-3">
+          <PlaidLinkButton
+            userId={userId}
+            onSuccess={onSkip}
+            label="Connect account"
+            variant="default"
+            size="lg"
+            fullWidth
+            className="w-full rounded-xl bg-neutral-900 hover:bg-neutral-800 h-12 text-sm font-semibold shadow-sm"
+          />
+
+          <Button
+            variant="ghost"
+            onClick={onSkip}
+            disabled={saving}
+            className="w-full text-neutral-400 hover:text-neutral-600 text-sm"
+          >
+            Skip for now
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Supported institutions */}
+      <div className="pt-5 border-t border-neutral-100">
+        <p className="text-[11px] text-neutral-400 font-medium text-center mb-3">
+          Works with 12,000+ institutions
+        </p>
+        <div className="flex justify-center items-center gap-5 text-neutral-300">
+          {["Chase", "Fidelity", "Schwab", "Vanguard", "TD"].map((name) => (
+            <span key={name} className="text-[11px] font-bold">{name}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Security note */}
+      <div className="flex items-start gap-3 p-4 bg-emerald-50/60 rounded-xl">
+        <ShieldCheck className="h-4.5 w-4.5 text-emerald-600 mt-0.5 shrink-0" />
+        <div>
+          <p className="text-xs font-semibold text-emerald-800">Read-only & secure</p>
+          <p className="text-[11px] text-emerald-700/70 leading-relaxed mt-0.5">
+            We never see your login credentials. Connection is powered by Plaid with bank-grade encryption.
           </p>
         </div>
       </div>

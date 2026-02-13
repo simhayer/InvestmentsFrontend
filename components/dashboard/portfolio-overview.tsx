@@ -95,7 +95,16 @@ export function PortfolioOverview() {
   if (!data) {
     return (
       <Page>
-        <EmptyState onRetry={() => load()} />
+        <ErrorState onRetry={() => load()} />
+      </Page>
+    );
+  }
+
+  // No holdings yet — show the welcome / onboarding state
+  if (data.positionsCount === 0) {
+    return (
+      <Page>
+        <WelcomeState hasConnections={(data.connections?.length ?? 0) > 0} />
       </Page>
     );
   }
@@ -696,17 +705,18 @@ function LoadingShell() {
   );
 }
 
-function EmptyState({ onRetry }: { onRetry: () => void }) {
+function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-8 text-center">
-      <div className="p-4 bg-neutral-100 rounded-2xl w-fit mx-auto mb-4">
-        <Wallet className="h-8 w-8 text-neutral-400" />
+      <div className="p-4 bg-rose-50 rounded-2xl w-fit mx-auto mb-4">
+        <AlertCircle className="h-8 w-8 text-rose-400" />
       </div>
       <h2 className="text-xl font-bold text-neutral-900 mb-2">
-        Couldn't load portfolio
+        Couldn&apos;t load portfolio
       </h2>
-      <p className="text-neutral-500 mb-6">
-        We had trouble loading your portfolio data. Please try again.
+      <p className="text-neutral-500 mb-6 max-w-sm mx-auto">
+        We had trouble loading your portfolio data. This could be a temporary
+        issue — please try again.
       </p>
       <div className="flex items-center justify-center gap-3">
         <Button onClick={onRetry} className="rounded-xl">
@@ -716,6 +726,104 @@ function EmptyState({ onRetry }: { onRetry: () => void }) {
         <Button asChild variant="outline" className="rounded-xl">
           <Link href="/connections">Go to Connections</Link>
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function WelcomeState({ hasConnections }: { hasConnections: boolean }) {
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 pt-4">
+      {/* Hero */}
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+        <div className="px-8 py-12 text-center">
+          <div className="relative mx-auto mb-6 w-fit">
+            <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-100 opacity-40 blur-xl" />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 mx-auto">
+              <Sparkles className="h-9 w-9 text-indigo-500" />
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 mb-2">
+            Welcome to your portfolio
+          </h1>
+          <p className="text-neutral-500 max-w-md mx-auto leading-relaxed">
+            {hasConnections
+              ? "Your account is connected — holdings will appear here once they sync. You can also add holdings manually."
+              : "Get started by connecting your brokerage account or adding holdings manually. Your AI-powered dashboard will come to life once you have positions."}
+          </p>
+        </div>
+      </div>
+
+      {/* Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Connect Account */}
+        <Link
+          href="/connections"
+          className="group bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 hover:border-indigo-200 hover:shadow-md transition-all"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+              <ExternalLink className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 mb-1">
+                {hasConnections ? "Manage Connections" : "Connect Account"}
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                {hasConnections
+                  ? "Check sync status, add more brokerages, or refresh your holdings."
+                  : "Link your brokerage through Plaid to automatically import all your holdings."}
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-neutral-300 shrink-0 mt-1 group-hover:text-indigo-400 transition-colors" />
+          </div>
+        </Link>
+
+        {/* Add Manually */}
+        <Link
+          href="/holdings"
+          className="group bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 hover:border-emerald-200 hover:shadow-md transition-all"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+              <Plus className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 mb-1">
+                Add Holdings Manually
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Quickly add stocks, ETFs, or crypto you own. Search by ticker to auto-fill details.
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-neutral-300 shrink-0 mt-1 group-hover:text-emerald-400 transition-colors" />
+          </div>
+        </Link>
+      </div>
+
+      {/* What you'll get */}
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">
+          What you&apos;ll unlock
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { icon: <BarChart3 className="h-4 w-4" />, label: "Portfolio Analytics", desc: "P/L tracking, allocation breakdowns" },
+            { icon: <Sparkles className="h-4 w-4" />, label: "AI Analysis", desc: "Personalized insights and recommendations" },
+            { icon: <ShieldAlert className="h-4 w-4" />, label: "Risk Metrics", desc: "Sharpe ratio, volatility, concentration" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-50 text-neutral-500">
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-neutral-800">{item.label}</p>
+                <p className="text-[11px] text-neutral-400">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

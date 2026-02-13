@@ -1,170 +1,147 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { resetPassword } from "@/utils/authService";
-import { ShieldCheck, Eye, EyeOff, Lock } from "lucide-react";
+import { ShieldCheck, Eye, EyeOff, Lock, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ResetPasswordPage() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  const isStrong = password.length >= 8;
+  const isLongEnough = password.length >= 8;
   const isMatch = password.length > 0 && password === confirmPassword;
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return;
 
-    if (!isStrong) {
-      toast({
-        title: "Weak password",
-        description: "Password must be at least 8 characters.",
-        variant: "destructive",
-      });
+    if (!isLongEnough) {
+      toast({ title: "Too short", description: "Password must be at least 8 characters.", variant: "destructive" });
       return;
     }
-
     if (!isMatch) {
-      toast({
-        title: "No match",
-        description: "Passwords do not match.",
-        variant: "destructive",
-      });
+      toast({ title: "Mismatch", description: "Passwords do not match.", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
       await resetPassword(password);
-      toast({
-        title: "Success",
-        description: "Your password has been updated.",
-      });
+      toast({ title: "Password updated", description: "You can now sign in with your new password." });
       router.replace("/login");
     } catch (err: any) {
-      toast({
-        title: "Update failed",
-        description: err?.message ?? "Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Update failed", description: err?.message ?? "Please try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
-      {/* Visual Identity Background */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-50/40 via-white to-white" />
-
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
       <div className="w-full max-w-md">
-        <Card className="rounded-[2.5rem] border-neutral-200/60 bg-white p-2 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)]">
-          <CardHeader className="pt-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="mx-auto h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-4">
               <ShieldCheck className="h-6 w-6 text-emerald-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-neutral-900">
-              Secure Account
-            </CardTitle>
-            <CardDescription className="text-sm font-medium text-neutral-500">
-              Set a new, strong password for your dashboard.
-            </CardDescription>
-          </CardHeader>
+            <h1 className="text-xl font-bold text-neutral-900">
+              Set a new password
+            </h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              Choose a strong password for your account.
+            </p>
+          </div>
 
-          <CardContent className="pb-8 space-y-6">
-            <form onSubmit={onSubmit} className="space-y-4" noValidate>
-              {/* Password Field */}
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">
-                  New Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isLoading}
-                    className="h-12 rounded-xl border-neutral-200 bg-neutral-50/50 pl-11 pr-11 transition-all focus:bg-white focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {/* Strength Meter */}
-                <div className="flex gap-1 px-1 pt-1">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        isStrong
-                          ? "bg-emerald-500"
-                          : password.length > 0
-                          ? "bg-amber-400"
-                          : "bg-neutral-100"
-                      }`}
-                    />
-                  ))}
-                </div>
+          {/* Form */}
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            {/* New password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-neutral-700">
+                New password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pl-10 pr-10 text-sm focus:bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
 
-              {/* Confirm Password Field */}
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">
-                  Confirm Password
-                </Label>
+              {/* Strength hints */}
+              {password.length > 0 && (
+                <div className="flex items-center gap-2 px-1 pt-1">
+                  <div className="flex gap-1 flex-1">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "h-1 flex-1 rounded-full transition-colors",
+                          isLongEnough ? "bg-emerald-500" : i === 1 ? "bg-amber-400" : "bg-neutral-200"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className={cn("text-[11px] font-medium", isLongEnough ? "text-emerald-600" : "text-neutral-400")}>
+                    {isLongEnough ? "Strong" : "Too short"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm password */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-neutral-700">
+                Confirm password
+              </Label>
+              <div className="relative">
                 <Input
+                  id="confirmPassword"
                   type={showPassword ? "text" : "password"}
+                  placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
                   disabled={isLoading}
-                  className={`h-12 rounded-xl border-neutral-200 bg-neutral-50/50 transition-all focus:bg-white focus:ring-2 ${
-                    isMatch
-                      ? "focus:ring-emerald-500/20"
-                      : "focus:ring-indigo-500/20"
-                  }`}
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
                 />
+                {isMatch && (
+                  <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                )}
               </div>
+            </div>
 
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isLoading || !isStrong || !isMatch}
-                className="h-12 w-full rounded-xl bg-neutral-900 text-sm font-bold text-white shadow-lg transition-all hover:bg-neutral-800 active:scale-[0.98] disabled:opacity-50"
-              >
-                {isLoading ? "Updating Security..." : "Secure Account"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            <Button
+              type="submit"
+              className="h-11 w-full rounded-xl bg-neutral-900 hover:bg-neutral-800 text-sm font-semibold mt-2"
+              disabled={isLoading || !isLongEnough || !isMatch}
+            >
+              {isLoading ? "Updating..." : "Update password"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

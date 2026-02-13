@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Sparkles,
   RefreshCcw,
@@ -14,13 +15,18 @@ import {
   Zap,
   Activity,
   ShieldAlert,
+  Plus,
+  Wallet2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
+import { useHolding } from "@/hooks/use-holdings";
 import { PortfolioAnalysisCard } from "@/components/analytics/portfolio-analysis-card";
+import { Page } from "@/components/layout/Page";
 
 interface PortfolioAnalysisTabProps {
   currency?: string;
@@ -31,6 +37,9 @@ export function PortfolioAnalysisTab({
   currency = "USD",
   className 
 }: PortfolioAnalysisTabProps) {
+  const { holdings, loading: holdingsLoading } = useHolding();
+  const hasHoldings = holdings.length > 0;
+
   const {
     inlineLoading,
     inline,
@@ -40,7 +49,56 @@ export function PortfolioAnalysisTab({
     fetchFullAnalysis,
     refreshInline,
     reset: resetAi,
-  } = usePortfolioAnalysis(currency, true);
+  } = usePortfolioAnalysis(currency, hasHoldings);
+
+  // ── Loading state ──
+  if (holdingsLoading) {
+    return (
+      <Page>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-48 rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+        </div>
+      </Page>
+    );
+  }
+
+  // ── No holdings ──
+  if (!hasHoldings) {
+    return (
+      <Page>
+        <div className="max-w-lg mx-auto py-12 text-center">
+          <div className="relative mx-auto mb-6 w-fit">
+            <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-100 opacity-30 blur-lg" />
+            <div className="relative h-16 w-16 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full flex items-center justify-center ring-1 ring-indigo-100 mx-auto">
+              <Wallet2 className="h-7 w-7 text-indigo-400" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-neutral-900 mb-2">
+            No portfolio to analyze
+          </h2>
+          <p className="text-sm text-neutral-500 max-w-sm mx-auto leading-relaxed mb-6">
+            Connect your brokerage or add holdings manually, then come back here
+            for AI-powered portfolio analysis, risk metrics, and recommendations.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button asChild className="rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white gap-1.5 shadow-lg">
+              <Link href="/holdings">
+                <Plus className="h-4 w-4" />
+                Add Holdings
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl gap-1.5">
+              <Link href="/connections">
+                Connect Account
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </Page>
+    );
+  }
 
   return (
     <div className={cn("space-y-6", className)}>

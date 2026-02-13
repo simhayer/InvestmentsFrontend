@@ -10,9 +10,7 @@ interface PlaidLinkButtonProps {
 export function GetPlaidInvestmentsButton({ userId }: PlaidLinkButtonProps) {
   const handleGetInvestments = useCallback(async () => {
     try {
-      const data = await getPlaidInvestments(userId);
-      console.log("Plaid Investments:", data);
-      // Optionally trigger UI update, toast, etc.
+      await getPlaidInvestments(userId);
     } catch (error) {
       console.error("Failed to get investments:", error);
     }

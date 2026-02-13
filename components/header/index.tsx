@@ -14,6 +14,7 @@ import {
   Settings,
   CreditCard,
   LayoutDashboard,
+  MessageCircle,
 } from "lucide-react";
 import { CommandSearch } from "./command-search";
 import { useAuth } from "@/lib/auth-provider";
@@ -154,6 +155,11 @@ export function Header() {
                     className="rounded-lg gap-2 cursor-pointer"
                   >
                     <CreditCard className="h-4 w-4" /> Pricing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-lg gap-2 cursor-pointer">
+                    <a href="mailto:support@wallstreetai.io?subject=WallStreetAI%20Support" target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="h-4 w-4" /> Support
+                    </a>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="mx-1" />
                   <DropdownMenuItem

@@ -35,7 +35,10 @@ import { NewsTab } from "./tabs/news-tab";
 
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
+import { CryptoAnalysisCard } from "@/components/ai/CryptoAnalysis";
 import SymbolLogo from "@/components/layout/SymbolLogo";
+import type { StockAnalysisResponse } from "@/types/symbol_analysis";
+import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
   const [r, setR] = useState(RANGE_PRESETS[5]);
@@ -62,7 +65,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
     error: aiError,
     fetchFullAnalysis,
     reset: resetAi,
-  } = useAiInsightSymbol(symbol);
+  } = useAiInsightSymbol(symbol, isCrypto);
 
   // Ref for auto-scrolling to analysis
   const analysisRef = useRef<HTMLDivElement>(null);
@@ -169,10 +172,12 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                 label="Market Cap"
                 value={fmtCompact(quote?.market_cap)}
               />
-              <StatRow
-                label="P/E Ratio"
-                value={quote?.pe_ratio?.toFixed(2) || "—"}
-              />
+              {!isCrypto && (
+                <StatRow
+                  label="P/E Ratio"
+                  value={quote?.pe_ratio?.toFixed(2) || "—"}
+                />
+              )}
               <StatRow
                 label="52W High"
                 value={fmtCurrency(
@@ -231,29 +236,62 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                   animate={{ opacity: 1 }}
                   className="grid grid-cols-2 md:grid-cols-3 gap-3"
                 >
-                  <InsightPill
-                    label="Valuation"
-                    value={inline.valuationBadge}
-                  />
-                  <InsightPill
-                    label="Margins"
-                    value={inline.marginCallout}
-                  />
-                  <InsightPill
-                    label="Earnings"
-                    value={inline.earningsFlag}
-                  />
-                  <InsightPill label="Health" value={inline.healthNote} />
-                  <InsightPill
-                    label="Momentum"
-                    value={inline.momentumSignal}
-                  />
-                  {inline.riskFlag && (
-                    <InsightPill
-                      label="Risk"
-                      value={inline.riskFlag}
-                      isRisk
-                    />
+                  {isCrypto ? (
+                    <>
+                      <InsightPill
+                        label="Market Cap"
+                        value={(inline as CryptoInlineInsights).marketCapBadge}
+                      />
+                      <InsightPill
+                        label="Volatility"
+                        value={(inline as CryptoInlineInsights).volatilityCallout}
+                      />
+                      <InsightPill
+                        label="Trend"
+                        value={(inline as CryptoInlineInsights).trendSignal}
+                      />
+                      <InsightPill
+                        label="Momentum"
+                        value={(inline as CryptoInlineInsights).momentumNote}
+                      />
+                      {(inline as CryptoInlineInsights).riskFlag && (
+                        <InsightPill
+                          label="Risk"
+                          value={(inline as CryptoInlineInsights).riskFlag!}
+                          isRisk
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <InsightPill
+                        label="Valuation"
+                        value={(inline as { valuationBadge: string }).valuationBadge}
+                      />
+                      <InsightPill
+                        label="Margins"
+                        value={(inline as { marginCallout: string }).marginCallout}
+                      />
+                      <InsightPill
+                        label="Earnings"
+                        value={(inline as { earningsFlag: string }).earningsFlag}
+                      />
+                      <InsightPill
+                        label="Health"
+                        value={(inline as { healthNote: string }).healthNote}
+                      />
+                      <InsightPill
+                        label="Momentum"
+                        value={(inline as { momentumSignal: string }).momentumSignal}
+                      />
+                      {(inline as { riskFlag?: string }).riskFlag && (
+                        <InsightPill
+                          label="Risk"
+                          value={(inline as { riskFlag: string }).riskFlag}
+                          isRisk
+                        />
+                      )}
+                    </>
                   )}
                 </motion.div>
               ) : (
@@ -319,7 +357,9 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                   Analyzing {symbol}
                 </p>
                 <p className="text-sm text-neutral-400 mt-1">
-                  Crunching fundamentals, news, and technicals...
+                  {isCrypto
+                    ? "Analyzing price action, risk metrics, and market data..."
+                    : "Crunching fundamentals, news, and technicals..."}
                 </p>
               </motion.div>
             )}
@@ -356,7 +396,11 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                   </button>
                 </div>
 
-                <StockAnalysisCard data={analysis} />
+                {isCrypto ? (
+                  <CryptoAnalysisCard data={analysis as CryptoAnalysisResponse} />
+                ) : (
+                  <StockAnalysisCard data={analysis as StockAnalysisResponse} />
+                )}
               </motion.div>
             )}
 
@@ -378,7 +422,9 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                         Get AI-Powered Analysis
                       </h3>
                       <p className="text-sm text-neutral-500">
-                        Deep dive into fundamentals, risks, and catalysts
+                        {isCrypto
+                          ? "Deep dive into price action, risk metrics, and market outlook"
+                          : "Deep dive into fundamentals, risks, and catalysts"}
                       </p>
                     </div>
                   </div>
@@ -446,9 +492,13 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             <TabList className="flex border-b border-neutral-100 px-2 pt-2 gap-1 overflow-x-auto scrollbar-hide">
               {[
                 { value: "news", label: "News" },
-                { value: "financials", label: "Financials" },
-                { value: "earnings", label: "Earnings" },
-                { value: "analyst", label: "Analyst" },
+                ...(!isCrypto
+                  ? [
+                      { value: "financials", label: "Financials" },
+                      { value: "earnings", label: "Earnings" },
+                      { value: "analyst", label: "Analyst" },
+                    ]
+                  : []),
                 { value: "profile", label: "Profile" },
               ].map((tab) => (
                 <TabTrigger
@@ -465,15 +515,19 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
               <TabPanel value="news">
                 <NewsTab symbol={symbol} />
               </TabPanel>
-              <TabPanel value="financials">
-                <FinancialsTab symbol={symbol} />
-              </TabPanel>
-              <TabPanel value="earnings">
-                <EarningsTab symbol={symbol} />
-              </TabPanel>
-              <TabPanel value="analyst">
-                <AnalystTab symbol={symbol} />
-              </TabPanel>
+              {!isCrypto && (
+                <>
+                  <TabPanel value="financials">
+                    <FinancialsTab symbol={symbol} />
+                  </TabPanel>
+                  <TabPanel value="earnings">
+                    <EarningsTab symbol={symbol} />
+                  </TabPanel>
+                  <TabPanel value="analyst">
+                    <AnalystTab symbol={symbol} />
+                  </TabPanel>
+                </>
+              )}
               <TabPanel value="profile">
                 <ProfileTab symbol={symbol} />
               </TabPanel>

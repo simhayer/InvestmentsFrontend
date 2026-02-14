@@ -37,6 +37,15 @@ export function renderMarkdown(input: string): string {
   let html = "";
   let inUl = false;
   let inOl = false;
+  const isTableSeparator = (line: string) =>
+    /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$/.test(line);
+  const splitTableRow = (line: string) =>
+    line
+      .trim()
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((cell) => cell.trim());
 
   const closeLists = () => {
     if (inUl) {
@@ -49,7 +58,8 @@ export function renderMarkdown(input: string): string {
     }
   };
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     const trimmed = line.trim();
     const codeMatch = trimmed.match(/^%%CODEBLOCK_(\d+)%%$/);
     if (codeMatch) {
@@ -93,13 +103,49 @@ export function renderMarkdown(input: string): string {
       continue;
     }
 
+    // GitHub-style pipe table:
+    // | Col A | Col B |
+    // | --- | --- |
+    // | v1 | v2 |
+    if (line.includes("|") && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      closeLists();
+      const headers = splitTableRow(line);
+      const colCount = headers.length;
+      const rows: string[][] = [];
+      i += 2; // Skip header and separator
+      while (i < lines.length) {
+        const rowLine = lines[i];
+        const rowTrimmed = rowLine.trim();
+        if (!rowTrimmed || !rowLine.includes("|")) break;
+        if (isTableSeparator(rowLine)) {
+          i += 1;
+          continue;
+        }
+        const cells = splitTableRow(rowLine);
+        rows.push(cells.slice(0, colCount));
+        i += 1;
+      }
+      i -= 1; // account for outer loop increment
+
+      const headerHtml = headers.map((cell) => `<th>${cell}</th>`).join("");
+      const bodyHtml = rows
+        .map((row) => {
+          const padded = [...row];
+          while (padded.length < colCount) padded.push("");
+          return `<tr>${padded.map((cell) => `<td>${cell}</td>`).join("")}</tr>`;
+        })
+        .join("");
+      html += `<div class="md-table-wrap"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+      continue;
+    }
+
     if (!trimmed) {
       closeLists();
       continue;
     }
 
     closeLists();
-    html += `<p>${line}</p>`;
+    html += `<p>${trimmed}</p>`;
   }
 
   closeLists();

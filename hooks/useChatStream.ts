@@ -12,15 +12,19 @@ type StreamEvent = {
   data: string;
 };
 
+type StreamStatusType = "status" | "search";
+
 function parseEventChunk(chunk: string): StreamEvent | null {
   const lines = chunk.split("\n");
-  let event = "delta";
+  let event = "message";
   const dataLines: string[] = [];
+  let sawEvent = false;
 
   for (const line of lines) {
     const cleanLine = line.endsWith("\r") ? line.slice(0, -1) : line;
     if (cleanLine.startsWith("event:")) {
-      event = cleanLine.slice("event:".length).trim() || "delta";
+      event = cleanLine.slice("event:".length).trim() || "message";
+      sawEvent = true;
       continue;
     }
     if (cleanLine.startsWith("data:")) {
@@ -30,8 +34,49 @@ function parseEventChunk(chunk: string): StreamEvent | null {
     }
   }
 
-  if (dataLines.length === 0) return null;
+  if (!sawEvent && dataLines.length === 0) return null;
   return { type: event, data: dataLines.join("\n") };
+}
+
+function formatStatusText(raw: string): { text: string | null; type: StreamStatusType } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { text: null, type: "status" };
+  const normalized = trimmed.toLowerCase().replace(/[\s-]+/g, "_");
+  const map: Record<string, string> = {
+    classifying: "Classifying...",
+    fetching_data: "Fetching data...",
+    thinking: "Thinking...",
+    searching: "Searching...",
+  };
+  if (map[normalized]) {
+    return {
+      text: map[normalized],
+      type: normalized === "searching" ? "search" : "status",
+    };
+  }
+  return {
+    text: trimmed,
+    type: normalized.startsWith("search") ? "search" : "status",
+  };
+}
+
+function extractSearchQuery(raw: string): string | null {
+  if (!raw) return null;
+  const parsed = safeParseJson(raw);
+  if (parsed && typeof parsed === "object") {
+    if (typeof parsed.query === "string") return parsed.query.trim();
+    if (typeof parsed.q === "string") return parsed.q.trim();
+    if (typeof parsed.text === "string") return parsed.text.trim();
+  }
+  if (typeof parsed === "string") return parsed.trim();
+  return raw.trim() || null;
+}
+
+function extractSearchText(raw: string): string | null {
+  if (!raw) return null;
+  const match = raw.match(/search(?:ing)?\s*(?:for)?\s*[:\-]?\s*(.+)/i);
+  if (match && match[1]) return match[1].trim();
+  return null;
 }
 
 function safeParseJson(raw: string): any | null {
@@ -52,13 +97,37 @@ function extractDeltaText(raw: string): string {
   if (typeof parsed.text === "string") return parsed.text;
   if (typeof parsed.content === "string") return parsed.content;
   if (typeof parsed.message === "string") return parsed.message;
+  if (typeof parsed.status === "string") return parsed.status;
   return raw;
+}
+
+function mergeStreamingText(existing: string, incoming: string): string {
+  if (!incoming) return existing;
+  if (!existing) return incoming;
+  if (existing.endsWith(incoming)) return existing;
+
+  // If model restarts from the beginning, avoid duplicating already shown text.
+  const startProbe = existing.slice(0, Math.min(60, existing.length));
+  if (incoming.length > 60 && startProbe && incoming.startsWith(startProbe)) {
+    return existing;
+  }
+
+  // Overlap-aware append (suffix(existing) == prefix(incoming)).
+  const max = Math.min(existing.length, incoming.length, 240);
+  for (let k = max; k > 0; k -= 1) {
+    if (existing.slice(-k) === incoming.slice(0, k)) {
+      return existing + incoming.slice(k);
+    }
+  }
+  return existing + incoming;
 }
 
 export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [statusType, setStatusType] = useState<StreamStatusType | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const typingTimerRef = useRef<number | null>(null);
   const typingActiveRef = useRef(false);
@@ -94,11 +163,15 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
     abortRef.current = null;
     cancelTyping();
     setIsStreaming(false);
+    setStatus(null);
+    setStatusType(null);
   }, [cancelTyping]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
     setError(null);
+    setStatus(null);
+    setStatusType(null);
     pendingTextRef.current = "";
   }, []);
 
@@ -125,13 +198,25 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsStreaming(true);
       setError(null);
+      setStatus(null);
+      setStatusType(null);
 
       const controller = new AbortController();
       abortRef.current = controller;
 
+      const resolvedSessionId = sessionId ?? crypto.randomUUID();
+      if (!sessionId) {
+        setSessionId?.(resolvedSessionId);
+      }
+
+      const history = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .slice(-12)
+        .map((m) => ({ role: m.role, content: m.text }));
+
       const request = {
-        message: trimmed,
-        ...(sessionId ? { session_id: sessionId } : {}),
+        conversation_id: resolvedSessionId,
+        messages: [...history, { role: "user" as const, content: trimmed }],
       };
 
       const assistantTextRef = { current: "" };
@@ -216,9 +301,6 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
         const contentType = res.headers.get("content-type") || "";
         if (!contentType.includes("text/event-stream")) {
           const fallback = await res.json().catch(() => null);
-          if (fallback?.session_id) {
-            setSessionId?.(fallback.session_id);
-          }
           const answer =
             fallback?.answer ||
             fallback?.text ||
@@ -247,19 +329,62 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             const event = parseEventChunk(part);
             if (!event) continue;
 
-            const isDelta = event.type === "delta";
+            const isMessageEvent =
+              event.type === "message" || event.type === "delta" || event.type === "token";
 
-            if (event.type === "plan") {
+            if (event.type === "meta") {
               const payload = safeParseJson(event.data) as
-                | { session_id?: string }
+                | { request_id?: string }
                 | null;
-              if (payload?.session_id) {
-                setSessionId?.(payload.session_id);
+              if (payload?.request_id) {
+                setSessionId?.(payload.request_id);
               }
             }
 
-            if (isDelta) {
-              const deltaText = extractDeltaText(event.data);
+            if (event.type === "tool_call") {
+              const payload = safeParseJson(event.data) as
+                | { tool_name?: string }
+                | null;
+              const name = payload?.tool_name || "tool";
+              setStatus(`Fetching ${name} data...`);
+              setStatusType("status");
+            } else if (event.type.startsWith("search")) {
+              const query = extractSearchQuery(event.data);
+              const text = query ? `Searching for ${query}....` : "Searching...";
+              setStatus(text);
+              setStatusType("search");
+            } else if (event.type === "status") {
+              const parsed = safeParseJson(event.data);
+              const statusValue = extractDeltaText(event.data);
+              const statusNormalized = statusValue.toLowerCase();
+              let searchQuery: string | null = null;
+
+              if (
+                parsed &&
+                typeof parsed === "object" &&
+                typeof parsed.status === "string" &&
+                parsed.status.toLowerCase().includes("search")
+              ) {
+                searchQuery = extractSearchQuery(event.data);
+              } else if (statusNormalized.includes("search")) {
+                searchQuery = extractSearchText(statusValue);
+              }
+
+              if (searchQuery) {
+                setStatus(`Searching for ${searchQuery}....`);
+                setStatusType("search");
+              } else {
+                const nextStatus = formatStatusText(statusValue);
+                setStatus(nextStatus.text);
+                setStatusType(nextStatus.text ? nextStatus.type : null);
+              }
+            }
+
+            if (isMessageEvent) {
+              const deltaTextRaw = extractDeltaText(event.data);
+              const currentCombined = assistantTextRef.current + pendingTextRef.current;
+              const merged = mergeStreamingText(currentCombined, deltaTextRaw);
+              const deltaText = merged.slice(currentCombined.length);
               if (deltaText.length > 0) {
                 hadDeltaRef.current = true;
                 enqueueTyping(deltaText);
@@ -271,17 +396,21 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
                 | { error?: string; message?: string }
                 | null;
               setError(errorPayload?.error || errorPayload?.message || "Stream error");
+              setStatus(null);
+              setStatusType(null);
               done = true;
               break;
             }
 
-            if (event.type === "final") {
+            if (event.type === "done") {
               if (!hadDeltaRef.current) {
                 const finalText = extractDeltaText(event.data);
                 if (finalText) {
                   await typeOutText(finalText);
                 }
               }
+              setStatus(null);
+              setStatusType(null);
               done = true;
               break;
             }
@@ -300,9 +429,6 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
 
         try {
           const fallback = await postChat(request, controller.signal);
-          if (fallback.session_id) {
-            setSessionId?.(fallback.session_id);
-          }
           await typeOutText(fallback.answer || "");
         } catch (fallbackErr) {
           const message =
@@ -314,15 +440,19 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+        setStatus(null);
+        setStatusType(null);
       }
     },
-    [sessionId, isStreaming, setSessionId]
+    [sessionId, isStreaming, setSessionId, messages]
   );
 
   return {
     messages,
     isStreaming,
     error,
+    status,
+    statusType,
     sendMessage,
     stop,
     clearMessages,

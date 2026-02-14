@@ -7,12 +7,24 @@ export type ChatMessage = {
   createdAt: number;
 };
 
+export type ChatHistoryRole = "user" | "assistant" | "system";
+
+export type ChatHistoryMessage = {
+  role: ChatHistoryRole;
+  content: string;
+};
+
 export type ChatRequest = {
-  message: string;
-  session_id?: string;
+  messages: ChatHistoryMessage[];
+  conversation_id?: string;
+  context?: {
+    portfolio_summary?: string;
+    risk_profile?: string;
+    preferred_currency?: string;
+  };
+  allow_web_search?: boolean;
 };
 
 export type ChatResponse = {
-  session_id?: string;
   answer?: string;
 };

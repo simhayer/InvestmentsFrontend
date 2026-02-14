@@ -11,14 +11,19 @@ import { Copy, Check } from "lucide-react";
 type ChatMessageProps = {
   message: ChatMessageType;
   isDraft?: boolean;
+  isStreaming?: boolean;
+  subStatus?: string | null;
 };
 
 export const ChatMessage = React.memo(function ChatMessage({
   message,
   isDraft,
+  isStreaming,
+  subStatus,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const [copied, setCopied] = React.useState(false);
+  const markdownSource = formatChatMarkdown(message.text);
 
   const handleCopy = () => {
     if (!message.text) return;
@@ -38,8 +43,15 @@ export const ChatMessage = React.memo(function ChatMessage({
         <div className={cn("relative", isUser ? "flex justify-end" : "flex justify-start")}>
           {/* USER (compact bubble) */}
           {isUser ? (
-            <div className="max-w-[85%] rounded-2xl bg-neutral-900 px-4 py-2.5 text-[14.5px] leading-[1.6] text-white shadow-[0_2px_10px_-6px_rgba(0,0,0,0.25)]">
-              <span className="whitespace-pre-wrap">{message.text}</span>
+            <div className="flex max-w-[85%] flex-col items-end gap-1">
+              <div className="rounded-2xl bg-neutral-900 px-4 py-2.5 text-[14.5px] leading-[1.6] text-white shadow-[0_2px_10px_-6px_rgba(0,0,0,0.25)]">
+                <span className="whitespace-pre-wrap">{message.text}</span>
+              </div>
+              {subStatus ? (
+                <div className="text-[11px] font-medium text-neutral-400">
+                  {subStatus}
+                </div>
+              ) : null}
             </div>
           ) : (
             /* ASSISTANT (editorial / research notes) */
@@ -51,7 +63,14 @@ export const ChatMessage = React.memo(function ChatMessage({
                   <span className="text-[13px]">Thinking…</span>
                 </div>
               ) : message.text ? (
-                <div className="relative border-l border-neutral-200/60 pl-5">
+                <div
+                  className={cn(
+                    "relative",
+                    isStreaming
+                      ? "rounded-2xl border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-white px-5 py-4 shadow-[0_10px_30px_-22px_rgba(16,185,129,0.6)]"
+                      : "border-l border-neutral-200/60 pl-5"
+                  )}
+                >
                   <div
                     className={cn(
                       "leading-[1.65]",
@@ -75,10 +94,17 @@ export const ChatMessage = React.memo(function ChatMessage({
 
                       // links & blockquotes
                       "[&_a]:text-emerald-700 [&_a]:underline [&_a]:underline-offset-2",
-                      "[&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-neutral-200/60 [&_blockquote]:pl-4 [&_blockquote]:text-neutral-600"
+                      "[&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-neutral-200/60 [&_blockquote]:pl-4 [&_blockquote]:text-neutral-600",
+
+                      // markdown tables
+                      "[&_.md-table-wrap]:my-4 [&_.md-table-wrap]:w-full [&_.md-table-wrap]:overflow-x-auto [&_.md-table-wrap]:rounded-xl [&_.md-table-wrap]:border [&_.md-table-wrap]:border-neutral-200/70",
+                      "[&_table]:w-full [&_table]:min-w-[540px] [&_table]:border-collapse [&_table]:text-left [&_table]:text-[0.9rem]",
+                      "[&_thead]:bg-neutral-50/80",
+                      "[&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-neutral-200/70 [&_th]:px-3 [&_th]:py-2 [&_th]:font-semibold",
+                      "[&_td]:align-top [&_td]:border-b [&_td]:border-neutral-100 [&_td]:px-3 [&_td]:py-2"
                     )}
                     dangerouslySetInnerHTML={{
-                      __html: renderMarkdown(formatChatMarkdown(message.text)),
+                      __html: renderMarkdown(markdownSource),
                     }}
                   />
 
@@ -86,7 +112,8 @@ export const ChatMessage = React.memo(function ChatMessage({
                   <button
                     onClick={handleCopy}
                     className={cn(
-                      "absolute right-0 top-0 rounded-md border border-neutral-200/60 bg-white/70 px-2 py-1 text-[11px] text-neutral-500",
+                      "absolute rounded-md border border-neutral-200/60 bg-white/70 px-2 py-1 text-[11px] text-neutral-500",
+                      isStreaming ? "right-2 top-2" : "right-0 top-0",
                       "shadow-[0_3px_14px_-10px_rgba(0,0,0,0.18)] backdrop-blur",
                       "opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-900"
                     )}

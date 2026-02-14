@@ -14,6 +14,8 @@ type ChatContextType = {
   // Logic State (Exposed from your hook)
   messages: ChatMessage[];
   isStreaming: boolean;
+  status: string | null;
+  statusType: "status" | "search" | null;
   error: string | null;
   setError: (error: string | null) => void;
   sendMessage: (text: string) => Promise<void>;
@@ -34,6 +36,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const {
     messages,
     isStreaming,
+    status,
+    statusType,
     error,
     sendMessage: originalSendMessage,
     stop,
@@ -67,6 +71,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setIsOpen,
         messages,
         isStreaming,
+        status,
+        statusType,
         error,
         setError,
         sendMessage,

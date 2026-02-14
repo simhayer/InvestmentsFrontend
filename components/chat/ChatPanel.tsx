@@ -24,6 +24,8 @@ export function ChatPanel() {
     messages,
     sendMessage,
     isStreaming,
+    status,
+    statusType,
     stop,
     clearMessages,
     error,
@@ -37,6 +39,15 @@ export function ChatPanel() {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   const hasHistory = messages.length > 0;
+  const normalizedStatus = (status || "").trim().toLowerCase();
+  const isSearching =
+    isStreaming && status && (statusType === "search" || normalizedStatus.startsWith("search"));
+  const lastUserIndex = React.useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "user") return i;
+    }
+    return -1;
+  }, [messages]);
 
   // Draft assistant message while streaming (so "Thinking…" shows)
   const draftMessage: ChatMessageType | null = React.useMemo(() => {
@@ -144,9 +155,31 @@ export function ChatPanel() {
         </div>
 
         <div ref={listRef} className="flex-1 space-y-6 overflow-y-auto p-6 scrollbar-thin">
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
-          ))}
+          {isStreaming && status && !isSearching && statusType === "status" && (
+            <div className="flex items-center gap-2 rounded-full bg-emerald-50/80 px-3 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100/70">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <span className="truncate">{status}</span>
+            </div>
+          )}
+
+          {messages.map((msg, index) => {
+            const isStreamingMessage =
+              isStreaming && msg.role === "assistant" && index === messages.length - 1;
+            const isLastUserMessage =
+              isStreaming &&
+              isSearching &&
+              msg.role === "user" &&
+              index === lastUserIndex;
+
+            return (
+              <ChatMessage
+                key={msg.id}
+                message={msg}
+                isStreaming={isStreamingMessage}
+                subStatus={isLastUserMessage ? status : null}
+              />
+            );
+          })}
 
           {/* Simple Thinking... row while streaming */}
           {draftMessage && <ChatMessage key={draftMessage.id} message={draftMessage} isDraft />}

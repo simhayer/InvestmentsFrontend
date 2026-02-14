@@ -2,20 +2,28 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { ChatMessage } from "@/types/chat"; 
-import { useChatStream } from "@/hooks/useChatStream"; // Your custom hook
-import { useChatSessionId } from "@/hooks/useChatSessionId"; // Your session hook
+import type { ChatMessage, PageContext, ChatContext as ChatCtxPayload } from "@/types/chat";
+import { useChatStream } from "@/hooks/useChatStream";
+import { useChatSessionId } from "@/hooks/useChatSessionId";
 
+// ── Page Context Registry ──────────────────────────────────────────────
+// Exposed so usePageContext (in any page) can register its context.
+export const PageContextCtx = React.createContext<
+  ((ctx: PageContext) => void) | null
+>(null);
+
+// ── Chat Context ───────────────────────────────────────────────────────
 type ChatContextType = {
   // UI State
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  
-  // Logic State (Exposed from your custom hook)
+
+  // Logic State
   messages: ChatMessage[];
   isStreaming: boolean;
   status: string | null;
   statusType: "status" | "search" | null;
+  thinkingText: string | null;
   error: string | null;
   setError: (error: string | null) => void;
   sendMessage: (text: string) => Promise<void>;
@@ -29,15 +37,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
 
-  // 1. Manage Session ID
+  // 1. Page context registered by the currently-visible page
+  const [pageContext, setPageContext] = React.useState<PageContext | null>(null);
+
+  const registerPageContext = React.useCallback((ctx: PageContext) => {
+    setPageContext(ctx);
+  }, []);
+
+  // Clear stale page context when the route changes
+  React.useEffect(() => {
+    setPageContext(null);
+  }, [pathname]);
+
+  // 2. Manage Session ID
   const { sessionId, setSessionId, resetSessionId } = useChatSessionId();
 
-  // 2. Initialize YOUR Custom Hook
+  // 3. Initialize the chat stream hook
   const {
     messages,
     isStreaming,
     status,
     statusType,
+    thinkingText,
     error,
     sendMessage: originalSendMessage,
     stop,
@@ -45,42 +66,47 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setError,
   } = useChatStream({ sessionId, setSessionId });
 
-  // 3. Wrapper to Inject Page Context (Optional but recommended)
-  // This helps the AI know which page the user is looking at without user typing it.
-  const sendMessage = React.useCallback(async (text: string) => {
-    if (!text.trim()) return;
-    
-    // NOTE: If you want to silently send the URL to your backend, 
-    // you can append it here or handle it in your API route.
-    // const contextText = `[Context: ${pathname}] ${text}`; 
-    
-    await originalSendMessage(text);
-  }, [originalSendMessage, pathname]);
+  // 4. Wrapper to inject page context into every request
+  const sendMessage = React.useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
 
-  // 4. Wrapper to clear everything
+      const context: ChatCtxPayload = {
+        page: pageContext ?? undefined,
+      };
+
+      await originalSendMessage(text, context);
+    },
+    [originalSendMessage, pageContext],
+  );
+
+  // 5. Wrapper to clear everything
   const clearAll = React.useCallback(() => {
     originalClearMessages();
     resetSessionId();
   }, [originalClearMessages, resetSessionId]);
 
   return (
-    <ChatContext.Provider
-      value={{
-        isOpen,
-        setIsOpen,
-        messages,
-        isStreaming,
-        status,
-        statusType,
-        error,
-        setError,
-        sendMessage,
-        stop,
-        clearMessages: clearAll,
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
+    <PageContextCtx.Provider value={registerPageContext}>
+      <ChatContext.Provider
+        value={{
+          isOpen,
+          setIsOpen,
+          messages,
+          isStreaming,
+          status,
+          statusType,
+          thinkingText,
+          error,
+          setError,
+          sendMessage,
+          stop,
+          clearMessages: clearAll,
+        }}
+      >
+        {children}
+      </ChatContext.Provider>
+    </PageContextCtx.Provider>
   );
 }
 

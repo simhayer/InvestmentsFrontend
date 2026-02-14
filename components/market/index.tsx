@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Page } from "@/components/layout/Page";
 import { cn } from "@/lib/utils";
+import { usePageContext } from "@/hooks/usePageContext";
+import { usePathname } from "next/navigation";
 
 // Optimized utility for time formatting
 const formatAgo = (input?: Date | string | null) => {
@@ -28,6 +30,7 @@ const formatAgo = (input?: Date | string | null) => {
 };
 
 export default function MarketOverviewPage() {
+  const pathname = usePathname();
   const {
     data,
     overviewLoading,
@@ -53,6 +56,21 @@ export default function MarketOverviewPage() {
   );
   const predictions = layers?.performance?.predictions?.assets ?? [];
   const actions = layers?.scenarios_rebalance?.actions ?? [];
+
+  // Register page context for the chat agent
+  const marketSummary = useMemo(() => {
+    if (!data?.top_items?.length) return undefined;
+    const indices = data.top_items
+      .map((item: any) => `${item.symbol}: ${item.price} (${item.change_pct > 0 ? "+" : ""}${item.change_pct?.toFixed(2)}%)`)
+      .join(", ");
+    return `Market overview — ${indices}`;
+  }, [data]);
+
+  usePageContext({
+    pageType: "market",
+    route: pathname,
+    summary: marketSummary,
+  });
 
   return (
     <Page className="max-w-[1400px] mx-auto space-y-8">

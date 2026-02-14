@@ -36,8 +36,11 @@ import { NewsTab } from "./tabs/news-tab";
 import { useAiInsightSymbol } from "@/hooks/use-ai-insight-symbol";
 import { StockAnalysisCard } from "@/components/ai/SymbolAnalysis";
 import SymbolLogo from "@/components/layout/SymbolLogo";
+import { usePageContext } from "@/hooks/usePageContext";
+import { usePathname } from "next/navigation";
 
 export default function InvestmentOverview({ symbol }: { symbol: string }) {
+  const pathname = usePathname();
   const [r, setR] = useState(RANGE_PRESETS[5]);
   const searchParams = useSearchParams();
   const assetType = searchParams.get("type");
@@ -77,6 +80,27 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
   }, [analysis]);
 
   const isPositive = (quote?.day_change_pct ?? 0) >= 0;
+
+  // Register page context for the chat agent
+  const symbolSummary = (() => {
+    if (!quote) return undefined;
+    const parts = [
+      `Viewing ${symbol} at ${fmtCurrency(quote.current_price)}`,
+      `Day: ${fmtPct(quote.day_change_pct)}`,
+      quote.pe_ratio ? `PE: ${quote.pe_ratio}` : "",
+      quote.market_cap ? `Mkt cap: ${fmtCompact(quote.market_cap)}` : "",
+      inline?.valuationBadge ? `Valuation: ${inline.valuationBadge}` : "",
+      analysis?.verdict ? `AI verdict: ${analysis.verdict}` : "",
+    ];
+    return parts.filter(Boolean).join(". ");
+  })();
+
+  usePageContext({
+    pageType: "symbol",
+    route: pathname,
+    symbol,
+    summary: symbolSummary,
+  });
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">

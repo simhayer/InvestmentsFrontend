@@ -26,6 +26,7 @@ export function ChatPanel() {
     isStreaming,
     status,
     statusType,
+    thinkingText,
     stop,
     clearMessages,
     error,
@@ -133,7 +134,11 @@ export function ChatPanel() {
         <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-3">
           <div className="flex items-center gap-2 text-emerald-600">
             <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              {isStreaming ? "AI Thinking..." : "AI Analyst"}
+              {isStreaming
+                ? thinkingText
+                  ? "AI Analyzing..."
+                  : "AI Thinking..."
+                : "AI Analyst"}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -158,7 +163,7 @@ export function ChatPanel() {
           {isStreaming && status && !isSearching && statusType === "status" && (
             <div className="flex items-center gap-2 rounded-full bg-emerald-50/80 px-3 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100/70">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              <span className="truncate">{status}</span>
+              <span className="truncate">{thinkingText || status}</span>
             </div>
           )}
 

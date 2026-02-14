@@ -31,8 +31,11 @@ import { StackedBar } from "./_bits";
 import { AnalysisSummaryCard } from "./ai-summary-card";
 import ProviderAvatar from "../layout/ProviderAvatar";
 import { PortfolioExplainCard} from './portfolio-health-card'
+import { usePageContext } from "@/hooks/usePageContext";
+import { usePathname } from "next/navigation";
  
 export function PortfolioOverview() {
+  const pathname = usePathname();
   const [data, setData] = React.useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -98,6 +101,26 @@ export function PortfolioOverview() {
     load(ac.signal);
     return () => ac.abort();
   }, [load]);
+
+  // Register page context for the chat agent
+  const dashSummary = React.useMemo(() => {
+    if (!data) return undefined;
+    const top = (data.topPositions ?? []).slice(0, 5).map((p: any) => p.symbol).join(", ");
+    return [
+      `Portfolio value: ${fmtCurrency(data.marketValue, (data as any).currency || "USD")}`,
+      `Day P/L: ${fmtCurrency(data.dayPl, (data as any).currency || "USD")} (${fmtPct(data.dayPlPct)})`,
+      `Unrealized P/L: ${fmtCurrency(data.unrealizedPl, (data as any).currency || "USD")} (${fmtPct(data.unrealizedPlPct)})`,
+      `Positions: ${data.positionsCount}`,
+      top ? `Top holdings: ${top}` : "",
+      healthScore ? `Health score: ${healthScore.score}/100 (${healthScore.risk_level})` : "",
+    ].filter(Boolean).join(". ");
+  }, [data, healthScore]);
+
+  usePageContext({
+    pageType: "dashboard",
+    route: pathname,
+    summary: dashSummary,
+  });
 
   if (loading && !data) return <LoadingShell />;
 

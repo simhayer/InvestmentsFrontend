@@ -34,6 +34,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fmtCurrency, fmtNumber, fmtPct } from "@/utils/format";
 import { Page } from "@/components/layout/Page";
 import SymbolLogo from "@/components/layout/SymbolLogo";
+import { usePageContext } from "@/hooks/usePageContext";
+import { usePathname } from "next/navigation";
 
 /**
  * UTILS
@@ -90,6 +92,7 @@ export function Holdings() {
   };
 
   const router = useRouter();
+  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState<string>("all");
 
@@ -136,6 +139,26 @@ export function Holdings() {
 
     return { totalValue, totalPl, totalPlPct };
   }, [filteredHoldings]);
+
+  // Register page context for the chat agent
+  const holdingsSummary = useMemo(() => {
+    if (!holdings || holdings.length === 0) return undefined;
+    const symbols = filteredHoldings.slice(0, 10).map((h) => h.symbol).join(", ");
+    return [
+      `Holdings: ${positionsCount} positions`,
+      `Total value: ${fmtCurrency(stats.totalValue, currency)}`,
+      `Total P/L: ${fmtCurrency(stats.totalPl, currency)} (${fmtPct(stats.totalPlPct)})`,
+      accountFilter !== "all" ? `Filtered by: ${accountFilter}` : "",
+      search ? `Search: "${search}"` : "",
+      `Symbols: ${symbols}`,
+    ].filter(Boolean).join(". ");
+  }, [holdings, filteredHoldings, positionsCount, stats, currency, accountFilter, search]);
+
+  usePageContext({
+    pageType: "holdings",
+    route: pathname,
+    summary: holdingsSummary,
+  });
 
   const handleRowClick = (h: Holding) => {
     const isCrypto = h.type === "cryptocurrency";

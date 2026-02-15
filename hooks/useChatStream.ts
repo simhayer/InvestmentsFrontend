@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ChatMessage } from "@/types/chat";
+import type { ChatMessage, ChatContext } from "@/types/chat";
 import { postChat, postChatStream, safeReadError } from "@/lib/chatApi";
 
 type UseChatStreamArgs = {
@@ -128,6 +128,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<StreamStatusType | null>(null);
+  const [thinkingText, setThinkingText] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const typingTimerRef = useRef<number | null>(null);
   const typingActiveRef = useRef(false);
@@ -165,6 +166,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
     setIsStreaming(false);
     setStatus(null);
     setStatusType(null);
+    setThinkingText(null);
   }, [cancelTyping]);
 
   const clearMessages = useCallback(() => {
@@ -172,11 +174,12 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
     setError(null);
     setStatus(null);
     setStatusType(null);
+    setThinkingText(null);
     pendingTextRef.current = "";
   }, []);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, context?: ChatContext) => {
       if (!text.trim() || isStreaming) return;
 
       const trimmed = text.trim();
@@ -217,6 +220,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
       const request = {
         conversation_id: resolvedSessionId,
         messages: [...history, { role: "user" as const, content: trimmed }],
+        ...(context ? { context } : {}),
       };
 
       const assistantTextRef = { current: "" };
@@ -341,13 +345,38 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
               }
             }
 
-            if (event.type === "tool_call") {
+            if (event.type === "thinking") {
+              const payload = safeParseJson(event.data) as
+                | { text?: string }
+                | null;
+              setThinkingText(payload?.text || "Analyzing...");
+              setStatus(payload?.text || "Analyzing...");
+              setStatusType("status");
+            } else if (event.type === "page_ack") {
+              // Brief acknowledgment — show as transient status
+              const payload = safeParseJson(event.data) as
+                | { text?: string }
+                | null;
+              if (payload?.text) {
+                setStatus(payload.text);
+                setStatusType("status");
+              }
+            } else if (event.type === "plan") {
+              const payload = safeParseJson(event.data) as
+                | { text?: string }
+                | null;
+              if (payload?.text) {
+                setStatus(payload.text);
+                setStatusType("status");
+              }
+            } else if (event.type === "tool_call") {
               const payload = safeParseJson(event.data) as
                 | { tool_name?: string }
                 | null;
               const name = payload?.tool_name || "tool";
               setStatus(`Fetching ${name} data...`);
               setStatusType("status");
+              setThinkingText(null);
             } else if (event.type.startsWith("search")) {
               const query = extractSearchQuery(event.data);
               const text = query ? `Searching for ${query}....` : "Searching...";
@@ -411,6 +440,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
               }
               setStatus(null);
               setStatusType(null);
+              setThinkingText(null);
               done = true;
               break;
             }
@@ -442,6 +472,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
         abortRef.current = null;
         setStatus(null);
         setStatusType(null);
+        setThinkingText(null);
       }
     },
     [sessionId, isStreaming, setSessionId, messages]
@@ -453,6 +484,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
     error,
     status,
     statusType,
+    thinkingText,
     sendMessage,
     stop,
     clearMessages,

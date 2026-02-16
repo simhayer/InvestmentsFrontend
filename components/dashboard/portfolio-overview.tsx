@@ -106,9 +106,8 @@ export function PortfolioOverview() {
       `Unrealized P/L: ${fmtCurrency(data.unrealizedPl, (data as any).currency || "USD")} (${fmtPct(data.unrealizedPlPct)})`,
       `Positions: ${data.positionsCount}`,
       top ? `Top holdings: ${top}` : "",
-      healthScore ? `Health score: ${healthScore.score}/100 (${healthScore.risk_level})` : "",
     ].filter(Boolean).join(". ");
-  }, [data, healthScore]);
+  }, [data]);
 
   usePageContext({
     pageType: "dashboard",

@@ -95,7 +95,7 @@ export function ProtectedGate({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </main>
-        {/* <ChatPanel /> */}
+        <ChatPanel />
       </div>
     </div>
   );

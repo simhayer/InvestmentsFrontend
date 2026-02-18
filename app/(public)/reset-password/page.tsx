@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pl-10 pr-10 text-sm focus:bg-white"
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pl-10 pr-10 focus:bg-white"
                 />
                 <button
                   type="button"
@@ -125,7 +125,7 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
-                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 focus:bg-white"
                 />
                 {isMatch && (
                   <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />

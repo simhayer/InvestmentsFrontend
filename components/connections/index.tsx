@@ -26,7 +26,7 @@ import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import { ConnectionItem } from "./connection-item";
 import { UpgradeGate } from "@/components/upgrade-gate";
 
-import { getPlaidInvestments, createLinkToken } from "@/utils/plaidService";
+import { getPlaidInvestments, createLinkToken, removeConnection } from "@/utils/plaidService";
 import { getInstitutions } from "@/utils/investmentsService";
 import { keysToCamel } from "@/utils/format";
 import { useAuth } from "@/lib/auth-provider";
@@ -42,11 +42,7 @@ const CONNECTION_LIMITS: Record<string, number> = {
   pro: -1, // unlimited
 };
 
-type ConnectionsProps = {
-  onRemove?: (id: string) => void;
-};
-
-export function Connections({ onRemove }: ConnectionsProps) {
+export function Connections() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
@@ -105,6 +101,24 @@ export function Connections({ onRemove }: ConnectionsProps) {
       title: "Account connected",
       description: "Your holdings are being synced now.",
     });
+  }, [loadConnections]);
+
+  const handleRemove = useCallback(async (connectionId: string) => {
+    try {
+      await removeConnection(connectionId);
+      await loadConnections();
+      toast({
+        title: "Connection removed",
+        description: "The account has been disconnected.",
+      });
+    } catch (e) {
+      console.error("Failed to remove connection:", e);
+      toast({
+        variant: "destructive",
+        title: "Remove failed",
+        description: "Could not disconnect the account. Please try again.",
+      });
+    }
   }, [loadConnections]);
 
   const onSyncNow = useCallback(async () => {
@@ -252,7 +266,7 @@ export function Connections({ onRemove }: ConnectionsProps) {
           {/* Active Connections List */}
           <div className="grid gap-4">
             {connections.map((c) => (
-              <ConnectionItem key={c.id} connection={c} onRemove={onRemove} />
+              <ConnectionItem key={c.id} connection={c} onRemove={handleRemove} />
             ))}
           </div>
 

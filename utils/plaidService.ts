@@ -56,6 +56,18 @@ export async function exchangePublicToken(
   await syncRes.json();
 }
 
+export async function removeConnection(connectionId: string) {
+  const path = `/api/plaid/institutions/${connectionId}`;
+  const res = await authedFetch(path, { method: "DELETE" });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to remove connection" }));
+    throw new Error(err.detail || "Failed to remove connection");
+  }
+
+  return res.json();
+}
+
 export async function getPlaidInvestments() {
   const path = "/api/plaid/investments";
   const res = await authedFetch(path, {

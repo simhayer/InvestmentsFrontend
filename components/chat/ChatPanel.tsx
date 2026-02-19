@@ -263,7 +263,7 @@ export function ChatPanel() {
             rows={1}
             placeholder={hasHistory ? "Continue analysis..." : "Ask AI to analyze..."}
             className={cn(
-              "max-h-[150px] w-full resize-none bg-transparent py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:outline-none",
+              "max-h-[150px] w-full resize-none bg-transparent py-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none",
               input.length > 0 || isOpen ? "px-4" : "pl-12 pr-12"
             )}
             style={{ minHeight: "48px" }}

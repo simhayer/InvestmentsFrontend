@@ -319,7 +319,7 @@ export function AddEditHoldingDialog({
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search by ticker or name..."
                       autoFocus
-                      className="h-10 w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-10 text-sm transition-all focus:border-neutral-400 focus:ring-2 focus:ring-neutral-900/5 outline-none"
+                      className="h-10 w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-10 text-base md:text-sm transition-all focus:border-neutral-400 focus:ring-2 focus:ring-neutral-900/5 outline-none"
                     />
                     {searchLoading && (
                       <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-neutral-400" />

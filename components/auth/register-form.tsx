@@ -112,7 +112,7 @@ export function RegisterForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={isLoading}
-          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 focus:bg-white"
         />
       </div>
 
@@ -129,7 +129,7 @@ export function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
-          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 focus:bg-white"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function RegisterForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
-            className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 text-sm focus:bg-white"
+            className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 pr-10 focus:bg-white"
           />
           <button
             type="button"
@@ -171,7 +171,7 @@ export function RegisterForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={isLoading}
-          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 text-sm focus:bg-white"
+          className="h-11 rounded-xl border-neutral-200 bg-neutral-50/50 focus:bg-white"
         />
       </div>
 

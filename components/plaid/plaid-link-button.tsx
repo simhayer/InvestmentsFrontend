@@ -7,6 +7,12 @@ import { analytics } from "@/lib/posthog";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const PLAID_REDIRECT_URI =
+  process.env.NEXT_PUBLIC_PLAID_REDIRECT_URI ||
+  (process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/plaid-oauth`
+    : undefined);
+
 interface PlaidLinkButtonProps {
   userId: string;
   onSuccess?: () => void;
@@ -34,22 +40,14 @@ export function PlaidLinkButton({
   const [internalToken, setInternalToken] = useState<string | null>(null);
   const fetchedRef = useRef(false);
 
-  // Only fetch a token if one wasn't provided externally
   useEffect(() => {
-    if (externalToken !== undefined) return;        // parent controls the token
-    if (fetchedRef.current) return;                  // already fetched
+    if (externalToken !== undefined) return;
+    if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    const fetchToken = async () => {
-      try {
-        const token = await createLinkToken(userId);
-        setInternalToken(token);
-      } catch (err) {
-        console.error("Failed to fetch link token:", err);
-      }
-    };
-
-    fetchToken();
+    createLinkToken(userId, PLAID_REDIRECT_URI)
+      .then(setInternalToken)
+      .catch((err) => console.error("Failed to fetch link token:", err));
   }, [userId, externalToken]);
 
   const resolvedToken = externalToken ?? internalToken;

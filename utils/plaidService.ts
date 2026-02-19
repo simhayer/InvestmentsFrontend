@@ -2,17 +2,46 @@ import { authedFetch } from "@/utils/authService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function createLinkToken(userId: string) {
+export async function createLinkToken(
+  userId: string,
+  redirectUri?: string
+) {
   const path = "/api/plaid/create-link-token";
+
+  const body: Record<string, string> = { user_id: userId };
+  if (redirectUri) body.redirect_uri = redirectUri;
 
   const res = await authedFetch(path, {
     method: "POST",
-    body: JSON.stringify({ user_id: userId }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.detail || "Failed to create link token");
+  }
+
+  const data = await res.json();
+  return data.link_token;
+}
+
+export async function createUpdateLinkToken(
+  connectionId: string,
+  redirectUri?: string
+) {
+  const path = "/api/plaid/create-update-link-token";
+
+  const body: Record<string, string> = { connection_id: connectionId };
+  if (redirectUri) body.redirect_uri = redirectUri;
+
+  const res = await authedFetch(path, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to create update link token");
   }
 
   const data = await res.json();
@@ -29,7 +58,6 @@ interface ExchangePayload {
 export async function exchangePublicToken(
   payload: ExchangePayload
 ): Promise<void> {
-  // Step 1: Exchange token
   const path = "/api/plaid/exchange-token";
   const res = await authedFetch(path, {
     method: "POST",
@@ -41,19 +69,6 @@ export async function exchangePublicToken(
     console.error("Token exchange failed:", error);
     throw new Error("Token exchange failed");
   }
-
-  // ✅ Step 2: Trigger sync
-  const syncPath = `/api/plaid/investments`;
-  const syncRes = await authedFetch(syncPath, {
-    method: "GET",
-  });
-
-  if (!syncRes.ok) {
-    console.error("Investment sync failed");
-    throw new Error("Failed to sync investments");
-  }
-
-  await syncRes.json();
 }
 
 export async function removeConnection(connectionId: string) {

@@ -69,6 +69,13 @@ export async function exchangePublicToken(
     console.error("Token exchange failed:", error);
     throw new Error("Token exchange failed");
   }
+
+  // Best-effort sync — don't block or fail the connection flow
+  try {
+    await authedFetch("/api/plaid/investments", { method: "GET" });
+  } catch {
+    // Data may not be ready yet; webhook will handle it later
+  }
 }
 
 export async function removeConnection(connectionId: string) {

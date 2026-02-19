@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePlaidLink } from "react-plaid-link";
 import {
   Link2,
   RefreshCcw,
@@ -26,7 +27,7 @@ import { PlaidLinkButton } from "../plaid/plaid-link-button";
 import { ConnectionItem } from "./connection-item";
 import { UpgradeGate } from "@/components/upgrade-gate";
 
-import { getPlaidInvestments, createLinkToken, removeConnection } from "@/utils/plaidService";
+import { getPlaidInvestments, createLinkToken, createUpdateLinkToken, removeConnection } from "@/utils/plaidService";
 import { getInstitutions } from "@/utils/investmentsService";
 import { keysToCamel } from "@/utils/format";
 import { useAuth } from "@/lib/auth-provider";
@@ -35,7 +36,12 @@ import type { Connection } from "@/types/connection";
 import { Page } from "@/components/layout/Page";
 import { cn } from "@/lib/utils";
 
-// Connection limits per plan (must match backend PLAN_LIMITS)
+const PLAID_REDIRECT_URI =
+  process.env.NEXT_PUBLIC_PLAID_REDIRECT_URI ||
+  (process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/plaid-oauth`
+    : undefined);
+
 const CONNECTION_LIMITS: Record<string, number> = {
   free: 1,
   premium: 3,
@@ -57,7 +63,7 @@ export function Connections() {
   useEffect(() => {
     if (!userId || tokenFetchedRef.current) return;
     tokenFetchedRef.current = true;
-    createLinkToken(userId)
+    createLinkToken(userId, PLAID_REDIRECT_URI)
       .then(setSharedLinkToken)
       .catch((err) => console.error("Failed to fetch link token:", err));
   }, [userId]);
@@ -99,9 +105,43 @@ export function Connections() {
     await loadConnections();
     toast({
       title: "Account connected",
-      description: "Your holdings are being synced now.",
+      description: "Your holdings will sync automatically in the background.",
     });
   }, [loadConnections]);
+
+  // ─── Re-auth flow for broken connections ────────────────────────
+  const [reauthToken, setReauthToken] = useState<string | null>(null);
+
+  const { open: openReauth, ready: reauthReady } = usePlaidLink({
+    token: reauthToken || "",
+    onSuccess: async () => {
+      setReauthToken(null);
+      await loadConnections();
+      toast({
+        title: "Re-authenticated",
+        description: "Your connection has been restored.",
+      });
+    },
+    onExit: () => setReauthToken(null),
+  });
+
+  useEffect(() => {
+    if (reauthReady && reauthToken) openReauth();
+  }, [reauthReady, reauthToken, openReauth]);
+
+  const handleReauth = useCallback(async (connectionId: string) => {
+    try {
+      const token = await createUpdateLinkToken(connectionId, PLAID_REDIRECT_URI);
+      setReauthToken(token);
+    } catch (e) {
+      console.error("Failed to create update link token:", e);
+      toast({
+        variant: "destructive",
+        title: "Re-auth failed",
+        description: "Could not initiate re-authentication. Please try again.",
+      });
+    }
+  }, []);
 
   const handleRemove = useCallback(async (connectionId: string) => {
     try {
@@ -266,7 +306,12 @@ export function Connections() {
           {/* Active Connections List */}
           <div className="grid gap-4">
             {connections.map((c) => (
-              <ConnectionItem key={c.id} connection={c} onRemove={handleRemove} />
+              <ConnectionItem
+                key={c.id}
+                connection={c}
+                onRemove={handleRemove}
+                onReauth={handleReauth}
+              />
             ))}
           </div>
 

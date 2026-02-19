@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Calendar,
   History,
+  KeyRound,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -100,13 +101,16 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
 type ConnectionItemProps = {
   connection: Connection;
   onRemove?: (id: string) => void;
+  onReauth?: (id: string) => void;
 };
 
 export function ConnectionItem({
   connection,
   onRemove,
+  onReauth,
 }: ConnectionItemProps) {
   const [removing, setRemoving] = React.useState(false);
+  const [reauthenticating, setReauthenticating] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   const handleConfirmedRemove = async () => {
@@ -116,6 +120,16 @@ export function ConnectionItem({
       await onRemove(connection.id);
     } finally {
       setRemoving(false);
+    }
+  };
+
+  const handleReauth = async () => {
+    if (!onReauth) return;
+    setReauthenticating(true);
+    try {
+      await onReauth(connection.id);
+    } finally {
+      setReauthenticating(false);
     }
   };
 
@@ -158,6 +172,23 @@ export function ConnectionItem({
 
         {/* 2. Actions */}
         <div className="flex items-center justify-between border-t border-neutral-50 pt-3 sm:border-none sm:pt-0 sm:justify-end gap-2">
+          {connection.status === "error" && onReauth && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-xl text-amber-600 hover:text-amber-700 hover:bg-amber-50/50"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReauth();
+              }}
+              disabled={reauthenticating}
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {reauthenticating ? "Loading..." : "Re-auth"}
+              </span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

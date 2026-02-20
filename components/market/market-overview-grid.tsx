@@ -95,7 +95,7 @@ export default function MarketOverviewGrid({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
-          onClick={() => router.push(`/investment/${item.symbol}`)}
+          onClick={() => router.push(`/dashboard/symbol/${item.symbol}`)}
           className="group relative min-w-[260px] cursor-pointer rounded-[24px] border border-neutral-200/60 bg-white p-5 shadow-sm transition-all hover:border-neutral-300 hover:shadow-xl hover:shadow-neutral-200/40"
         >
           {/* Header */}

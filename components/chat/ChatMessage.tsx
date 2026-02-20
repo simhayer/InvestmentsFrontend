@@ -75,14 +75,7 @@ export const ChatMessage = React.memo(function ChatMessage({
                   <span className="text-[13px]">Thinking…</span>
                 </div>
               ) : message.text ? (
-                <div
-                  className={cn(
-                    "relative",
-                    isStreaming
-                      ? "rounded-2xl border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-white px-5 py-4 shadow-[0_10px_30px_-22px_rgba(16,185,129,0.6)]"
-                      : "border-l border-neutral-200/60 pl-5"
-                  )}
-                >
+                <div className="relative pl-1">
                   <div
                     className={cn(
                       "leading-[1.65]",
@@ -105,7 +98,7 @@ export const ChatMessage = React.memo(function ChatMessage({
                       "[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-inherit",
 
                       // links & blockquotes
-                      "[&_a]:text-emerald-700 [&_a]:underline [&_a]:underline-offset-2",
+                      "[&_a]:text-neutral-700 [&_a]:underline [&_a]:underline-offset-2",
                       "[&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-neutral-200/60 [&_blockquote]:pl-4 [&_blockquote]:text-neutral-600",
 
                       // markdown tables
@@ -145,19 +138,14 @@ export const ChatMessage = React.memo(function ChatMessage({
                   {/* Copy button (top-right on hover, subtle) */}
                   <button
                     onClick={handleCopy}
-                    className={cn(
-                      "absolute rounded-md border border-neutral-200/60 bg-white/70 px-2 py-1 text-[11px] text-neutral-500",
-                      isStreaming ? "right-2 top-2" : "right-0 top-0",
-                      "shadow-[0_3px_14px_-10px_rgba(0,0,0,0.18)] backdrop-blur",
-                      "opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-900"
-                    )}
+                    className="absolute right-0 top-0 rounded-md border border-neutral-200/60 bg-white/70 px-2 py-1 text-[11px] text-neutral-500 shadow-[0_3px_14px_-10px_rgba(0,0,0,0.18)] backdrop-blur opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-900"
                     aria-label="Copy assistant message"
                   >
                     <span className="flex items-center gap-1.5">
                       {copied ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-emerald-600" />
-                          <span className="text-emerald-600">Copied</span>
+                          <Check className="h-3.5 w-3.5 text-neutral-600" />
+                          <span className="text-neutral-600">Copied</span>
                         </>
                       ) : (
                         <>

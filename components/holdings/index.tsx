@@ -181,7 +181,7 @@ export function Holdings() {
     params.set("type", isCrypto ? "crypto" : "stock");
 
     router.push(
-      `/investment/${encodeURIComponent(h.symbol)}?${params.toString()}`
+      `/dashboard/symbol/${encodeURIComponent(h.symbol)}?${params.toString()}`
     );
   };
 

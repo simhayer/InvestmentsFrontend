@@ -101,8 +101,8 @@ export function CommandSearch() {
                     const qs = params.toString();
                     router.push(
                       qs
-                        ? `/investment/${r.symbol}?${qs}`
-                        : `/investment/${r.symbol}`
+                        ? `/dashboard/symbol/${r.symbol}?${qs}`
+                        : `/dashboard/symbol/${r.symbol}`
                     );
 
                     setOpen(false);

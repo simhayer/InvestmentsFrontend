@@ -5,6 +5,10 @@ export type ChatMessage = {
   role: ChatRole;
   text: string;
   createdAt: number;
+  toolCalls?: string[];
+  webSearches?: string[];
+  webSearchEnabled?: boolean;
+  webLinks?: Array<{ url: string; title?: string }>;
 };
 
 export type ChatHistoryRole = "user" | "assistant" | "system";

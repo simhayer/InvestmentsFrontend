@@ -24,6 +24,18 @@ export const ChatMessage = React.memo(function ChatMessage({
   const isUser = message.role === "user";
   const [copied, setCopied] = React.useState(false);
   const markdownSource = formatChatMarkdown(message.text);
+  const toolCalls = message.toolCalls || [];
+  const webSearches = message.webSearches || [];
+  const webLinks = message.webLinks || [];
+  const metadataLines: string[] = [];
+  if (toolCalls.length > 0) {
+    metadataLines.push(`Tools: ${toolCalls.join(", ")}`);
+  }
+  if (webSearches.length > 0) {
+    metadataLines.push(`Web searches: ${webSearches.join(" | ")}`);
+  } else if (message.webSearchEnabled) {
+    metadataLines.push("Web searches: enabled");
+  }
 
   const handleCopy = () => {
     if (!message.text) return;
@@ -107,6 +119,28 @@ export const ChatMessage = React.memo(function ChatMessage({
                       __html: renderMarkdown(markdownSource),
                     }}
                   />
+                  {metadataLines.length > 0 ? (
+                    <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
+                      {metadataLines.map((line) => (
+                        <div key={line}>{line}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {webLinks.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                      {webLinks.map((item) => (
+                        <a
+                          key={item.url}
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md border border-neutral-200/70 bg-neutral-50 px-2 py-1 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-100 hover:text-neutral-800"
+                        >
+                          {item.title || item.url}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
 
                   {/* Copy button (top-right on hover, subtle) */}
                   <button

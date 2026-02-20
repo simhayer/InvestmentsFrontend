@@ -13,6 +13,7 @@ type StreamEvent = {
 };
 
 type StreamStatusType = "status" | "search";
+type CitationLink = { url: string; title?: string };
 
 function parseEventChunk(chunk: string): StreamEvent | null {
   const lines = chunk.split("\n");
@@ -135,6 +136,10 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const pendingTextRef = useRef("");
   const prefersReducedMotionRef = useRef(false);
   const hadDeltaRef = useRef(false);
+  const toolCallsRef = useRef<string[]>([]);
+  const webSearchesRef = useRef<string[]>([]);
+  const webSearchEnabledRef = useRef(false);
+  const webLinksRef = useRef<CitationLink[]>([]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -224,6 +229,10 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
       };
 
       const assistantTextRef = { current: "" };
+      toolCallsRef.current = [];
+      webSearchesRef.current = [];
+      webSearchEnabledRef.current = false;
+      webLinksRef.current = [];
       const updateAssistant = (nextText: string) => {
         assistantTextRef.current = nextText;
         setMessages((prev) =>
@@ -231,6 +240,48 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             msg.id === assistantId ? { ...msg, text: nextText } : msg
           )
         );
+      };
+      const updateAssistantMeta = () => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantId
+              ? {
+                  ...msg,
+                  toolCalls: [...toolCallsRef.current],
+                  webSearches: [...webSearchesRef.current],
+                  webSearchEnabled: webSearchEnabledRef.current,
+                  webLinks: [...webLinksRef.current],
+                }
+              : msg
+          )
+        );
+      };
+      const appendToolCall = (name: string) => {
+        const trimmed = name.trim();
+        if (!trimmed || toolCallsRef.current.includes(trimmed)) return;
+        toolCallsRef.current = [...toolCallsRef.current, trimmed];
+        updateAssistantMeta();
+      };
+      const appendWebSearch = (query: string | null) => {
+        webSearchEnabledRef.current = true;
+        const trimmed = (query || "").trim();
+        if (trimmed && !webSearchesRef.current.includes(trimmed)) {
+          webSearchesRef.current = [...webSearchesRef.current, trimmed];
+        }
+        updateAssistantMeta();
+      };
+      const appendWebLink = (link: CitationLink | null) => {
+        if (!link || !link.url) return;
+        const normalizedUrl = link.url.trim();
+        if (!normalizedUrl) return;
+        const exists = webLinksRef.current.some((item) => item.url === normalizedUrl);
+        if (exists) return;
+        webLinksRef.current = [
+          ...webLinksRef.current,
+          link.title ? { url: normalizedUrl, title: link.title } : { url: normalizedUrl },
+        ];
+        webSearchEnabledRef.current = true;
+        updateAssistantMeta();
       };
 
       const flushImmediate = (nextText: string) => {
@@ -338,10 +389,14 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
 
             if (event.type === "meta") {
               const payload = safeParseJson(event.data) as
-                | { request_id?: string }
+                | { request_id?: string; allow_web_search?: boolean }
                 | null;
               if (payload?.request_id) {
                 setSessionId?.(payload.request_id);
+              }
+              if (typeof payload?.allow_web_search === "boolean") {
+                webSearchEnabledRef.current = payload.allow_web_search;
+                updateAssistantMeta();
               }
             }
 
@@ -374,11 +429,13 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
                 | { tool_name?: string }
                 | null;
               const name = payload?.tool_name || "tool";
+              appendToolCall(name);
               setStatus(`Fetching ${name} data...`);
               setStatusType("status");
               setThinkingText(null);
             } else if (event.type.startsWith("search")) {
               const query = extractSearchQuery(event.data);
+              appendWebSearch(query);
               const text = query ? `Searching for ${query}....` : "Searching...";
               setStatus(text);
               setStatusType("search");
@@ -400,12 +457,28 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
               }
 
               if (searchQuery) {
+                appendWebSearch(searchQuery);
                 setStatus(`Searching for ${searchQuery}....`);
                 setStatusType("search");
               } else {
                 const nextStatus = formatStatusText(statusValue);
                 setStatus(nextStatus.text);
                 setStatusType(nextStatus.text ? nextStatus.type : null);
+              }
+            } else if (event.type === "citation") {
+              const payload = safeParseJson(event.data) as
+                | { url?: string; uri?: string; link?: string; title?: string }
+                | null;
+              const rawUrl =
+                payload?.url || payload?.uri || payload?.link || null;
+              if (typeof rawUrl === "string" && rawUrl.trim()) {
+                appendWebLink({
+                  url: rawUrl.trim(),
+                  title:
+                    typeof payload?.title === "string" && payload.title.trim()
+                      ? payload.title.trim()
+                      : undefined,
+                });
               }
             }
 
@@ -432,6 +505,22 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             }
 
             if (event.type === "done") {
+              const payload = safeParseJson(event.data) as
+                | { citations?: Array<{ url?: string; title?: string }> }
+                | null;
+              if (Array.isArray(payload?.citations)) {
+                for (const item of payload.citations) {
+                  if (!item || typeof item.url !== "string") continue;
+                  appendWebLink({
+                    url: item.url.trim(),
+                    title:
+                      typeof item.title === "string" && item.title.trim()
+                        ? item.title.trim()
+                        : undefined,
+                  });
+                }
+              }
+              updateAssistantMeta();
               if (!hadDeltaRef.current) {
                 const finalText = extractDeltaText(event.data);
                 if (finalText) {

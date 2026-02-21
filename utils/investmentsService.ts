@@ -78,3 +78,19 @@ export async function getInstitutions() {
   if (!res.ok) throw new Error("Failed to fetch institutions");
   return await res.json();
 }
+
+export type PortfolioHistoryPoint = { t: number; value: number };
+export type PortfolioHistoryResponse = {
+  points: PortfolioHistoryPoint[];
+  currency: string;
+};
+
+export async function getPortfolioHistory(
+  days: number = 7
+): Promise<PortfolioHistoryResponse> {
+  const res = await authedFetch(`/holdings/portfolio-history?days=${days}`, {
+    method: "GET",
+  });
+  if (!res.ok) throw new Error("Failed to fetch portfolio history");
+  return res.json();
+}

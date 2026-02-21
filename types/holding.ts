@@ -22,6 +22,11 @@ export interface Holding {
   purchaseUnitPrice?: number | null; // purchaseAmountTotal / quantity (if both present)
 
   /**
+   * Cost basis converted to user's display currency (from settings). Use this to sum totals when filtering.
+   */
+  valueInDisplayCurrency?: number | null;
+
+  /**
    * Server-computed totals & P/L (recommended to display directly):
    */
   currentValue?: number | null; // currentPrice * quantity

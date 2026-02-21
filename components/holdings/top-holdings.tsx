@@ -35,17 +35,17 @@ export function TopHoldings({
 }: Props) {
   const router = useRouter();
 
-  const getTotalValue = (holding: Holding) => {
-    if (holding.currentValue != null) return holding.currentValue;
+  // Broker-only: cost = purchase_price * quantity (no current price / P/L)
+  const getTotalCost = (holding: Holding) => {
     const qty = Number(holding.quantity);
-    const price = Number(holding.currentPrice);
+    const price = Number(holding.purchaseUnitPrice ?? holding.purchasePrice ?? 0);
     if (!Number.isFinite(qty) || !Number.isFinite(price)) return null;
     return qty * price;
   };
 
   const sortedHoldings = (holdings ?? [])
     .slice()
-    .sort((a, b) => (getTotalValue(b) ?? 0) - (getTotalValue(a) ?? 0));
+    .sort((a, b) => (getTotalCost(b) ?? 0) - (getTotalCost(a) ?? 0));
 
   const visibleHoldings = sortedHoldings.slice(0, maxRows);
   const hasMoreHoldings = (holdings?.length ?? 0) > visibleHoldings.length;
@@ -65,7 +65,7 @@ export function TopHoldings({
       {/* Table Header */}
       <div className="grid grid-cols-[1fr_100px] gap-2 px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
         <span>Asset</span>
-        <span className="text-right">Value</span>
+        <span className="text-right">Cost</span>
       </div>
 
       {!visibleHoldings.length ? (
@@ -75,7 +75,8 @@ export function TopHoldings({
       ) : (
         <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-100 bg-white shadow-sm overflow-hidden">
           {visibleHoldings.map((holding, idx) => {
-            const totalValue = getTotalValue(holding);
+            const totalCost = getTotalCost(holding);
+            const displayCurrency = holding.currency ?? currency;
 
             return (
               <button
@@ -101,9 +102,9 @@ export function TopHoldings({
                   </div>
                 </div>
 
-                {/* Value */}
+                {/* Cost (broker purchase_price * quantity) */}
                 <div className="text-right text-sm font-semibold text-neutral-900">
-                  {fmtCurrency(totalValue, currency)}
+                  {fmtCurrency(totalCost, displayCurrency)}
                 </div>
               </button>
             );

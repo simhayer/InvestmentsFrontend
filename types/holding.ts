@@ -7,7 +7,7 @@ export interface Holding {
   type: HoldingType;
 
   quantity: number; // units/shares
-  currentPrice: number; // per-unit live price
+  currentPrice?: number | null; // per-unit live price (Finnhub); may be missing if quote unavailable
 
   /**
    * DEPRECATED: was ambiguous (sometimes total cost, sometimes unit).

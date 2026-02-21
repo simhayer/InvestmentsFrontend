@@ -8,9 +8,6 @@ import {
   Wallet2,
   SlidersHorizontal,
   X,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
   Newspaper,
   ChevronRight,
   Plus,
@@ -41,55 +38,16 @@ import { usePageContext } from "@/hooks/usePageContext";
 import { usePathname } from "next/navigation";
 
 /**
- * UTILS
- */
-
-function toneFromPct(pct?: number | null) {
-  if (pct == null) return "text-neutral-500 bg-neutral-50";
-  if (pct > 0) return "text-emerald-600 bg-emerald-50";
-  if (pct < 0) return "text-rose-600 bg-rose-50";
-  return "text-neutral-600 bg-neutral-50";
-}
-
-/**
- * COMPONENTS: Sparkline
- */
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  if (!data || data.length < 2)
-    return <div className="h-6 w-20 bg-neutral-50 rounded animate-pulse" />;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min;
-  const width = 80;
-  const height = 24;
-
-  const points = data
-    .map((val, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((val - min) / (range || 1)) * height;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg width={width} height={height} className="overflow-visible">
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
-      />
-    </svg>
-  );
-}
-
-/**
  * MAIN COMPONENT
  */
 export function Holdings() {
-  const { holdings, loading, reloadHoldings } = useHolding();
+  const {
+    holdings,
+    loading,
+    reloadHoldings,
+    totalCost: apiTotalCost,
+    displayCurrency,
+  } = useHolding();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -111,7 +69,7 @@ export function Holdings() {
     setDialogOpen(true);
   };
 
-  const currency = holdings?.[0]?.currency || "USD";
+  const currency = displayCurrency || holdings?.[0]?.currency || "USD";
   const positionsCount = holdings?.length ?? 0;
 
   const accountLabel = (h: Holding) =>
@@ -139,21 +97,20 @@ export function Holdings() {
     });
   }, [holdings, search, accountFilter]);
 
-  // Derived Financial Stats for the summary bar
+  // Total from API (converted to user's currency in settings); fallback to sum when filtered
   const stats = useMemo(() => {
-    const totalValue = filteredHoldings.reduce(
-      (acc, h) => acc + (h.currentValue ?? 0),
+    const filteredSum = filteredHoldings.reduce(
+      (acc, h) =>
+        acc +
+        Number(h.quantity) * Number(h.purchaseUnitPrice ?? h.purchasePrice ?? 0),
       0
     );
-    const totalCost = filteredHoldings.reduce(
-      (acc, h) => acc + Number(h.quantity) * Number(h.purchaseUnitPrice || 0),
-      0
-    );
-    const totalPl = totalValue - totalCost;
-    const totalPlPct = totalCost > 0 ? (totalPl / totalCost) * 100 : 0;
-
-    return { totalValue, totalPl, totalPlPct };
-  }, [filteredHoldings]);
+    const totalCost =
+      apiTotalCost != null && accountFilter === "all" && !search.trim()
+        ? apiTotalCost
+        : filteredSum;
+    return { totalCost };
+  }, [filteredHoldings, apiTotalCost, accountFilter, search]);
 
   // Register page context for the chat agent
   const holdingsSummary = useMemo(() => {
@@ -161,8 +118,7 @@ export function Holdings() {
     const symbols = filteredHoldings.slice(0, 10).map((h) => h.symbol).join(", ");
     return [
       `Holdings: ${positionsCount} positions`,
-      `Total value: ${fmtCurrency(stats.totalValue, currency)}`,
-      `Total P/L: ${fmtCurrency(stats.totalPl, currency)} (${fmtPct(stats.totalPlPct)})`,
+      `Total cost: ${fmtCurrency(stats.totalCost, currency)}`,
       accountFilter !== "all" ? `Filtered by: ${accountFilter}` : "",
       search ? `Search: "${search}"` : "",
       `Symbols: ${symbols}`,
@@ -251,32 +207,14 @@ export function Holdings() {
       <Card className="overflow-hidden rounded-[32px] border-neutral-200/60 shadow-xl shadow-neutral-200/40 bg-white">
         {/* TOP STATS BAR */}
         {!loading && filteredHoldings.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-x divide-neutral-100 border-b border-neutral-100 bg-neutral-50/30">
+          <div className="grid grid-cols-1 divide-y divide-neutral-100 border-b border-neutral-100 bg-neutral-50/30">
             <div className="p-4 sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                Portfolio Value
+                Total cost ({currency})
               </p>
               <p className="text-xl sm:text-2xl font-bold text-neutral-900">
-                {fmtCurrency(stats.totalValue, currency)}
+                {fmtCurrency(stats.totalCost, currency)}
               </p>
-            </div>
-            <div className="p-4 sm:p-6">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                Total Returns
-              </p>
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 text-lg font-bold",
-                  stats.totalPlPct >= 0 ? "text-emerald-600" : "text-rose-600"
-                )}
-              >
-                {stats.totalPlPct >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4" />
-                )}
-                {fmtPct(stats.totalPlPct)}
-              </div>
             </div>
           </div>
         )}
@@ -352,11 +290,11 @@ export function Holdings() {
                   <tr>
                     {[
                       ["Asset", "text-left", ""],
-                      ["Quantity", "text-right", "hidden sm:table-cell"],
-                      ["Total Value", "text-right", ""],
-                      ["Current Price", "text-right", "hidden lg:table-cell"],
-                      ["7D Trend", "text-center", "hidden md:table-cell"],
-                      ["Returns", "text-right", ""],
+                      ["Quantity", "text-right", ""],
+                      ["Purchase price", "text-right", ""],
+                      ["Current price", "text-right", ""],
+                      ["P/L", "text-right", ""],
+                      ["Currency", "text-right", ""],
                       ["", "w-10", ""],
                     ].map(([label, align, visibility]) => (
                       <th
@@ -373,19 +311,33 @@ export function Holdings() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
-                  {filteredHoldings.map((h) => {
-                    const pl = h.unrealizedPlPct ?? 0;
-                    const isPositive = pl >= 0;
-                    const sparkColor = isPositive ? "#10b981" : "#f43f5e";
-
-                    // Mock data - replace with h.history if available
-                    const mockTrend = isPositive
-                      ? [30, 35, 32, 45, 42, 50, 48, 60]
-                      : [60, 55, 58, 45, 48, 40, 35, 30];
+                  {filteredHoldings.map((h, index) => {
+                    const purchasePrice =
+                      h.purchaseUnitPrice ?? h.purchasePrice ?? 0;
+                    const qty = Number(h.quantity) || 0;
+                    const costBasis = purchasePrice * qty;
+                    const currentPrice =
+                      h.currentPrice != null && Number.isFinite(h.currentPrice)
+                        ? h.currentPrice
+                        : null;
+                    const currentValue =
+                      currentPrice != null ? currentPrice * qty : null;
+                    const pl =
+                      currentValue != null && costBasis > 0
+                        ? currentValue - costBasis
+                        : null;
+                    const plPct =
+                      currentValue != null && costBasis > 0
+                        ? ((currentValue / costBasis - 1) * 100)
+                        : null;
+                    const rowKey =
+                      h.id != null
+                        ? String(h.id)
+                        : `${h.externalId ?? h.symbol}-${h.accountName ?? h.accountId ?? index}`;
 
                     return (
                       <tr
-                        key={h.externalId ?? h.id ?? h.symbol}
+                        key={rowKey}
                         onClick={() => handleRowClick(h)}
                         className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
                       >
@@ -407,38 +359,42 @@ export function Holdings() {
                           </div>
                         </td>
 
-                        <td className="hidden sm:table-cell px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-600">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-600">
                           {fmtNumber(h.quantity)}
                         </td>
 
                         <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-bold text-neutral-900">
-                          {fmtCurrency(h.currentValue ?? null, currency)}
+                          {fmtCurrency(purchasePrice, h.currency ?? currency)}
                         </td>
 
-                        <td className="hidden lg:table-cell px-4 sm:px-6 py-4 sm:py-5 text-right text-neutral-600">
-                          {fmtCurrency(h.currentPrice ?? null, currency)}
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-700">
+                          {h.currentPrice != null && Number.isFinite(h.currentPrice)
+                            ? fmtCurrency(h.currentPrice, h.currency ?? currency)
+                            : "—"}
                         </td>
 
-                        <td className="hidden md:table-cell px-4 sm:px-6 py-4 sm:py-5">
-                          <div className="flex justify-center items-center opacity-70 group-hover:opacity-100 transition-opacity">
-                            <Sparkline data={mockTrend} color={sparkColor} />
-                          </div>
-                        </td>
-
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right">
-                          <div className="flex flex-col items-end gap-1">
-                            <Badge
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium">
+                          {pl != null && plPct != null ? (
+                            <span
                               className={cn(
-                                "rounded-md border-none px-2 py-0.5 font-bold shadow-none",
-                                toneFromPct(pl)
+                                pl >= 0
+                                  ? "text-emerald-600"
+                                  : "text-red-600"
                               )}
                             >
-                              {fmtPct(pl)}
-                            </Badge>
-                            <span className="text-[9px] uppercase tracking-tighter font-bold text-neutral-400">
-                              Total P/L
+                              {fmtCurrency(pl, h.currency ?? currency)}
+                              <span className="text-neutral-500 font-normal ml-1">
+                                ({pl >= 0 ? "+" : ""}
+                                {fmtPct(plPct)})
+                              </span>
                             </span>
-                          </div>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right text-neutral-600 font-medium">
+                          {h.currency ?? currency}
                         </td>
 
                         <td className="px-2 py-5">

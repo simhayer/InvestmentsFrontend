@@ -1,17 +1,20 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Sparkles,
   ArrowUp,
   Square,
   Trash2,
   X,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/components/chat/ChatContext";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
+import { getMyUsage } from "@/utils/billingService";
 
 const quickPrompts = [
   "How is my portfolio doing today",
@@ -32,13 +35,28 @@ export function ChatPanel() {
     stop,
     clearMessages,
     error,
+    tierLimit,
   } = useChat();
 
   const [input, setInput] = React.useState("");
+  const [chatUsage, setChatUsage] = React.useState<{ used: number; limit: number } | null>(null);
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const panelRef = React.useRef<HTMLDivElement | null>(null);
   const userScrolledUpRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!isOpen || isStreaming) return;
+    let cancelled = false;
+    getMyUsage()
+      .then((data) => {
+        if (cancelled) return;
+        const chat = data.usage.find((u) => u.feature === "chat_messages");
+        if (chat) setChatUsage({ used: chat.used, limit: chat.limit });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isOpen, isStreaming, messages.length]);
 
   const hasHistory = messages.length > 0;
   const normalizedStatus = (status || "").trim().toLowerCase();
@@ -67,10 +85,10 @@ export function ChatPanel() {
     if (!isOpen) return;
     const node = listRef.current;
     if (!node) return;
-    if ((messages.length > 0 || isStreaming) && !userScrolledUpRef.current) {
+    if ((messages.length > 0 || isStreaming || tierLimit) && !userScrolledUpRef.current) {
       node.scrollTop = node.scrollHeight;
     }
-  }, [messages, isOpen, isStreaming]);
+  }, [messages, isOpen, isStreaming, tierLimit]);
 
   React.useEffect(() => {
     const node = listRef.current;
@@ -291,6 +309,27 @@ export function ChatPanel() {
               {error && (
                 <div className="px-3 text-xs text-red-500">Error: {error}</div>
               )}
+
+              {tierLimit && (
+                <div className="mx-1 flex flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+                    <Zap className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <p className="text-sm text-amber-900 font-medium">
+                    Daily limit reached
+                  </p>
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    You&apos;ve used all {tierLimit.limit} messages on your{" "}
+                    <span className="font-semibold capitalize">{tierLimit.plan}</span> plan today.
+                  </p>
+                  <Link
+                    href="/pricing"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-neutral-900 px-4 text-xs font-semibold text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Upgrade for more
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -344,7 +383,12 @@ export function ChatPanel() {
               </button>
             )}
           </form>
-          <div className="mt-2 text-center">
+          <div className="mt-2 flex items-center justify-center gap-3">
+            {chatUsage && chatUsage.limit > 0 && (
+              <span className="text-[10px] text-neutral-400">
+                {Math.max(0, chatUsage.limit - chatUsage.used)}/{chatUsage.limit} messages left today
+              </span>
+            )}
             <span className="text-[10px] text-neutral-300">
               <kbd className="rounded border border-neutral-200 px-1 font-mono text-[9px]">
                 {typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent) ? "⌘" : "Ctrl"}

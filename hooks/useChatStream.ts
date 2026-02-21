@@ -2,6 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatMessage, ChatContext } from "@/types/chat";
 import { postChat, postChatStream, safeReadError } from "@/lib/chatApi";
 
+export type ChatTierError = {
+  code: string;
+  plan: string;
+  feature: string;
+  limit: number;
+  used: number;
+  message: string;
+};
+
 type UseChatStreamArgs = {
   sessionId: string | null;
   setSessionId?: (sessionId: string) => void;
@@ -127,6 +136,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tierLimit, setTierLimit] = useState<ChatTierError | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<StreamStatusType | null>(null);
   const [thinkingText, setThinkingText] = useState<string | null>(null);
@@ -177,6 +187,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
   const clearMessages = useCallback(() => {
     setMessages([]);
     setError(null);
+    setTierLimit(null);
     setStatus(null);
     setStatusType(null);
     setThinkingText(null);
@@ -206,6 +217,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsStreaming(true);
       setError(null);
+      setTierLimit(null);
       setStatus(null);
       setStatusType(null);
 
@@ -543,8 +555,26 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
             // Ignore cancellation errors
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         if (controller.signal.aborted) return;
+
+        const tierDetail = err?.detail?.detail ?? err?.detail;
+        if (typeof tierDetail === "object" && tierDetail?.code === "TIER_LIMIT") {
+          setTierLimit(tierDetail as ChatTierError);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && !last.text) {
+              return prev.slice(0, -1);
+            }
+            return prev;
+          });
+          setIsStreaming(false);
+          abortRef.current = null;
+          setStatus(null);
+          setStatusType(null);
+          setThinkingText(null);
+          return;
+        }
 
         try {
           const fallback = await postChat(request, controller.signal);
@@ -571,6 +601,7 @@ export function useChatStream({ sessionId, setSessionId }: UseChatStreamArgs) {
     messages,
     isStreaming,
     error,
+    tierLimit,
     status,
     statusType,
     thinkingText,

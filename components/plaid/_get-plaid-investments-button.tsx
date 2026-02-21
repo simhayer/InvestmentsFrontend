@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { getPlaidInvestments } from "@/utils/plaidService";
+import { logger } from "@/lib/logger";
 
 interface PlaidLinkButtonProps {
   userId: string;
@@ -12,7 +13,7 @@ export function GetPlaidInvestmentsButton({ userId }: PlaidLinkButtonProps) {
     try {
       await getPlaidInvestments(userId);
     } catch (error) {
-      console.error("Failed to get investments:", error);
+      logger.error("Failed to get investments", { error: String(error) });
     }
   }, [userId]);
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { createLinkToken, exchangePublicToken } from "@/utils/plaidService";
 import { analytics } from "@/lib/posthog";
+import { logger } from "@/lib/logger";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export function PlaidLinkButton({
 
     createLinkToken(userId, PLAID_REDIRECT_URI)
       .then(setInternalToken)
-      .catch((err) => console.error("Failed to fetch link token:", err));
+      .catch((err) => logger.error("Failed to fetch link token", { error: String(err) }));
   }, [userId, externalToken]);
 
   const resolvedToken = externalToken ?? internalToken;
@@ -69,7 +70,7 @@ export function PlaidLinkButton({
 
         onSuccess?.();
       } catch (err) {
-        console.error("Error during token exchange:", err);
+        logger.error("Error during token exchange", { error: String(err) });
       }
     },
   });

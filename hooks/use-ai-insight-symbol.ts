@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getFullAnalysis, getInlineInsights, getFullCryptoAnalysis, getCryptoInlineInsights } from "@/utils/aiService";
+import { logger } from "@/lib/logger";
 import type { StockAnalysisResponse, InlineInsights } from "@/types/symbol_analysis";
 import type { CryptoAnalysisResponse, CryptoInlineInsights } from "@/types/crypto_analysis";
 import type { TierError } from "@/hooks/use-portfolio-ai";
@@ -65,7 +66,7 @@ export function useAiInsightSymbol(
           setInline(res);
         }
       } catch (e) {
-        console.error("Inline insights error:", e);
+        logger.error("Inline insights error", { error: String(e), symbol });
         // Don't set error for inline - it's optional/background
       } finally {
         if (!cancelled) {
@@ -102,15 +103,17 @@ export function useAiInsightSymbol(
         if (res.inline) {
           setInline(res.inline);
         }
+        logger.info("symbol_analysis_loaded", { symbol, isCrypto: true });
       } else {
         const res = await getFullAnalysis(symbol, true);
         setAnalysis(res);
         if (res.inline) {
           setInline(res.inline);
         }
+        logger.info("symbol_analysis_loaded", { symbol, isCrypto: false });
       }
     } catch (e: any) {
-      console.error("AI analysis error:", e);
+      logger.error("AI analysis error", { error: String(e), symbol });
       // FastAPI wraps in {detail: ...}, and ApiError stores the parsed body
       const tierDetail = e?.detail?.detail ?? e?.detail;
       if (typeof tierDetail === "object" && tierDetail?.code === "TIER_LIMIT") {
@@ -165,7 +168,7 @@ export function useInlineInsights(symbol: string, autoFetch: boolean = true) {
       const res = await getInlineInsights(symbol);
       setInsights(res);
     } catch (e) {
-      console.error("Inline insights error:", e);
+      logger.error("Inline insights error", { error: String(e), symbol });
       setError(e instanceof Error ? e.message : "Failed to fetch insights.");
     } finally {
       setLoading(false);

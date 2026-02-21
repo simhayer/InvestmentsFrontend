@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 export default function ProtectedError({
   error,
@@ -10,7 +11,7 @@ export default function ProtectedError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[protected]", error);
+    logger.error(error.message, { source: "protected-error", digest: error.digest });
   }, [error]);
 
   return (

@@ -1,5 +1,6 @@
 import { authedFetch } from "@/utils/authService";
 import { analytics } from "@/lib/posthog";
+import { logger } from "@/lib/logger";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -15,8 +16,10 @@ export const addHolding = async (data: any) => {
     throw new Error("Failed to add holding");
   }
 
+  const out = await res.json();
+  logger.info("holding_added", { symbol: data?.symbol, type: data?.type });
   analytics.capture("holding_added", { symbol: data?.symbol, type: data?.type });
-  return res.json();
+  return out;
 };
 
 export const getHoldings = async () => {
@@ -31,9 +34,11 @@ export const getHoldings = async () => {
       throw new Error("Failed to fetch holdings");
     }
 
-    return res.json();
+    const data = await res.json();
+    logger.info("holdings_loaded", { count: data?.items?.length ?? 0 });
+    return data;
   } catch (error) {
-    console.error("Error in getHoldings:", error);
+    logger.error("Error in getHoldings", { error: String(error) });
     throw error;
   }
 };
@@ -51,7 +56,9 @@ export const updateHolding = async (holdingId: string, data: Record<string, unkn
     throw new Error(err.detail || "Failed to update holding");
   }
 
-  return res.json();
+  const out = await res.json();
+  logger.info("holding_updated", { holdingId });
+  return out;
 };
 
 export const deleteHolding = async (holdingId: string) => {
@@ -65,6 +72,7 @@ export const deleteHolding = async (holdingId: string) => {
     throw new Error("Failed to delete holding");
   }
 
+  logger.info("holding_deleted", { holdingId });
   analytics.capture("holding_deleted", { holdingId });
   return res.json();
 };
@@ -76,7 +84,9 @@ export async function getInstitutions() {
   });
 
   if (!res.ok) throw new Error("Failed to fetch institutions");
-  return await res.json();
+  const data = await res.json();
+  logger.info("institutions_loaded", { count: Array.isArray(data) ? data.length : 0 });
+  return data;
 }
 
 export type PortfolioHistoryPoint = { t: number; value: number };
@@ -92,5 +102,7 @@ export async function getPortfolioHistory(
     method: "GET",
   });
   if (!res.ok) throw new Error("Failed to fetch portfolio history");
-  return res.json();
+  const data = await res.json();
+  logger.info("portfolio_history_loaded", { days, points: data?.points?.length ?? 0 });
+  return data;
 }

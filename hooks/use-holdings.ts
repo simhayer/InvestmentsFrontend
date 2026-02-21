@@ -2,6 +2,7 @@ import { toast } from "@/components/ui/use-toast";
 import type { Holding } from "@/types/holding";
 import { keysToCamel } from "@/utils/format";
 import { getHoldings } from "@/utils/investmentsService";
+import { logger } from "@/lib/logger";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type PriceStatus = "live" | "stale" | "unavailable" | "unrequested";
@@ -30,13 +31,15 @@ export function useHolding() {
         priceStatus?: PriceStatus;
       };
 
-      setHoldings(camel.items ?? []);
+      const items = camel.items ?? [];
+      setHoldings(items);
       setTotalCost(
         camel.marketValue != null ? Number(camel.marketValue) : null
       );
       setDisplayCurrency(
         (camel.currency as string)?.trim()?.toUpperCase() || "USD"
       );
+      logger.info("holdings_loaded_success", { count: items.length });
     } catch (err) {
       toast({
         title: "Error",

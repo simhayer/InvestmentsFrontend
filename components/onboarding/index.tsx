@@ -17,6 +17,7 @@ import {
   completeOnboarding,
   type OnboardingState,
 } from "@/utils/onboardingService";
+import { logger } from "@/lib/logger";
 
 import { StepProfile } from "./steps/steps-profile";
 import { StepPreferences } from "./steps/steps-preferences";
@@ -90,7 +91,7 @@ export default function OnboardingWizard() {
         setStep(s);
         setForm((prev) => ({ ...prev, ...data, current_step: s }));
       } catch (err) {
-        console.error(err);
+        logger.error("Onboarding load failed", { error: String(err) });
         toast({ title: "Couldn't load onboarding", description: "Please refresh and try again.", variant: "destructive" });
       } finally {
         if (!cancelled) setLoading(false);

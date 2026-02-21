@@ -1,6 +1,7 @@
 // utils/authService.ts
 import { AppUser } from "@/types/user";
 import { supabase } from "./supabaseClient";
+import { logger } from "@/lib/logger";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -12,6 +13,7 @@ export async function login(email: string, password: string) {
     password,
   });
   if (error) throw new Error(error.message);
+  logger.info("login_success", { email });
   return { ok: true as const, session: data.session };
 }
 
@@ -27,12 +29,14 @@ export async function register(email: string, password: string) {
     options: { emailRedirectTo: redirectTo },
   });
   if (error) throw new Error(error.message);
+  logger.info("register_success", { email });
   return { ok: true as const, data };
 }
 
 export async function logout() {
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
+  logger.info("logout_success");
   return { ok: true as const };
 }
 
@@ -94,6 +98,9 @@ export async function authedFetch(path: string, init?: RequestInit) {
     } catch {
       // body wasn't JSON — use the status text
       detail = { message: `Request failed: ${res.status}` };
+    }
+    if (res.status >= 500) {
+      logger.error(`API error ${res.status} for ${path}`, { path, status: res.status, detail });
     }
     throw new ApiError(res.status, detail);
   }

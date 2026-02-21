@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 export default function PublicError({
   error,
@@ -11,7 +12,7 @@ export default function PublicError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[public]", error);
+    logger.error(error.message, { source: "public-error", digest: error.digest });
   }, [error]);
 
   return (

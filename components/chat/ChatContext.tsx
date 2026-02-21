@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import type { ChatMessage, PageContext, ChatContext as ChatCtxPayload } from "@/types/chat";
-import { useChatStream } from "@/hooks/useChatStream";
+import { useChatStream, type ChatTierError } from "@/hooks/useChatStream";
 import { useChatSessionId } from "@/hooks/useChatSessionId";
 
 // ── Page Context Registry ──────────────────────────────────────────────
@@ -25,6 +25,7 @@ type ChatContextType = {
   statusType: "status" | "search" | null;
   thinkingText: string | null;
   error: string | null;
+  tierLimit: ChatTierError | null;
   setError: (error: string | null) => void;
   sendMessage: (text: string) => Promise<void>;
   stop: () => void;
@@ -60,6 +61,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     statusType,
     thinkingText,
     error,
+    tierLimit,
     sendMessage: originalSendMessage,
     stop,
     clearMessages: originalClearMessages,
@@ -98,6 +100,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           statusType,
           thinkingText,
           error,
+          tierLimit,
           setError,
           sendMessage,
           stop,

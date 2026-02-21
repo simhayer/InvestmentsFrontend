@@ -6,11 +6,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type PriceStatus = "live" | "stale" | "unavailable" | "unrequested";
 
+/** Total cost in user's display currency (from settings); converted on the backend. */
 export function useHolding() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCost, setTotalCost] = useState<number | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<string>("USD");
 
-  // Dedup — prevent overlapping / repeated fetches
   const inFlightRef = useRef(false);
 
   const loadHoldings = useCallback(async () => {
@@ -22,11 +24,19 @@ export function useHolding() {
 
       const camel = keysToCamel(resp) as {
         items: Holding[];
+        marketValue?: number;
+        currency?: string;
         asOf?: number;
         priceStatus?: PriceStatus;
       };
 
-      setHoldings(camel.items);
+      setHoldings(camel.items ?? []);
+      setTotalCost(
+        camel.marketValue != null ? Number(camel.marketValue) : null
+      );
+      setDisplayCurrency(
+        (camel.currency as string)?.trim()?.toUpperCase() || "USD"
+      );
     } catch (err) {
       toast({
         title: "Error",
@@ -43,5 +53,11 @@ export function useHolding() {
     loadHoldings();
   }, [loadHoldings]);
 
-  return { holdings, loading, reloadHoldings: loadHoldings };
+  return {
+    holdings,
+    loading,
+    reloadHoldings: loadHoldings,
+    totalCost,
+    displayCurrency,
+  };
 }

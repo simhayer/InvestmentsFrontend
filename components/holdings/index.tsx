@@ -6,12 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   Search,
   Wallet2,
-  SlidersHorizontal,
-  X,
-  Newspaper,
-  ChevronRight,
   Plus,
   Pencil,
+  ChevronRight,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -36,6 +33,38 @@ import SymbolLogo from "@/components/layout/SymbolLogo";
 import { AddEditHoldingDialog } from "@/components/holdings/add-edit-holding-dialog";
 import { usePageContext } from "@/hooks/usePageContext";
 import { usePathname } from "next/navigation";
+
+/**
+ * Sparkline (from commit before 0ebbcac — mock 7D trend).
+ */
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (!data || data.length < 2)
+    return <div className="h-6 w-20 bg-neutral-50 rounded animate-pulse" />;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min;
+  const width = 80;
+  const height = 24;
+  const points = data
+    .map((val, i) => {
+      const x = (i / (data.length - 1)) * width;
+      const y = height - ((val - min) / (range || 1)) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
+}
 
 /**
  * MAIN COMPONENT
@@ -97,16 +126,17 @@ export function Holdings() {
     });
   }, [holdings, search, accountFilter]);
 
-  // Total from API (converted to user's currency in settings); fallback to sum when filtered
+  // Total in user's display currency: API total when unfiltered, else sum of per-holding converted values
   const stats = useMemo(() => {
-    const filteredSum = filteredHoldings.reduce(
-      (acc, h) =>
-        acc +
-        Number(h.quantity) * Number(h.purchaseUnitPrice ?? h.purchasePrice ?? 0),
-      0
-    );
+    const filteredSum = filteredHoldings.reduce((acc, h) => {
+      const inDisplay =
+        h.valueInDisplayCurrency != null && Number(h.valueInDisplayCurrency) >= 0
+          ? Number(h.valueInDisplayCurrency)
+          : null;
+      return acc + (inDisplay ?? 0);
+    }, 0);
     const totalCost =
-      apiTotalCost != null && accountFilter === "all" && !search.trim()
+      accountFilter === "all" && !search.trim() && apiTotalCost != null
         ? apiTotalCost
         : filteredSum;
     return { totalCost };
@@ -294,7 +324,7 @@ export function Holdings() {
                       ["Purchase price", "text-right", ""],
                       ["Current price", "text-right", ""],
                       ["P/L", "text-right", ""],
-                      ["Currency", "text-right", ""],
+                      ["7D Trend", "text-center", "min-w-[100px] w-[100px]"],
                       ["", "w-10", ""],
                     ].map(([label, align, visibility]) => (
                       <th
@@ -330,6 +360,11 @@ export function Holdings() {
                       currentValue != null && costBasis > 0
                         ? ((currentValue / costBasis - 1) * 100)
                         : null;
+                    const isPositive = (plPct ?? h.unrealizedPlPct ?? 0) >= 0;
+                    const sparkColor = isPositive ? "#10b981" : "#f43f5e";
+                    const mockTrend = isPositive
+                      ? [30, 35, 32, 45, 42, 50, 48, 60]
+                      : [60, 55, 58, 45, 48, 40, 35, 30];
                     const rowKey =
                       h.id != null
                         ? String(h.id)
@@ -393,8 +428,10 @@ export function Holdings() {
                           )}
                         </td>
 
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right text-neutral-600 font-medium">
-                          {h.currency ?? currency}
+                        <td className="px-2 sm:px-4 py-4 sm:py-5 text-center align-middle min-w-[100px] w-[100px]">
+                          <div className="flex justify-center items-center opacity-70 group-hover:opacity-100 transition-opacity">
+                            <Sparkline data={mockTrend} color={sparkColor} />
+                          </div>
                         </td>
 
                         <td className="px-2 py-5">

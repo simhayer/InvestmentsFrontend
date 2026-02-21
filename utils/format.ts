@@ -8,14 +8,17 @@ export const formatCurrency = (n: number, currency = "USD") =>
 
 export const formatPct = (p: number) => `${(isFinite(p) ? p : 0).toFixed(2)}%`;
 
-export const fmtCurrency = (v?: number | null, ccy = "USD") =>
-  v == null
-    ? "—"
-    : new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: ccy,
-        maximumFractionDigits: 3,
-      }).format(v);
+export const fmtCurrency = (v?: number | null, ccy = "USD") => {
+  if (v == null) return "—";
+  const formatted = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: ccy,
+    maximumFractionDigits: 3,
+  }).format(v);
+  // Prefix "US" for US dollar so it's explicit
+  if ((ccy || "").toUpperCase() === "USD") return `US ${formatted}`;
+  return formatted;
+};
 
 export const fmtCompact = (v?: number | null) =>
   v == null

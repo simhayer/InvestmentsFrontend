@@ -35,6 +35,7 @@ import type { AppUser } from "@/types/user";
 import type { Connection } from "@/types/connection";
 import { Page } from "@/components/layout/Page";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 const PLAID_REDIRECT_URI =
   process.env.NEXT_PUBLIC_PLAID_REDIRECT_URI ||
@@ -65,7 +66,7 @@ export function Connections() {
     tokenFetchedRef.current = true;
     createLinkToken(userId, PLAID_REDIRECT_URI)
       .then(setSharedLinkToken)
-      .catch((err) => console.error("Failed to fetch link token:", err));
+      .catch((err) => logger.error("Failed to fetch link token", { error: String(err) }));
   }, [userId]);
 
   const hasConnections = connections.length > 0;
@@ -84,10 +85,12 @@ export function Connections() {
     try {
       const data = await getInstitutions();
       const list = keysToCamel<Connection[]>(data as unknown as Connection[]);
-      setConnections(Array.isArray(list) ? list : []);
+      const arr = Array.isArray(list) ? list : [];
+      setConnections(arr);
+      logger.info("connections_loaded", { count: arr.length });
     } catch (e: any) {
       if (e?.name !== "AbortError") {
-        console.error("Failed to fetch connections:", e);
+        logger.error("Failed to fetch connections", { error: String(e) });
         setError("Couldn't load your connections. Please try again.");
         setConnections([]);
       }
@@ -134,7 +137,7 @@ export function Connections() {
       const token = await createUpdateLinkToken(connectionId, PLAID_REDIRECT_URI);
       setReauthToken(token);
     } catch (e) {
-      console.error("Failed to create update link token:", e);
+      logger.error("Failed to create update link token", { error: String(e) });
       toast({
         variant: "destructive",
         title: "Re-auth failed",
@@ -152,7 +155,7 @@ export function Connections() {
         description: "The account has been disconnected.",
       });
     } catch (e) {
-      console.error("Failed to remove connection:", e);
+      logger.error("Failed to remove connection", { error: String(e) });
       toast({
         variant: "destructive",
         title: "Remove failed",
@@ -168,12 +171,13 @@ export function Connections() {
       setRefreshing(true);
       await getPlaidInvestments();
       await loadConnections();
+      logger.info("plaid_sync_completed");
       toast({
         title: "Sync complete",
         description: "Your portfolio data is up to date.",
       });
     } catch (e) {
-      console.error("Failed to sync:", e);
+      logger.error("Failed to sync", { error: String(e) });
       toast({
         variant: "destructive",
         title: "Sync unsuccessful",

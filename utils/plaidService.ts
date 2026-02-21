@@ -1,4 +1,5 @@
 import { authedFetch } from "@/utils/authService";
+import { logger } from "@/lib/logger";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -22,6 +23,7 @@ export async function createLinkToken(
   }
 
   const data = await res.json();
+  logger.info("plaid_link_token_created");
   return data.link_token;
 }
 
@@ -66,10 +68,11 @@ export async function exchangePublicToken(
 
   if (!res.ok) {
     const error = await res.json();
-    console.error("Token exchange failed:", error);
+    logger.error("Token exchange failed", { detail: error });
     throw new Error("Token exchange failed");
   }
 
+  logger.info("plaid_token_exchanged", { institution_name: payload.institution_name });
   // Best-effort sync — don't block or fail the connection flow
   try {
     await authedFetch("/api/plaid/investments", { method: "GET" });
@@ -87,6 +90,7 @@ export async function removeConnection(connectionId: string) {
     throw new Error(err.detail || "Failed to remove connection");
   }
 
+  logger.info("plaid_connection_removed", { connectionId });
   return res.json();
 }
 
@@ -105,5 +109,7 @@ export async function getPlaidInvestments() {
     throw err;
   }
 
-  return res.json();
+  const data = await res.json();
+  logger.info("plaid_investments_synced", { count: data?.holdings?.length ?? 0 });
+  return data;
 }

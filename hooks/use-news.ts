@@ -1,4 +1,5 @@
 import { authedFetch } from "@/utils/authService";
+import { logger } from "@/lib/logger";
 
 export async function fetchNewsForSymbol(symbol: string): Promise<any> {
   const path = `/api/news/latest-for-symbol?symbol=${encodeURIComponent(
@@ -9,7 +10,7 @@ export async function fetchNewsForSymbol(symbol: string): Promise<any> {
   });
 
   if (res.status === 401 || res.status === 403) {
-    console.warn("News-by-symbol request unauthorized; returning empty list.");
+    logger.warn("News-by-symbol request unauthorized; returning empty list.", { symbol });
     return [];
   }
   if (!res.ok) {

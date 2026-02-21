@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { CommandSearch } from "./command-search";
 import { useAuth } from "@/lib/auth-provider";
+import { logger } from "@/lib/logger";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +63,7 @@ export function Header() {
       refresh();
       router.replace("/login");
     } catch (e) {
-      console.error(e);
+      logger.error("Logout failed", { error: String(e) });
     }
   };
 

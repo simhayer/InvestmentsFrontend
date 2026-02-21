@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { fetchNewsForSymbol } from "@/hooks/use-news";
+import { logger } from "@/lib/logger";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -117,7 +118,7 @@ export function NewsTab({ symbol }: { symbol: string }) {
 
       setItems(flat);
     } catch (e) {
-      console.error("Failed to fetch news:", e);
+      logger.error("Failed to fetch news", { error: String(e), symbol });
       setError("Couldn’t load news. Please try again.");
       setItems([]);
     } finally {

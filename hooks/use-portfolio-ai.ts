@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { authedFetch } from "@/utils/authService";
 import { analytics } from "@/lib/posthog";
+import { logger } from "@/lib/logger";
 import type {
   PortfolioAnalysisResponse,
   PortfolioInlineInsights,
@@ -103,7 +104,7 @@ export function usePortfolioAnalysis(
       const res = await getPortfolioInlineInsights(currencyRef.current);
       setInline(res);
     } catch (e) {
-      console.error("Portfolio inline insights error:", e);
+      logger.error("Portfolio inline insights error", { error: String(e) });
     } finally {
       setInlineLoading(false);
       inlineInFlightRef.current = false;
@@ -133,7 +134,7 @@ export function usePortfolioAnalysis(
         const res = await getPortfolioInlineInsights(currencyRef.current);
         if (!cancelled) setInline(res);
       } catch (e) {
-        if (!cancelled) console.error("Portfolio inline insights error:", e);
+        if (!cancelled) logger.error("Portfolio inline insights error", { error: String(e) });
       } finally {
         if (!cancelled) setInlineLoading(false);
         inlineInFlightRef.current = false;
@@ -157,9 +158,10 @@ export function usePortfolioAnalysis(
       const res = await getFullPortfolioAnalysis(currencyRef.current, true, refresh);
       setAnalysis(res);
       if (res.inline) setInline(res.inline);
+      logger.info("portfolio_analysis_loaded", { currency: currencyRef.current });
       analytics.capture("portfolio_analysis_completed", { currency: currencyRef.current });
     } catch (e: any) {
-      console.error("Portfolio analysis error:", e);
+      logger.error("Portfolio analysis error", { error: String(e) });
       // Check for tier limit error (403 with TIER_LIMIT code)
       // FastAPI wraps in {detail: ...}, and ApiError stores the parsed body
       const tierDetail = e?.detail?.detail ?? e?.detail;
@@ -219,7 +221,7 @@ export function usePortfolioInline(currency: string = "USD", autoFetch: boolean 
       const res = await getPortfolioInlineInsights(currencyRef.current);
       setInsights(res);
     } catch (e) {
-      console.error("Portfolio inline error:", e);
+      logger.error("Portfolio inline error", { error: String(e) });
       setError(e instanceof Error ? e.message : "Failed to fetch insights.");
     } finally {
       setLoading(false);

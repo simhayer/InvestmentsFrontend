@@ -1,5 +1,6 @@
 import type { Holding } from "@/types/holding";
 import { authedFetch } from "@/utils/authService";
+import { logger } from "@/lib/logger";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const BACKEND_URL = `${API_URL}/api/finnhub`;
@@ -27,7 +28,7 @@ export async function fetchLivePricesForList(
   });
 
   if (!res.ok) {
-    console.error("Failed to fetch live prices", await res.text());
+    logger.error("Failed to fetch live prices", { body: await res.text() });
     return invList;
   }
 

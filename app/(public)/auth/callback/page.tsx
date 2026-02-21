@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
+import { logger } from "@/lib/logger";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -52,17 +53,19 @@ export default function AuthCallbackPage() {
 
         if (type === "recovery") {
           // Password reset flow — redirect to reset-password page
+          logger.info("auth_callback_success", { type: "recovery" });
           setStatus("success");
           setMessage("Redirecting to set your new password...");
           setTimeout(() => router.replace("/reset-password"), 1500);
         } else {
           // Email verification or other — redirect to dashboard/onboarding
+          logger.info("auth_callback_success", { type: type ?? "default" });
           setStatus("success");
           setMessage("Email verified! Redirecting...");
           setTimeout(() => router.replace("/dashboard"), 1500);
         }
       } catch (err: any) {
-        console.error("Auth callback error:", err);
+        logger.error("Auth callback error", { error: String(err?.message ?? err) });
         setStatus("error");
         setMessage(err?.message || "Something went wrong. Please try again.");
       }

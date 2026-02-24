@@ -47,6 +47,9 @@ export interface StockAnalysisResponse {
   report: AnalysisReport;
   inline?: InlineInsights;
   dataGaps: string[];
+  cached?: boolean | null;
+  stale?: boolean | null;
+  lastAnalyzedAt?: string | null;
 }
 
 export interface QuickSummaryResponse {

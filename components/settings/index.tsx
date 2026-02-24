@@ -35,7 +35,10 @@ import {
   getMySubscription,
   createCheckoutSession,
   createPortalSession,
+  checkRefundEligibility,
+  requestRefund,
   type SubscriptionMe,
+  type RefundEligibility,
 } from "@/utils/billingService";
 
 type Currency = "USD" | "CAD";
@@ -160,6 +163,33 @@ export function Settings() {
       setBillingBusy(false);
     }
   }, []);
+
+  // ── Refund ──────────────────────────────────────────────────
+  const { data: refundData } = useSWR<RefundEligibility>(
+    user && sub && sub.plan !== "free" ? "billing:refund-eligibility" : null,
+    () => checkRefundEligibility(),
+    { revalidateOnFocus: false, shouldRetryOnError: false, dedupingInterval: 30_000 }
+  );
+  const [refundBusy, setRefundBusy] = useState(false);
+  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+
+  const handleRefund = useCallback(async () => {
+    try {
+      setRefundBusy(true);
+      const result = await requestRefund();
+      if (result.ok) {
+        toast({ title: "Refund processed", description: result.message });
+        setShowRefundConfirm(false);
+        await refreshSub();
+        await refresh();
+      }
+    } catch (e: any) {
+      const msg = e?.detail?.message ?? e?.message ?? "Refund failed. Please contact support.";
+      toast({ variant: "destructive", title: "Refund failed", description: msg });
+    } finally {
+      setRefundBusy(false);
+    }
+  }, [refreshSub, refresh]);
 
   const planLabel = (sub?.plan ?? "free") as "free" | "premium" | "pro";
   const canManage = !!sub && planLabel !== "free";
@@ -316,8 +346,59 @@ export function Settings() {
               </div>
             )}
 
+            {showRefundConfirm && refundData?.eligible && (
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3.5 space-y-3">
+                <p className="text-sm font-medium text-neutral-900">
+                  Are you sure?
+                </p>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Your subscription will be canceled immediately and a full
+                  refund will be issued to your original payment method.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="h-8 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 px-4"
+                    disabled={refundBusy}
+                    onClick={handleRefund}
+                  >
+                    {refundBusy ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Processing...
+                      </div>
+                    ) : (
+                      "Confirm refund"
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-lg text-xs text-neutral-500 hover:text-neutral-900"
+                    disabled={refundBusy}
+                    onClick={() => setShowRefundConfirm(false)}
+                  >
+                    Never mind
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-neutral-50 px-4 py-2.5 text-xs text-neutral-500">
-              <span>Cancel anytime from the billing portal.</span>
+              <span>
+                Cancel anytime from the billing portal.
+                {refundData?.eligible && !showRefundConfirm && (
+                  <>
+                    {" "}
+                    <button
+                      onClick={() => setShowRefundConfirm(true)}
+                      className="text-neutral-400 underline underline-offset-2 hover:text-neutral-600"
+                    >
+                      Request a refund
+                    </button>
+                  </>
+                )}
+              </span>
               <Link
                 href="/pricing"
                 className="inline-flex items-center gap-1 font-semibold text-neutral-700 hover:text-neutral-900 underline underline-offset-2 shrink-0"

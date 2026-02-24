@@ -217,9 +217,9 @@ export function PortfolioAnalysisTab({
       {/* ================================================================== */}
       {/* SECTION 2: FULL ANALYSIS */}
       {/* ================================================================== */}
-      <AnimatePresence mode="wait">
-        {/* Tier Limit State */}
-        {tierError && (
+      <AnimatePresence>
+        {/* Tier Limit — full gate when no analysis */}
+        {tierError && !analysis && (
           <motion.div
             key="tier-error"
             initial={{ opacity: 0, y: 10 }}
@@ -271,7 +271,7 @@ export function PortfolioAnalysisTab({
           </motion.div>
         )}
 
-        {/* Analysis Result */}
+        {/* Analysis Result (with optional compact upgrade banner) */}
         {analysis && (
           <motion.div
             key="analysis"
@@ -280,6 +280,18 @@ export function PortfolioAnalysisTab({
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
+            {(tierError || analysis.stale) && (
+              <UpgradeGate
+                compact
+                feature="Portfolio Analysis"
+                plan={tierError?.plan}
+                message={
+                  tierError?.message ??
+                  "You've reached your daily limit. Upgrade to refresh this analysis."
+                }
+              />
+            )}
+
             {/* Header Controls */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -289,7 +301,9 @@ export function PortfolioAnalysisTab({
                 <div>
                   <h2 className="text-lg font-bold text-neutral-900">Portfolio Analysis</h2>
                   <p className="text-xs text-neutral-500">
-                    AI-powered insights & recommendations
+                    {analysis.stale
+                      ? `Last analyzed ${analysis.lastAnalyzedAt ? new Date(analysis.lastAnalyzedAt).toLocaleDateString() : "previously"}`
+                      : "AI-powered insights & recommendations"}
                   </p>
                 </div>
               </div>
@@ -317,8 +331,8 @@ export function PortfolioAnalysisTab({
           </motion.div>
         )}
 
-        {/* CTA (Empty State) - Updated to be lighter/cleaner */}
-        {!analysis && !analysisLoading && !aiError && (
+        {/* CTA (Empty State) */}
+        {!analysis && !analysisLoading && !aiError && !tierError && (
           <motion.div
             key="cta"
             initial={{ opacity: 0 }}

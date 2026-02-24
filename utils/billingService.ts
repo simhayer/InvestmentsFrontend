@@ -42,3 +42,19 @@ export async function getMyUsage(): Promise<UsageOut> {
   const res = await authedFetch("/api/billing/usage", { method: "GET" });
   return res.json();
 }
+
+export type RefundEligibility = {
+  eligible: boolean;
+  days_left?: number | null;
+  reason?: string | null;
+};
+
+export async function checkRefundEligibility(): Promise<RefundEligibility> {
+  const res = await authedFetch("/api/billing/refund-eligibility", { method: "GET" });
+  return res.json();
+}
+
+export async function requestRefund(): Promise<{ ok: boolean; message: string }> {
+  const res = await authedFetch("/api/billing/refund", { method: "POST" });
+  return res.json();
+}

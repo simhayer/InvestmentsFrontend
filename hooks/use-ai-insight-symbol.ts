@@ -121,8 +121,8 @@ export function useAiInsightSymbol(
         setError(null);
       } else {
         setError(e instanceof Error ? e.message : "Failed to fetch AI insight.");
+        setAnalysis(null);
       }
-      setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
       analysisInFlightRef.current = false;

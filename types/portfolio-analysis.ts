@@ -91,6 +91,7 @@ export interface PortfolioAnalysisResponse {
   riskMetrics?: PortfolioRiskMetrics | null;
   dataGaps: string[];
   cached?: boolean | null;
+  stale?: boolean | null;
   lastAnalyzedAt?: string | null;
 }
 

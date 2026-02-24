@@ -313,9 +313,9 @@ export function PortfolioOverview() {
         <div className="space-y-6 min-w-0">
           {/* AI Analysis Section */}
           <div ref={analysisRef}>
-            <AnimatePresence mode="wait">
-              {/* Tier Limit */}
-              {tierError && (
+            <AnimatePresence>
+              {/* Tier Limit — full gate when no analysis, compact banner when analysis exists */}
+              {tierError && !analysis && (
                 <motion.div
                   key="tier-error"
                   initial={{ opacity: 0, y: 10 }}
@@ -370,7 +370,7 @@ export function PortfolioOverview() {
                 </motion.div>
               )}
 
-              {/* Analysis Result */}
+              {/* Analysis Result (with optional compact upgrade banner) */}
               {analysis && (
                 <motion.div
                   key="analysis"
@@ -379,6 +379,18 @@ export function PortfolioOverview() {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-4"
                 >
+                  {(tierError || analysis.stale) && (
+                    <UpgradeGate
+                      compact
+                      feature="Portfolio Analysis"
+                      plan={tierError?.plan}
+                      message={
+                        tierError?.message ??
+                        "You've reached your daily limit. Upgrade to refresh this analysis."
+                      }
+                    />
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
@@ -386,7 +398,11 @@ export function PortfolioOverview() {
                       </div>
                       <div>
                         <h2 className="text-lg font-bold text-neutral-900">Portfolio Analysis</h2>
-                        <p className="text-xs text-neutral-500">AI-powered insights & recommendations</p>
+                        <p className="text-xs text-neutral-500">
+                          {analysis.stale
+                            ? `Last analyzed ${analysis.lastAnalyzedAt ? new Date(analysis.lastAnalyzedAt).toLocaleDateString() : "previously"}`
+                            : "AI-powered insights & recommendations"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -414,7 +430,7 @@ export function PortfolioOverview() {
               )}
 
               {/* CTA when no analysis */}
-              {!analysis && !analysisLoading && !aiError && (
+              {!analysis && !analysisLoading && !aiError && !tierError && (
                 <motion.div
                   key="cta"
                   initial={{ opacity: 0 }}

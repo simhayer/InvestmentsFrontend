@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles, Zap, Crown, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-provider";
@@ -20,7 +20,7 @@ const PLANS = [
     icon: Sparkles,
     features: [
       "1 brokerage connection",
-      "1 full portfolio analysis / week",
+      "1 full portfolio analysis / day",
       "3 stock analyses / day",
       "15 AI chat messages / day",
       "Basic inline insights",
@@ -104,6 +104,12 @@ export default function PricingPage() {
         <p className="text-neutral-500 text-base sm:text-lg leading-relaxed">
           Start free, upgrade when you need more. Cancel anytime.
         </p>
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          <span className="text-sm font-medium text-emerald-800">
+            7-day money-back guarantee on all paid plans
+          </span>
+        </div>
       </div>
 
       {/* Plan cards */}
@@ -180,31 +186,39 @@ export default function PricingPage() {
                   </Button>
                 </Link>
               ) : (
-                <Button
-                  className={cn(
-                    "h-11 w-full rounded-xl font-semibold",
-                    plan.highlighted
-                      ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                      : "bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-50"
+                <>
+                  <Button
+                    className={cn(
+                      "h-11 w-full rounded-xl font-semibold",
+                      plan.highlighted
+                        ? "bg-neutral-900 text-white hover:bg-neutral-800"
+                        : "bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-50"
+                    )}
+                    variant={plan.highlighted ? "default" : "outline"}
+                    disabled={isCurrent || busy !== null}
+                    onClick={() => isUpgrade && handleUpgrade(plan.id as "premium" | "pro")}
+                  >
+                    {busy === plan.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Redirecting...
+                      </div>
+                    ) : isCurrent ? (
+                      "Current plan"
+                    ) : (
+                      <>
+                        {plan.cta}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                  {!isCurrent && (
+                    <p className="mt-2.5 flex items-center justify-center gap-1 text-[11px] text-neutral-400">
+                      <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                      7-day money-back guarantee
+                    </p>
                   )}
-                  variant={plan.highlighted ? "default" : "outline"}
-                  disabled={isCurrent || busy !== null}
-                  onClick={() => isUpgrade && handleUpgrade(plan.id as "premium" | "pro")}
-                >
-                  {busy === plan.id ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Redirecting...
-                    </div>
-                  ) : isCurrent ? (
-                    "Current plan"
-                  ) : (
-                    <>
-                      {plan.cta}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                </>
               )}
             </div>
           );
@@ -214,6 +228,8 @@ export default function PricingPage() {
       {/* FAQ / Trust */}
       <div className="max-w-2xl mx-auto mt-16 text-center">
         <p className="text-sm text-neutral-400">
+          7-day money-back guarantee. No questions asked.
+          <br />
           All plans include SSL encryption, Plaid read-only access, and secure data storage.
           <br />
           Cancel anytime from your{" "}

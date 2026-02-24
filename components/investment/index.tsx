@@ -339,9 +339,9 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
         {/* SECTION 2: AI ANALYSIS */}
         {/* ============================================================== */}
         <div ref={analysisRef} className="scroll-mt-20">
-          <AnimatePresence mode="wait">
-            {/* Tier Limit State */}
-            {tierError && (
+          <AnimatePresence>
+            {/* Tier Limit — full gate when no analysis */}
+            {tierError && !analysis && (
               <motion.div
                 key="tier-error"
                 initial={{ opacity: 0, y: 10 }}
@@ -400,7 +400,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
               </motion.div>
             )}
 
-            {/* Analysis Result */}
+            {/* Analysis Result (with optional compact upgrade banner) */}
             {analysis && (
               <motion.div
                 key="analysis"
@@ -409,6 +409,19 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                 exit={{ opacity: 0, y: -20 }}
                 className="mb-6"
               >
+                {(tierError || ("stale" in analysis && analysis.stale)) && (
+                  <UpgradeGate
+                    compact
+                    feature={isCrypto ? "Crypto Analysis" : "Stock Analysis"}
+                    plan={tierError?.plan}
+                    message={
+                      tierError?.message ??
+                      "You've reached your daily limit. Upgrade to refresh this analysis."
+                    }
+                    className="mb-4"
+                  />
+                )}
+
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 rounded-xl">
@@ -419,7 +432,9 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
                         AI Analysis
                       </h2>
                       <p className="text-xs text-neutral-500">
-                        Generated just now
+                        {"stale" in analysis && analysis.stale
+                          ? `Last analyzed ${"lastAnalyzedAt" in analysis && analysis.lastAnalyzedAt ? new Date(analysis.lastAnalyzedAt as string).toLocaleDateString() : "previously"}`
+                          : "Generated just now"}
                       </p>
                     </div>
                   </div>
@@ -441,7 +456,7 @@ export default function InvestmentOverview({ symbol }: { symbol: string }) {
             )}
 
             {/* CTA - Only show if no analysis active */}
-            {!analysis && !analysisLoading && !aiError && (
+            {!analysis && !analysisLoading && !aiError && !tierError && (
               <motion.div
                 key="cta"
                 initial={{ opacity: 0 }}

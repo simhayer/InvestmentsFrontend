@@ -65,6 +65,7 @@ export interface CryptoAnalysisResponse {
   marketData?: CryptoMarketData | null;
   dataGaps: string[];
   cached?: boolean | null;
+  stale?: boolean | null;
   lastAnalyzedAt?: string | null;
 }
 

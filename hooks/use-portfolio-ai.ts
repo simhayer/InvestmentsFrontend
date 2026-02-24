@@ -170,8 +170,8 @@ export function usePortfolioAnalysis(
         setError(null);
       } else {
         setError(e instanceof Error ? e.message : "Failed to analyze portfolio.");
+        setAnalysis(null);
       }
-      setAnalysis(null);
     } finally {
       setAnalysisLoading(false);
       analysisInFlightRef.current = false;

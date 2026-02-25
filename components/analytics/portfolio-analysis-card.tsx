@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Activity,
   Target,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -35,13 +36,18 @@ interface PortfolioAnalysisCardProps {
 }
 
 export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCardProps) {
-  const { report, portfolioSummary, riskMetrics, dataGaps } = data;
+  const { report, portfolioSummary, riskMetrics, dataGaps, disclaimer } = data;
 
-  // Check if we have urgent actions to highlight
   const hasActions = report.rebalancingSuggestions.length > 0 || report.actionItems.length > 0;
+
+  const disclaimerText = disclaimer
+    || "AI-generated analysis for informational and educational purposes only. This does not constitute financial advice. Past performance does not guarantee future results. Consult a qualified financial advisor before making investment decisions.";
 
   return (
     <div className={cn("space-y-6", className)}>
+      {/* LEGAL DISCLAIMER */}
+      <DisclaimerBanner text={disclaimerText} />
+
       {/* 1. HERO: Health Overview */}
       <HealthOverviewCard
         health={report.health}
@@ -53,12 +59,12 @@ export function PortfolioAnalysisCard({ data, className }: PortfolioAnalysisCard
       {/* 2. RISK DASHBOARD: Quantitative metrics + benchmark */}
       {riskMetrics && <RiskDashboard metrics={riskMetrics} />}
 
-      {/* 3. STRATEGY: Action Plan (If applicable) */}
+      {/* 3. OBSERVATIONS: Points to Review (If applicable) */}
       {hasActions && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {report.actionItems.length > 0 && (
             <StructuredActionSection
-              title="Priority Actions"
+              title="Points to Review"
               icon={Zap}
               items={report.actionItems}
             />
@@ -221,6 +227,7 @@ function HealthOverviewCard({
                     ({plPositive ? "+" : ""}${Math.abs(portfolioSummary.totalPL).toLocaleString()})
                 </span>
              </div>
+             <p className="text-white/50 text-[10px] mt-1">Past performance ≠ future results</p>
         </div>
       </div>
 
@@ -608,10 +615,10 @@ function BenchmarkStat({ label, value }: { label: string; value: string }) {
 // ============================================================================
 
 const ACTION_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
-  reduce: { bg: "bg-amber-50 border-amber-100", text: "text-amber-700", label: "REDUCE" },
-  sell: { bg: "bg-rose-50 border-rose-100", text: "text-rose-700", label: "SELL" },
-  add: { bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-700", label: "ADD" },
-  buy: { bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-700", label: "BUY" },
+  consider_reducing: { bg: "bg-amber-50 border-amber-100", text: "text-amber-700", label: "REVIEW" },
+  worth_researching: { bg: "bg-emerald-50 border-emerald-100", text: "text-emerald-700", label: "RESEARCH" },
+  monitor: { bg: "bg-blue-50 border-blue-100", text: "text-blue-700", label: "MONITOR" },
+  review: { bg: "bg-amber-50 border-amber-100", text: "text-amber-700", label: "REVIEW" },
   hold: { bg: "bg-blue-50 border-blue-100", text: "text-blue-700", label: "HOLD" },
 };
 
@@ -662,6 +669,21 @@ function StructuredActionSection({
   );
 }
 
+
+// ============================================================================
+// COMPONENT: LEGAL DISCLAIMER
+// ============================================================================
+
+function DisclaimerBanner({ text }: { text: string }) {
+  return (
+    <div className="bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 flex items-start gap-3">
+      <div className="p-1 bg-neutral-100 rounded-full shrink-0 mt-0.5">
+        <Info className="h-3 w-3 text-neutral-500" />
+      </div>
+      <p className="text-[11px] text-neutral-500 leading-relaxed">{text}</p>
+    </div>
+  );
+}
 
 // ============================================================================
 // COMPONENT: DATA GAPS

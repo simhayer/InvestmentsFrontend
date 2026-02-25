@@ -18,7 +18,7 @@ export interface PositionInsight {
 }
 
 export interface ActionItem {
-  action: "reduce" | "add" | "hold" | "sell" | "buy";
+  action: "consider_reducing" | "worth_researching" | "monitor" | "review" | "hold";
   symbol?: string;
   reasoning: string;
 }
@@ -90,6 +90,7 @@ export interface PortfolioAnalysisResponse {
   portfolioSummary: PortfolioSummary;
   riskMetrics?: PortfolioRiskMetrics | null;
   dataGaps: string[];
+  disclaimer?: string;
   cached?: boolean | null;
   stale?: boolean | null;
   lastAnalyzedAt?: string | null;

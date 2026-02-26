@@ -970,10 +970,46 @@ function Footer() {
           <div className="space-y-2.5">
             <h4 className="text-xs font-semibold text-neutral-900">Product</h4>
             <ul className="space-y-1.5 text-neutral-500">
-              <li><Link href="/register" className="hover:text-neutral-700 transition-colors">Get started</Link></li>
-              <li><Link href="/login" className="hover:text-neutral-700 transition-colors">Sign in</Link></li>
-              <li><Link href="/pricing" className="hover:text-neutral-700 transition-colors">Pricing</Link></li>
-              <li><Link href="/market" className="hover:text-neutral-700 transition-colors">Market</Link></li>
+              <li>
+                <Link
+                  href="/register"
+                  className="hover:text-neutral-700 transition-colors"
+                >
+                  Get started
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/login"
+                  className="hover:text-neutral-700 transition-colors"
+                >
+                  Sign in
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/pricing"
+                  className="hover:text-neutral-700 transition-colors"
+                >
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/market"
+                  className="hover:text-neutral-700 transition-colors"
+                >
+                  Market
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/feedback"
+                  className="hover:text-neutral-700 transition-colors"
+                >
+                  Feedback
+                </Link>
+              </li>
             </ul>
           </div>
           <div className="space-y-2.5">

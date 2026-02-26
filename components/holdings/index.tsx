@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -27,12 +27,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fmtCurrency, fmtNumber, fmtPct } from "@/utils/format";
+import { fmtCurrency, fmtNumber, fmtPct, keysToCamel } from "@/utils/format";
 import { Page } from "@/components/layout/Page";
 import SymbolLogo from "@/components/layout/SymbolLogo";
 import { AddEditHoldingDialog } from "@/components/holdings/add-edit-holding-dialog";
 import { usePageContext } from "@/hooks/usePageContext";
 import { usePathname } from "next/navigation";
+import { getPortfolioSummary } from "@/utils/portfolioService";
 
 /**
  * Sparkline (from commit before 0ebbcac — mock 7D trend).
@@ -83,6 +84,35 @@ export function Holdings() {
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState<string>("all");
 
+  // Dashboard portfolio value (same source as /dashboard) — fetch from portfolio summary API
+  const [dashboardMarketValue, setDashboardMarketValue] = useState<number | null>(null);
+
+  const fetchPortfolioSummary = useCallback(async () => {
+    try {
+      const raw = await getPortfolioSummary();
+      const data = keysToCamel(raw) as { marketValue?: number };
+      if (typeof data.marketValue === "number") {
+        setDashboardMarketValue(data.marketValue);
+      }
+    } catch {
+      // keep previous value on error
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPortfolioSummary();
+  }, [fetchPortfolioSummary]);
+
+  // Refetch dashboard portfolio value when holdings are reloaded (e.g. after add/edit)
+  const holdingsCountRef = useRef(holdings?.length ?? 0);
+  useEffect(() => {
+    const prev = holdingsCountRef.current;
+    holdingsCountRef.current = holdings?.length ?? 0;
+    if (prev > 0 && (holdings?.length ?? 0) !== prev) {
+      fetchPortfolioSummary();
+    }
+  }, [holdings?.length, fetchPortfolioSummary]);
+
   // Add/Edit dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingHolding, setEditingHolding] = useState<Holding | null>(null);
@@ -126,34 +156,48 @@ export function Holdings() {
     });
   }, [holdings, search, accountFilter]);
 
-  // Total in user's display currency: API total when unfiltered, else sum of per-holding converted values
+  // Total cost and portfolio value (market value) for filtered holdings
   const stats = useMemo(() => {
-    const filteredSum = filteredHoldings.reduce((acc, h) => {
+    let costSum = 0;
+    let marketValueSum = 0;
+    for (const h of filteredHoldings) {
       const inDisplay =
         h.valueInDisplayCurrency != null && Number(h.valueInDisplayCurrency) >= 0
           ? Number(h.valueInDisplayCurrency)
           : null;
-      return acc + (inDisplay ?? 0);
-    }, 0);
+      costSum += inDisplay ?? 0;
+      const qty = Number(h.quantity) || 0;
+      const currentVal =
+        h.currentValue != null && Number.isFinite(h.currentValue)
+          ? Number(h.currentValue)
+          : h.currentPrice != null && Number.isFinite(h.currentPrice)
+            ? h.currentPrice * qty
+            : 0;
+      marketValueSum += currentVal;
+    }
     const totalCost =
       accountFilter === "all" && !search.trim() && apiTotalCost != null
         ? apiTotalCost
-        : filteredSum;
-    return { totalCost };
+        : costSum;
+    return { totalCost, portfolioValue: marketValueSum };
   }, [filteredHoldings, apiTotalCost, accountFilter, search]);
 
   // Register page context for the chat agent
   const holdingsSummary = useMemo(() => {
     if (!holdings || holdings.length === 0) return undefined;
     const symbols = filteredHoldings.slice(0, 10).map((h) => h.symbol).join(", ");
+    const portfolioValue =
+      accountFilter === "all" && !search.trim() && dashboardMarketValue != null
+        ? dashboardMarketValue
+        : stats.portfolioValue;
     return [
       `Holdings: ${positionsCount} positions`,
-      `Total cost: ${fmtCurrency(stats.totalCost, currency)}`,
+      `Portfolio value: ${fmtCurrency(portfolioValue, currency)}`,
       accountFilter !== "all" ? `Filtered by: ${accountFilter}` : "",
       search ? `Search: "${search}"` : "",
       `Symbols: ${symbols}`,
     ].filter(Boolean).join(". ");
-  }, [holdings, filteredHoldings, positionsCount, stats, currency, accountFilter, search]);
+  }, [holdings, filteredHoldings, positionsCount, stats, currency, accountFilter, search, dashboardMarketValue]);
 
   usePageContext({
     pageType: "holdings",
@@ -237,15 +281,18 @@ export function Holdings() {
       <Card className="overflow-hidden rounded-[32px] border-neutral-200/60 shadow-xl shadow-neutral-200/40 bg-white">
         {/* TOP STATS BAR */}
         {!loading && filteredHoldings.length > 0 && (
-          <div className="grid grid-cols-1 divide-y divide-neutral-100 border-b border-neutral-100 bg-neutral-50/30">
-            <div className="p-4 sm:p-6">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
-                Total cost ({currency})
-              </p>
-              <p className="text-xl sm:text-2xl font-bold text-neutral-900">
-                {fmtCurrency(stats.totalCost, currency)}
-              </p>
-            </div>
+          <div className="p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/30">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+              Portfolio value ({currency})
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-neutral-900">
+              {fmtCurrency(
+                accountFilter === "all" && !search.trim() && dashboardMarketValue != null
+                  ? dashboardMarketValue
+                  : stats.portfolioValue,
+                currency
+              )}
+            </p>
           </div>
         )}
 
@@ -348,11 +395,18 @@ export function Holdings() {
                       : `${h.externalId ?? h.symbol}-${h.accountName ?? h.accountId ?? index}`;
 
                   return (
-                    <button
+                    <div
                       key={rowKey}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleRowClick(h)}
-                      className="w-full text-left px-4 py-4 active:bg-neutral-50/80 transition-colors flex items-center gap-3"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleRowClick(h);
+                        }
+                      }}
+                      className="w-full text-left px-4 py-4 active:bg-neutral-50/80 transition-colors flex items-center gap-3 cursor-pointer"
                     >
                       <SymbolLogo
                         symbol={h.symbol}
@@ -404,6 +458,7 @@ export function Holdings() {
                         )}
                         {h.source === "manual" && (
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditDialog(h, e);
@@ -416,7 +471,7 @@ export function Holdings() {
                         )}
                       </div>
                       <ChevronRight className="h-4 w-4 text-neutral-300 shrink-0" />
-                    </button>
+                    </div>
                   );
                 })}
               </div>

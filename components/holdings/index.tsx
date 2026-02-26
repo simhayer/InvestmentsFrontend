@@ -314,143 +314,252 @@ export function Holdings() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead className="sticky top-0 z-20 bg-neutral-50/90 backdrop-blur-md text-neutral-500">
-                  <tr>
-                    {[
-                      ["Asset", "text-left", ""],
-                      ["Quantity", "text-right", ""],
-                      ["Purchase price", "text-right", ""],
-                      ["Current price", "text-right", ""],
-                      ["P/L", "text-right", ""],
-                      ["7D Trend", "text-center", "min-w-[100px] w-[100px]"],
-                      ["", "w-10", ""],
-                    ].map(([label, align, visibility]) => (
-                      <th
-                        key={label || "edit"}
-                        className={cn(
-                          "px-4 sm:px-6 py-4 text-[10px] font-bold uppercase tracking-widest",
-                          align,
-                          visibility
-                        )}
-                      >
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100">
-                  {filteredHoldings.map((h, index) => {
-                    const purchasePrice =
-                      h.purchaseUnitPrice ?? h.purchasePrice ?? 0;
-                    const qty = Number(h.quantity) || 0;
-                    const costBasis = purchasePrice * qty;
-                    const currentPrice =
-                      h.currentPrice != null && Number.isFinite(h.currentPrice)
-                        ? h.currentPrice
+            <>
+              {/* Mobile: card list (no horizontal scroll) */}
+              <div className="md:hidden divide-y divide-neutral-100 pb-4">
+                {filteredHoldings.map((h, index) => {
+                  const purchasePrice =
+                    h.purchaseUnitPrice ?? h.purchasePrice ?? 0;
+                  const qty = Number(h.quantity) || 0;
+                  const costBasis = purchasePrice * qty;
+                  const currentPrice =
+                    h.currentPrice != null && Number.isFinite(h.currentPrice)
+                      ? h.currentPrice
+                      : null;
+                  const currentValue =
+                    currentPrice != null ? currentPrice * qty : null;
+                  const pl =
+                    currentValue != null && costBasis > 0
+                      ? currentValue - costBasis
+                      : null;
+                  const plPct =
+                    currentValue != null && costBasis > 0
+                      ? ((currentValue / costBasis - 1) * 100)
+                      : null;
+                  const displayValue =
+                    currentValue != null
+                      ? currentValue
+                      : costBasis > 0
+                        ? costBasis
                         : null;
-                    const currentValue =
-                      currentPrice != null ? currentPrice * qty : null;
-                    const pl =
-                      currentValue != null && costBasis > 0
-                        ? currentValue - costBasis
-                        : null;
-                    const plPct =
-                      currentValue != null && costBasis > 0
-                        ? ((currentValue / costBasis - 1) * 100)
-                        : null;
-                    const isPositive = (plPct ?? h.unrealizedPlPct ?? 0) >= 0;
-                    const sparkColor = isPositive ? "#10b981" : "#f43f5e";
-                    const mockTrend = isPositive
-                      ? [30, 35, 32, 45, 42, 50, 48, 60]
-                      : [60, 55, 58, 45, 48, 40, 35, 30];
-                    const rowKey =
-                      h.id != null
-                        ? String(h.id)
-                        : `${h.externalId ?? h.symbol}-${h.accountName ?? h.accountId ?? index}`;
+                  const rowKey =
+                    h.id != null
+                      ? String(h.id)
+                      : `${h.externalId ?? h.symbol}-${h.accountName ?? h.accountId ?? index}`;
 
-                    return (
-                      <tr
-                        key={rowKey}
-                        onClick={() => handleRowClick(h)}
-                        className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
-                      >
-                        <td className="px-4 sm:px-6 py-4 sm:py-5">
-                          <div className="flex items-center gap-3">
-                            <SymbolLogo
-                              symbol={h.symbol}
-                              isCrypto={h.type === "cryptocurrency"}
-                              className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shadow-sm transition-transform group-hover:scale-110"
-                            />
-                            <div className="min-w-0">
-                              <div className="font-bold text-neutral-900 leading-none mb-1 text-sm">
-                                {h.symbol}
-                              </div>
-                              <div className="truncate text-xs text-neutral-400 max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]">
-                                {h.name}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-600">
-                          {fmtNumber(h.quantity)}
-                        </td>
-
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-bold text-neutral-900">
-                          {fmtCurrency(purchasePrice, h.currency ?? currency)}
-                        </td>
-
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-700">
-                          {h.currentPrice != null && Number.isFinite(h.currentPrice)
-                            ? fmtCurrency(h.currentPrice, h.currency ?? currency)
-                            : "—"}
-                        </td>
-
-                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium">
-                          {pl != null && plPct != null ? (
+                  return (
+                    <button
+                      key={rowKey}
+                      type="button"
+                      onClick={() => handleRowClick(h)}
+                      className="w-full text-left px-4 py-4 active:bg-neutral-50/80 transition-colors flex items-center gap-3"
+                    >
+                      <SymbolLogo
+                        symbol={h.symbol}
+                        isCrypto={h.type === "cryptocurrency"}
+                        className="h-10 w-10 shrink-0 rounded-xl shadow-sm"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-neutral-900 truncate">
+                          {h.symbol}
+                        </div>
+                        <div className="truncate text-xs text-neutral-500">
+                          {h.name}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-neutral-500">
+                            {fmtNumber(h.quantity)} shares
+                          </span>
+                          {displayValue != null && (
+                            <span className="text-xs font-medium text-neutral-700">
+                              · {fmtCurrency(displayValue, h.currency ?? currency)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex flex-col items-end gap-0.5">
+                        {pl != null && plPct != null ? (
+                          <>
                             <span
                               className={cn(
-                                pl >= 0
-                                  ? "text-emerald-600"
-                                  : "text-red-600"
+                                "text-sm font-semibold",
+                                pl >= 0 ? "text-emerald-600" : "text-red-600"
                               )}
                             >
+                              {pl >= 0 ? "+" : ""}
                               {fmtCurrency(pl, h.currency ?? currency)}
-                              <span className="text-neutral-500 font-normal ml-1">
-                                ({pl >= 0 ? "+" : ""}
-                                {fmtPct(plPct)})
-                              </span>
                             </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-
-                        <td className="px-2 sm:px-4 py-4 sm:py-5 text-center align-middle min-w-[100px] w-[100px]">
-                          <div className="flex justify-center items-center opacity-70 group-hover:opacity-100 transition-opacity">
-                            <Sparkline data={mockTrend} color={sparkColor} />
-                          </div>
-                        </td>
-
-                        <td className="px-2 py-5">
-                          {h.source === "manual" && (
-                            <button
-                              onClick={(e) => openEditDialog(h, e)}
-                              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 group-hover:opacity-100 transition-all"
-                              title="Edit holding"
+                            <span
+                              className={cn(
+                                "text-xs font-medium",
+                                pl >= 0 ? "text-emerald-600/80" : "text-red-600/80"
+                              )}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
+                              {pl >= 0 ? "+" : ""}
+                              {fmtPct(plPct)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-neutral-400">—</span>
+                        )}
+                        {h.source === "manual" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditDialog(h, e);
+                            }}
+                            className="p-1.5 -mr-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-all mt-1"
+                            title="Edit holding"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-neutral-300 shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Desktop: full table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead className="sticky top-0 z-20 bg-neutral-50/90 backdrop-blur-md text-neutral-500">
+                    <tr>
+                      {[
+                        ["Asset", "text-left", ""],
+                        ["Quantity", "text-right", ""],
+                        ["Purchase price", "text-right", ""],
+                        ["Current price", "text-right", ""],
+                        ["P/L", "text-right", ""],
+                        ["7D Trend", "text-center", "min-w-[100px] w-[100px]"],
+                        ["", "w-10", ""],
+                      ].map(([label, align, visibility]) => (
+                        <th
+                          key={label || "edit"}
+                          className={cn(
+                            "px-4 sm:px-6 py-4 text-[10px] font-bold uppercase tracking-widest",
+                            align,
+                            visibility
                           )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        >
+                          {label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100">
+                    {filteredHoldings.map((h, index) => {
+                      const purchasePrice =
+                        h.purchaseUnitPrice ?? h.purchasePrice ?? 0;
+                      const qty = Number(h.quantity) || 0;
+                      const costBasis = purchasePrice * qty;
+                      const currentPrice =
+                        h.currentPrice != null && Number.isFinite(h.currentPrice)
+                          ? h.currentPrice
+                          : null;
+                      const currentValue =
+                        currentPrice != null ? currentPrice * qty : null;
+                      const pl =
+                        currentValue != null && costBasis > 0
+                          ? currentValue - costBasis
+                          : null;
+                      const plPct =
+                        currentValue != null && costBasis > 0
+                          ? ((currentValue / costBasis - 1) * 100)
+                          : null;
+                      const isPositive = (plPct ?? h.unrealizedPlPct ?? 0) >= 0;
+                      const sparkColor = isPositive ? "#10b981" : "#f43f5e";
+                      const mockTrend = isPositive
+                        ? [30, 35, 32, 45, 42, 50, 48, 60]
+                        : [60, 55, 58, 45, 48, 40, 35, 30];
+                      const rowKey =
+                        h.id != null
+                          ? String(h.id)
+                          : `${h.externalId ?? h.symbol}-${h.accountName ?? h.accountId ?? index}`;
+
+                      return (
+                        <tr
+                          key={rowKey}
+                          onClick={() => handleRowClick(h)}
+                          className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
+                        >
+                          <td className="px-4 sm:px-6 py-4 sm:py-5">
+                            <div className="flex items-center gap-3">
+                              <SymbolLogo
+                                symbol={h.symbol}
+                                isCrypto={h.type === "cryptocurrency"}
+                                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shadow-sm transition-transform group-hover:scale-110"
+                              />
+                              <div className="min-w-0">
+                                <div className="font-bold text-neutral-900 leading-none mb-1 text-sm">
+                                  {h.symbol}
+                                </div>
+                                <div className="truncate text-xs text-neutral-400 max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]">
+                                  {h.name}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-600">
+                            {fmtNumber(h.quantity)}
+                          </td>
+
+                          <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-bold text-neutral-900">
+                            {fmtCurrency(purchasePrice, h.currency ?? currency)}
+                          </td>
+
+                          <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium text-neutral-700">
+                            {h.currentPrice != null && Number.isFinite(h.currentPrice)
+                              ? fmtCurrency(h.currentPrice, h.currency ?? currency)
+                              : "—"}
+                          </td>
+
+                          <td className="px-4 sm:px-6 py-4 sm:py-5 text-right font-medium">
+                            {pl != null && plPct != null ? (
+                              <span
+                                className={cn(
+                                  pl >= 0
+                                    ? "text-emerald-600"
+                                    : "text-red-600"
+                                )}
+                              >
+                                {fmtCurrency(pl, h.currency ?? currency)}
+                                <span className="text-neutral-500 font-normal ml-1">
+                                  ({pl >= 0 ? "+" : ""}
+                                  {fmtPct(plPct)})
+                                </span>
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+
+                          <td className="px-2 sm:px-4 py-4 sm:py-5 text-center align-middle min-w-[100px] w-[100px]">
+                            <div className="flex justify-center items-center opacity-70 group-hover:opacity-100 transition-opacity">
+                              <Sparkline data={mockTrend} color={sparkColor} />
+                            </div>
+                          </td>
+
+                          <td className="px-2 py-5">
+                            {h.source === "manual" && (
+                              <button
+                                onClick={(e) => openEditDialog(h, e)}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 group-hover:opacity-100 transition-all"
+                                title="Edit holding"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

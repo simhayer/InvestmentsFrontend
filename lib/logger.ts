@@ -13,7 +13,8 @@ function formatMessage(level: string, message: string, meta?: Record<string, unk
   const ts = new Date().toISOString();
   const base = `${LOG_PREFIX} ${ts} | ${level} | ${message}`;
   if (meta && Object.keys(meta).length > 0) {
-    return `${base} | ${JSON.stringify(meta)}`;
+    const serialized = JSON.stringify(meta);
+    return serialized === "{}" ? base : `${base} | ${serialized}`;
   }
   return base;
 }
@@ -48,12 +49,20 @@ async function sendToBackend(level: string, message: string, meta?: Record<strin
 export const logger = {
   info(message: string, meta?: Record<string, unknown>): void {
     const formatted = formatMessage("INFO", message, meta);
+    if (meta) {
+      console.log(formatted, meta);
+      return;
+    }
     console.log(formatted);
   },
 
   warn(message: string, meta?: Record<string, unknown>): void {
     const formatted = formatMessage("WARN", message, meta);
-    console.warn(formatted);
+    if (meta) {
+      console.warn(formatted, meta);
+    } else {
+      console.warn(formatted);
+    }
     if (typeof window !== "undefined") {
       sendToBackend("warn", message, meta);
     }
@@ -61,7 +70,11 @@ export const logger = {
 
   error(message: string, meta?: Record<string, unknown>): void {
     const formatted = formatMessage("ERROR", message, meta);
-    console.error(formatted);
+    if (meta) {
+      console.error(formatted, meta);
+    } else {
+      console.error(formatted);
+    }
     if (typeof window !== "undefined") {
       sendToBackend("error", message, meta);
     }

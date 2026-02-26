@@ -169,6 +169,12 @@ export function Header() {
                     >
                       <CreditCard className="h-4 w-4" /> Pricing
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/feedback")}
+                      className="rounded-lg gap-2 cursor-pointer text-[13px]"
+                    >
+                      <MessageCircle className="h-4 w-4" /> Feedback
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg gap-2 cursor-pointer text-[13px]">
                       <a
                         href="mailto:support@wallstreetai.io?subject=WallStreetAI%20Support"
@@ -307,6 +313,13 @@ export function Header() {
                   label="Pricing"
                   href="/pricing"
                   active={pathname === "/pricing"}
+                  onClick={closeMobileNav}
+                />
+                <MobileNavLink
+                  icon={MessageCircle}
+                  label="Feedback"
+                  href="/feedback"
+                  active={pathname === "/feedback"}
                   onClick={closeMobileNav}
                 />
                 <a

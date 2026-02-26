@@ -175,15 +175,6 @@ export function Header() {
                     >
                       <MessageCircle className="h-4 w-4" /> Feedback
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="rounded-lg gap-2 cursor-pointer text-[13px]">
-                      <a
-                        href="mailto:support@wallstreetai.io?subject=WallStreetAI%20Support"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="h-4 w-4" /> Support
-                      </a>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator className="mx-1" />
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -322,15 +313,6 @@ export function Header() {
                   active={pathname === "/feedback"}
                   onClick={closeMobileNav}
                 />
-                <a
-                  href="mailto:support@wallstreetai.io?subject=WallStreetAI%20Support"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
-                >
-                  <MessageCircle className="h-4 w-4 text-neutral-400 shrink-0" />
-                  Support
-                </a>
               </div>
             </nav>
 

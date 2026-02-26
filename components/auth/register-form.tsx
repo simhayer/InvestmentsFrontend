@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,12 +32,22 @@ export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const passwordRules = [
+    { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+    { label: "Lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+    { label: "Uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+    { label: "Digit", test: (p: string) => /\d/.test(p) },
+    { label: "Symbol", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+  ];
+
+  const allRulesMet = passwordRules.every((r) => r.test(password));
+
   const validate = () => {
     if (!name.trim()) return "Please enter your full name.";
     if (!email.trim()) return "Please enter your email.";
     if (!/^\S+@\S+\.\S+$/.test(email.trim()))
       return "Please enter a valid email.";
-    if (password.length < 8) return "Password must be at least 8 characters.";
+    if (!allRulesMet) return "Password does not meet all requirements.";
     if (password !== confirmPassword) return "Passwords do not match.";
     return null;
   };
@@ -142,7 +152,7 @@ export function RegisterForm() {
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            placeholder="Strong password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
@@ -157,6 +167,28 @@ export function RegisterForm() {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        {password.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {passwordRules.map((rule) => {
+              const met = rule.test(password);
+              return (
+                <li
+                  key={rule.label}
+                  className={`flex items-center gap-1.5 text-xs transition-colors ${
+                    met ? "text-emerald-600" : "text-neutral-400"
+                  }`}
+                >
+                  {met ? (
+                    <Check className="h-3 w-3 shrink-0" />
+                  ) : (
+                    <X className="h-3 w-3 shrink-0" />
+                  )}
+                  {rule.label}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <div className="space-y-2">

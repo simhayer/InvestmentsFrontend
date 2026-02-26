@@ -8,6 +8,11 @@ import { supabase } from "@/utils/supabaseClient";
 import { analytics } from "@/lib/posthog";
 import type { Session } from "@supabase/supabase-js";
 
+function isSessionExpired(session: Session | null): boolean {
+  if (!session?.expires_at) return true;
+  return Date.now() / 1000 >= session.expires_at;
+}
+
 type AuthContextValue = {
   user: AppUser | null;
   session: Session | null; // <-- NEW
@@ -37,26 +42,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasSession = !!session;
 
-  // 1) Track Supabase session reliably
+  // 1) Track Supabase session reliably, with hard expiry (no auto-refresh)
   React.useEffect(() => {
     let mounted = true;
+    let expiryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const handleSession = (nextSession: Session | null) => {
+      if (!mounted) return;
+      if (expiryTimer) clearTimeout(expiryTimer);
+
+      if (nextSession && isSessionExpired(nextSession)) {
+        supabase.auth.signOut();
+        setSession(null);
+        setSessionReady(true);
+        return;
+      }
+
+      setSession(nextSession);
+      setSessionReady(true);
+
+      if (nextSession?.expires_at) {
+        const msUntilExpiry = nextSession.expires_at * 1000 - Date.now();
+        if (msUntilExpiry > 0) {
+          expiryTimer = setTimeout(() => {
+            supabase.auth.signOut();
+            setSession(null);
+          }, msUntilExpiry);
+        }
+      }
+    };
 
     (async () => {
       const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      setSessionReady(true);
+      handleSession(data.session ?? null);
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
-        setSession(nextSession ?? null);
-        setSessionReady(true);
+        handleSession(nextSession ?? null);
       }
     );
 
     return () => {
       mounted = false;
+      if (expiryTimer) clearTimeout(expiryTimer);
       sub.subscription.unsubscribe();
     };
   }, []);

@@ -18,11 +18,12 @@ import {
   Plus,
   Activity,
   ShieldAlert,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
-import { keysToCamel, fmtCurrency, fmtPct } from "@/utils/format";
+import { keysToCamel, fmtCurrency, fmtPct, timeAgo } from "@/utils/format";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -202,8 +203,8 @@ export function PortfolioOverview() {
             {/* Right: AI Button */}
             <div className="flex flex-col items-start lg:items-end gap-3">
               <Button
-                onClick={fetchFullAnalysis}
-                disabled={analysisLoading}
+                onClick={() => fetchFullAnalysis(!!analysis)}
+                disabled={analysisLoading || ((!!tierError || !!analysis?.stale) && !!analysis)}
                 size="lg"
                 className={cn(
                   "h-12 px-6 rounded-xl font-semibold transition-all",
@@ -216,6 +217,11 @@ export function PortfolioOverview() {
                   <>
                     <RefreshCcw className="h-4 w-4 animate-spin mr-2" />
                     Analyzing...
+                  </>
+                ) : (tierError || analysis?.stale) && analysis ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Limit Reached
                   </>
                 ) : (
                   <>
@@ -399,22 +405,31 @@ export function PortfolioOverview() {
                       <div>
                         <h2 className="text-lg font-bold text-neutral-900">Portfolio Analysis</h2>
                         <p className="text-xs text-neutral-500">
-                          {analysis.stale
-                            ? `Last analyzed ${analysis.lastAnalyzedAt ? new Date(analysis.lastAnalyzedAt).toLocaleDateString() : "previously"}`
+                          {analysis.lastAnalyzedAt
+                            ? `Analyzed ${timeAgo(analysis.lastAnalyzedAt)}${analysis.stale ? " · refresh unavailable" : ""}`
                             : "AI-powered insights & recommendations"}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        onClick={fetchFullAnalysis}
+                        onClick={() => fetchFullAnalysis(true)}
                         variant="outline"
                         size="sm"
-                        disabled={analysisLoading}
+                        disabled={analysisLoading || !!tierError || !!analysis.stale}
                         className="h-9 text-xs font-medium rounded-lg bg-white"
                       >
-                        <RefreshCcw className={cn("h-3.5 w-3.5 mr-2", analysisLoading && "animate-spin")} />
-                        Regenerate
+                        {tierError || analysis.stale ? (
+                          <>
+                            <Lock className="h-3.5 w-3.5 mr-2" />
+                            Limit Reached
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCcw className={cn("h-3.5 w-3.5 mr-2", analysisLoading && "animate-spin")} />
+                            Regenerate
+                          </>
+                        )}
                       </Button>
                       <button
                         onClick={resetAi}

@@ -17,10 +17,12 @@ import {
   ShieldAlert,
   Plus,
   Wallet2,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { timeAgo } from "@/utils/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolioAnalysis } from "@/hooks/use-portfolio-ai";
@@ -301,22 +303,31 @@ export function PortfolioAnalysisTab({
                 <div>
                   <h2 className="text-lg font-bold text-neutral-900">Portfolio Analysis</h2>
                   <p className="text-xs text-neutral-500">
-                    {analysis.stale
-                      ? `Last analyzed ${analysis.lastAnalyzedAt ? new Date(analysis.lastAnalyzedAt).toLocaleDateString() : "previously"}`
+                    {analysis.lastAnalyzedAt
+                      ? `Analyzed ${timeAgo(analysis.lastAnalyzedAt)}${analysis.stale ? " · refresh unavailable" : ""}`
                       : "AI-powered insights & recommendations"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={fetchFullAnalysis}
+                  onClick={() => fetchFullAnalysis(true)}
                   variant="outline"
                   size="sm"
-                  disabled={analysisLoading}
+                  disabled={analysisLoading || !!tierError || !!analysis.stale}
                   className="h-9 text-xs font-medium rounded-lg bg-white"
                 >
-                  <RefreshCcw className={cn("h-3.5 w-3.5 mr-2", analysisLoading && "animate-spin")} />
-                  Regenerate
+                  {tierError || analysis.stale ? (
+                    <>
+                      <Lock className="h-3.5 w-3.5 mr-2" />
+                      Limit Reached
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw className={cn("h-3.5 w-3.5 mr-2", analysisLoading && "animate-spin")} />
+                      Regenerate
+                    </>
+                  )}
                 </Button>
                 <button
                   onClick={resetAi}

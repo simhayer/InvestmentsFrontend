@@ -49,6 +49,26 @@ export function keysToCamel<T>(input: T): T {
 export const fmtNumber = (n: number) =>
   new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);
 
+export function timeAgo(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  try {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diffSec = Math.floor((now - then) / 1000);
+    if (diffSec < 60) return "just now";
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay === 1) return "yesterday";
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  } catch {
+    return "";
+  }
+}
+
 export function fmtAsOf(asOf?: string) {
   if (!asOf) return undefined;
   try {

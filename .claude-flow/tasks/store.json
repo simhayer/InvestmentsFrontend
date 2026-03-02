@@ -1,0 +1,81 @@
+{
+  "tasks": {
+    "task-1772417007608-on70m8": {
+      "taskId": "task-1772417007608-on70m8",
+      "type": "feature",
+      "description": "Finance World redesign via ruflo swarm: repo scan, plan, implementation, verification, summary",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [
+        "frontend",
+        "finance-world",
+        "swarm"
+      ],
+      "createdAt": "2026-03-02T02:03:27.608Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1772419859448-pn6qzt": {
+      "taskId": "task-1772419859448-pn6qzt",
+      "type": "feature",
+      "description": "Redesign finance-world page in a Wealthsimple-style UI using monitor-panel and watchlist APIs, replacing old symbol-driven flow.",
+      "priority": "high",
+      "status": "completed",
+      "progress": 100,
+      "assignedTo": [],
+      "tags": [
+        "finance-world",
+        "watchlists",
+        "monitor-panel",
+        "frontend",
+        "ui"
+      ],
+      "createdAt": "2026-03-02T02:50:59.448Z",
+      "startedAt": null,
+      "completedAt": "2026-03-02T02:51:03.295Z",
+      "result": {
+        "status": "completed",
+        "summary": "finance-world now uses monitor-panel/watchlist flows and has a light premium Wealthsimple-style layout with portfolio/watchlist personalization UI.",
+        "files": [
+          "app/(public)/finance-world/page.tsx",
+          "hooks/use-monitor-panel.ts",
+          "hooks/use-watchlists.ts",
+          "types/monitor-panel.ts",
+          "types/watchlist.ts"
+        ],
+        "verification": "npx tsc --noEmit still fails in pre-existing components/dashboard/daily-feed.tsx JSX errors"
+      }
+    },
+    "task-1772420126177-tu4911": {
+      "taskId": "task-1772420126177-tu4911",
+      "type": "feature",
+      "description": "Add finance-world to the signed-in protected app shell and authenticated navigation.",
+      "priority": "normal",
+      "status": "completed",
+      "progress": 100,
+      "assignedTo": [],
+      "tags": [
+        "finance-world",
+        "protected-route",
+        "navigation",
+        "frontend"
+      ],
+      "createdAt": "2026-03-02T02:55:26.177Z",
+      "startedAt": null,
+      "completedAt": "2026-03-02T02:55:31.463Z",
+      "result": {
+        "status": "completed",
+        "route": "/dashboard/finance-world",
+        "summary": "Added finance-world as a signed-in protected route by reusing the existing page implementation and exposed it in authenticated navigation.",
+        "files": [
+          "app/(protected)/dashboard/finance-world/page.tsx",
+          "components/navigation/nav-items.ts"
+        ],
+        "verification": "npx tsc --noEmit still fails on pre-existing JSX errors in components/dashboard/daily-feed.tsx"
+      }
+    }
+  },
+  "version": "3.0.0"
+}

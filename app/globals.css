@@ -111,6 +111,53 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+.finance-world-grid {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), transparent);
+}
+
+.finance-world-glow {
+  animation: finance-world-float 14s ease-in-out infinite;
+}
+
+.finance-world-scanlines {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.03) 0,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  background-size: 100% 4px;
+}
+
+.finance-world-hud::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 55%, rgba(0, 0, 0, 0.18) 100%);
+  pointer-events: none;
+}
+
+@keyframes finance-world-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.04);
+  }
+}
+
+/* Finance World page – uses site colors (background, card, primary) */
+.finance-world-page {
+  --fw-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.08);
+  --fw-shadow-sm: 0 8px 24px -12px rgba(0, 0, 0, 0.06);
+  background-color: hsl(var(--background));
+}
+
 .chat-markdown {
   line-height: 1.55;
 }

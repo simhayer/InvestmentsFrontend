@@ -10,6 +10,8 @@ export interface MarketSummaryData {
   as_of: string;
   market: string;
   sections: MarketSection[];
+  /** Optional one-sentence outlook from global brief (Phase 2). */
+  outlook?: string;
 }
 
 export interface MarketSummaryResponse {

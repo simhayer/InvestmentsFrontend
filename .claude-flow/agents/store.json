@@ -1,0 +1,101 @@
+{
+  "agents": {
+    "finance-scan": {
+      "agentId": "finance-scan",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-03-02T01:57:52.484Z",
+      "domain": "frontend",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "finance-impl": {
+      "agentId": "finance-impl",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-03-02T01:57:52.515Z",
+      "domain": "frontend",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "finance-verify": {
+      "agentId": "finance-verify",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-03-02T01:57:52.522Z",
+      "domain": "frontend",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "wealth-scan": {
+      "agentId": "wealth-scan",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-03-02T02:42:24.776Z",
+      "domain": "frontend",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "wealth-impl": {
+      "agentId": "wealth-impl",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-03-02T02:42:24.778Z",
+      "domain": "frontend",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "wealth-verify": {
+      "agentId": "wealth-verify",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-03-02T02:42:24.779Z",
+      "domain": "frontend",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "finance-world-route": {
+      "agentId": "finance-world-route",
+      "agentType": "implementer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {},
+      "createdAt": "2026-03-02T02:54:52.458Z",
+      "domain": "frontend",
+      "model": "sonnet",
+      "modelRoutedBy": "router"
+    }
+  },
+  "version": "3.0.0"
+}
